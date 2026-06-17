@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BNF COACHING APP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --input-bg: #2a2a2a;
+            --primary-color: #d500f9; /* サイバーパープル */
+            --text-color: #ffffff;
+            --text-muted: #aaaaaa;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ヘッダー */
+        header {
+            background-color: var(--card-bg);
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: var(--primary-color);
+            border-bottom: 1px solid #333;
+        }
+
+        /* メインコンテンツ表示エリア */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 80px; /* ナビゲーションバーの余白 */
+            box-sizing: border-box;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* 下部ナビゲーションバー */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background-color: var(--card-bg);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #333;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            cursor: pointer;
+            width: 25%;
+            transition: color 0.2s;
+        }
+
+        .nav-item i {
+            font-size: 1.4rem;
+            margin-bottom: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        /* 各画面共通のパーツスタイル */
+        .card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        h3 {
+            margin-top: 0;
+            color: #00b0ff;
+            font-size: 1.1rem;
+        }
+
+        .placeholder-text {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 40px 0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <header id="app-title">BNF COACHING APP</header>
+
+    <div class="content-area">
+        <div id="screen-market" class="screen active">
+            <div class="card">
+                <h3>🌍 MARKET SCORE（地合い）</h3>
+                <div class="placeholder-text">
+                    <i class="fa-solid fa-cloud-showers-heavy" style="font-size: 3rem; color: #333; margin-bottom: 15px;"></i><br>
+                    【地合い画面の土台】<br>
+                    ここに東証のリアルタイム騰落スコアと、BNF氏の戦況分析メッセージが入ります。
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-tools" class="screen">
+            <div class="card">
+                <h3>🛠️ THE TOOLS（メイン戦闘画面）</h3>
+                <div class="placeholder-text">
+                    <i class="fa-solid fa-calculator" style="font-size: 3rem; color: #333; margin-bottom: 15px;"></i><br>
+                    【ツール画面の土台】<br>
+                    ここに「乖離率メーター」と手数料加算の「カウンター」が合体して実装されます。
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-brain" class="screen">
+            <div class="card">
+                <h3>🤖 THE BRAIN（BNF・AIコーチ）</h3>
+                <div class="placeholder-text">
+                    <i class="fa-solid fa-brain" style="font-size: 3rem; color: #333; margin-bottom: 15px;"></i><br>
+                    【AI対話画面の土台】<br>
+                    「損切りしたくない」などの感情を冷徹に論破するチャットUIがここに入ります。
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-log" class="screen">
+            <div class="card">
+                <h3>📊 ERROR RADAR（ログ・分析）</h3>
+                <div class="placeholder-text">
+                    <i class="fa-solid fa-chart-pie" style="font-size: 3rem; color: #333; margin-bottom: 15px;"></i><br>
+                    【弱点分析画面の土台】<br>
+                    引け後の反省日記の生成と、負けパターンの自動お説教システムがここに入ります。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchScreen('market', this)">
+            <i class="fa-solid fa-earth-asia"></i>
+            <span>地合い</span>
+        </div>
+        <div class="nav-item" onclick="switchScreen('tools', this)">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+            <span>ツール</span>
+        </div>
+        <div class="nav-item" onclick="switchScreen('brain', this)">
+            <i class="fa-solid fa-brain"></i>
+            <span>BNF・AI</span>
+        </div>
+        <div class="nav-item" onclick="switchScreen('log', this)">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>ログ分析</span>
+        </div>
+    </div>
+
+    <script>
+        // 画面をスムーズに切り替えるJavaScriptロジック
+        function switchScreen(screenId, element) {
+            // すべての画面を非表示にする
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(screen => screen.classList.remove('active'));
+
+            // すべてのナビアイテムのアクティブ状態を解除
+            const navItems = document.querySelectorAll('.nav-bar .nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+
+            // 狙った画面とナビアイテムをアクティブにする
+            document.getElementById('screen-' + screenId).classList.add('active');
+            element.classList.add('active');
+
+            // ヘッダーのタイトルを画面に合わせて変更
+            const headers = {
+                'market': 'MARKET SCORE',
+                'tools': 'THE TOOLS',
+                'brain': 'THE BRAIN',
+                'log': 'ERROR RADAR'
+            };
+            document.getElementById('app-title').innerText = headers[screenId];
+        }
+    </script>
+</body>
+</html>
