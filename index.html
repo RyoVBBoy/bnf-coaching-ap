@@ -153,25 +153,41 @@
         .res-up { color: #ff5252; }
         .res-down { color: #00e676; }
 
-        /* 🤖 AI脳ミソ画面専用スタイル */
-        .panic-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-        .panic-btn {
-            flex: 1; min-width: 45%; padding: 12px 10px; background-color: #212121;
-            border: 1px solid #ff5252; color: #ff5252; border-radius: 8px;
-            font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: all 0.2s;
-        }
-        .panic-btn:active { background-color: rgba(255, 82, 82, 0.2); }
-        
+        /* 🤖 AIチャットボット専用スタイル */
         .chat-container {
             background-color: #151515; border: 1px solid #333; border-radius: 12px;
-            height: 300px; display: flex; flex-direction: column; overflow: hidden;
+            height: 380px; display: flex; flex-direction: column; overflow: hidden;
         }
         .chat-timeline { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         
-        .bubble { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
+        .bubble { max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 0.9rem; line-height: 1.5; box-sizing: border-box; }
         .bubble.user { background-color: var(--primary-color); color: #121212; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: bold; }
         .bubble.bnf { background-color: #2a2a2a; color: #e0e0e0; align-self: flex-start; border-bottom-left-radius: 2px; border-left: 3px solid #00b0ff; }
-        .chat-system-tag { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px; font-weight: bold; }
+        .chat-system-tag { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; font-weight: bold; }
+
+        /* チャット入力ゾーン */
+        .chat-input-zone {
+            display: flex; padding: 10px; background-color: #1e1e1e; border-top: 1px solid #333; gap: 8px;
+        }
+        .chat-input-zone input {
+            flex: 1; padding: 12px; background-color: var(--input-bg); border: 1px solid #444;
+            border-radius: 8px; color: #fff; font-size: 0.95rem;
+        }
+        .chat-input-zone input:focus { border-color: var(--primary-color); outline: none; }
+        .chat-send-btn {
+            background-color: var(--primary-color); color: #121212; border: none;
+            padding: 0 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem;
+        }
+
+        /* タイピングアニメーション */
+        .typing-dots { display: flex; gap: 4px; padding: 4px 0; }
+        .typing-dots span {
+            width: 6px; height: 6px; background-color: var(--text-muted); border-radius: 50%;
+            animation: blink 1.4s infinite both;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: .2s; }
+        .typing-dots span:nth-child(3) { animation-delay: .4s; }
+        @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
     </style>
 </head>
 <body>
@@ -231,22 +247,20 @@
         </div>
 
         <div id="screen-brain" class="screen">
-            <div class="card">
-                <h3>🤖 THE BRAIN（感情強制冷却装置）</h3>
-                <label>今のメンタルのバグを選択してください</label>
-                <div class="panic-buttons">
-                    <button class="panic-btn" onclick="triggerBrain('loss')">🛑 損切りしたくない！</button>
-                    <button class="panic-btn" onclick="triggerBrain('flying')">⚡ フライングしそう！</button>
-                    <button class="panic-btn" onclick="triggerBrain('rage')">🔥 連敗してイライラする！</button>
-                    <button class="panic-btn" onclick="triggerBrain('hold')">⏳ 一泊二日、迷う…</button>
-                </div>
-
+            <div class="card" style="padding: 10px; margin-bottom: 0;">
+                <h3>🤖 THE BRAIN（対話型AIコーチ）</h3>
+                
                 <div class="chat-container">
                     <div class="chat-timeline" id="chat-box">
                         <div class="bubble bnf">
                             <div class="chat-system-tag">B.N.F</div>
-                            「……。感情がブレてルールを破ると、一瞬で資産は溶けます。上のボタンを押すか、マシーンのロジックに従ってください」
+                            「……。何か迷いでもあるんですか。僕で良ければ、ボソボソと事実だけを答えますけど……」
                         </div>
+                    </div>
+                    
+                    <div class="chat-input-zone">
+                        <input type="text" id="chat-input" placeholder="損切り、フライング、持ち越しなどの悩みを相談..." onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                        <button class="chat-send-btn" onclick="sendChatMessage()">送信</button>
                     </div>
                 </div>
             </div>
@@ -388,46 +402,56 @@
             document.getElementById('res-target-loss').innerText = Math.round(breakEvenPrice * 0.99) + " 円";
         }
 
-        // 🤖 AI脳ミソコーチングシステム
-        function triggerBrain(type) {
+        // 🤖 新・AIチャットボットシステム（対話生成型）
+        function sendChatMessage() {
+            const inputEl = document.getElementById('chat-input');
             const chatBox = document.getElementById('chat-box');
-            let userMsg = "";
-            let bnfMsg = "";
+            const userText = inputEl.value.trim();
 
-            switch(type) {
-                case 'loss':
-                    userMsg = "損切りしたくない！戻ってくるのを待ちたい！";
-                    bnfMsg = "「……希望的観測は無意味です。そこから株価がさらに底を抜けたらどうするんですか？自分の買った位置への未練なんて市場は1ミリも考慮してくれません。マシーンとして今すぐ切りなさい」";
-                    break;
-                case 'flying':
-                    userMsg = "まだ乖離率のボーダーに届いてないけど、買いそう！";
-                    bnfMsg = "「……バネがまだ十分に縮みきっていないところで手を出して、今まで何度底が抜けて大ケガをしたんですか。待つのも仕事です。僕なら今の時間はカップ麺食べてます」";
-                    break;
-                case 'rage':
-                    userMsg = "連敗してイライラする！取り返したい！";
-                    bnfMsg = "「……完全に脳が熱くなって、プロリバ（プロの養分リバウンダー）になってますね。取り返そうとして雑なエントリーを重ねるのが一番破産に近い。今すぐiSPEEDを閉じて、大学の講義に集中してください」";
-                    break;
-                case 'hold':
-                    userMsg = "一泊二日、翌日に持ち越していいですか？";
-                    if (currentMarketScore < 55) {
-                        bnfMsg = "「……今の地合いスコアを見てください。全体の下支えがない無風の日に持ち越すのは、ただのギャンブルです。日中に少しでも浮いた、あるいはトントンの位置にいるなら、同値撤退で逃げるのが鉄則です」";
-                    } else {
-                        bnfMsg = "「……市場全体が強烈な大暴落（パニック）で、狙った銘柄の乖離率も限界まで縮んでいるなら、一泊二日の優位性はあります。ただし、翌朝9:15までに反発がなければ即座に投げる覚悟は持っておいてください」";
-                    }
-                    break;
-            }
+            if (!userText) return;
 
-            // チャットタイムラインに動的追加
-            chatBox.innerHTML += `<div class="bubble user">${userMsg}</div>`;
+            // 1. ユーザーの吹き出しを追加
+            chatBox.innerHTML += `<div class="bubble user">${userText}</div>`;
+            inputEl.value = ""; // 入力欄をクリア
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // 2. 「入力中…」のダミー吹き出しを追加してリアリティを出す
+            const typingId = "typing-" + Date.now();
+            chatBox.innerHTML += `
+                <div class="bubble bnf" id="${typingId}">
+                    <div class="chat-system-tag">B.N.F</div>
+                    <div class="typing-dots"><span></span><span></span><span></span></div>
+                </div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // 3. 1秒後にAIがキーワードを自動解析して返答
             setTimeout(() => {
-                chatBox.innerHTML += `
-                    <div class="bubble bnf">
-                        <div class="chat-system-tag">B.N.F</div>
-                        ${bnfMsg}
-                    </div>`;
-                // 最下部へスクロール自動調整
+                const typingBubble = document.getElementById(typingId);
+                let bnfAnswer = "「……すみません、ちょっと僕にはよく分からないです。ただ、自分の感情で売買してたら遅かれ早かれマーケットからは退場させられますよ」";
+
+                // キーワードマッチングによる高度な思考シミュレーション
+                if (userText.match(/(損切|そんぎり|切る|切れない|マイナス)/)) {
+                    bnfAnswer = "「……希望的観測は無意味ですよ。ここから株価がさらに底を抜けたらどうするんですか？自分の買った位置への未練なんて市場は1ミリも考慮してくれません。マシーンとして今すぐ切りなさい」";
+                } else if (userText.match(/(フライング|早い|買いそう|ポジポジ|我慢)/)) {
+                    bnfAnswer = "「……バネがまだ十分に縮みきっていないところで手を出して、今まで何度底が抜けて大ケガをしたんですか。待つのも仕事です。僕なら今の時間はカップ麺食べてますよ」";
+                } else if (userText.match(/(連敗|ムカつく|イライラ|負け|取り返す)/)) {
+                    bnfAnswer = "「……完全に脳が熱くなって、プロの養分リバウンダーになってますね。取り返そうとして雑なエントリーを重ねるのが一番破産に近い。今すぐ取引ツールを閉じて、大学の講義に集中するか、寝てください」";
+                } else if (userText.match(/(持ち越し|一泊|明日|ホールド)/)) {
+                    if (currentMarketScore < 55) {
+                        bnfAnswer = "「……今の地合いスコアを見てください。全体の下支え（パニック）がない無風の日に持ち越すのは、ただのギャンブルです。日中に少しでも浮いた、あるいはトントンの位置にいるなら、同値撤退で逃げるのが鉄則です」";
+                    } else {
+                        bnfAnswer = "「……市場全体が強烈な大暴落で、狙った銘柄の乖離率も限界まで縮んでいるなら、一泊二日の優位性はあります。ただし、翌朝9:15までに反発がなければ即座に投げる覚悟は持っておいてください」";
+                    }
+                } else if (userText.match(/(利益|利確|目標|上がった)/)) {
+                    bnfAnswer = "「……目標にあと少し届かなくても、頭が重くなったら欲張らずに手前で利益を確保するか、最悪でも買い値まで戻ったら同値撤退で逃げるべきです。利益を逃すより、大損に巻き込まれる方が致命的ですから」";
+                } else if (userText.match(/(こんにちは|挨拶|はじめまして|誰)/)) {
+                    bnfAnswer = "「……あ、どうも。BNFです。トレードのことで何か迷いでもあるんですか。数字の事実だけなら答えますけど……」";
+                }
+
+                // 「入力中…」を消して、本物のセリフに書き換える
+                typingBubble.innerHTML = `<div class="chat-system-tag">B.N.F</div>${bnfAnswer}`;
                 chatBox.scrollTop = chatBox.scrollHeight;
-            }, 300);
+            }, 1200);
         }
 
         window.onload = function() { fetchMarketData(); setInterval(fetchMarketData, 600000); };
