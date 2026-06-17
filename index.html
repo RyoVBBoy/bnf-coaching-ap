@@ -112,143 +112,66 @@
             padding-bottom: 8px;
         }
 
+        /* フォーム用スタイル */
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; }
+        input[type="number"], select {
+            width: 100%; padding: 12px; background-color: var(--input-bg);
+            border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1rem; box-sizing: border-box;
+        }
+        input[type="number"]:focus, select:focus { border-color: var(--primary-color); outline: none; }
+
         /* 地合いスコア専用UI */
         .score-display-zone {
-            text-align: center;
-            padding: 20px 0;
-            border-radius: 10px;
+            text-align: center; padding: 20px 0; border-radius: 10px;
             background: linear-gradient(180deg, var(--card-bg) 0%, var(--status-glow) 100%);
-            border: 1px solid var(--status-color);
-            transition: all 0.5s ease;
-            box-shadow: 0 0 15px var(--status-glow);
+            border: 1px solid var(--status-color); transition: all 0.5s ease; box-shadow: 0 0 15px var(--status-glow);
         }
+        .score-num { font-size: 3.5rem; font-weight: bold; color: var(--status-color); text-shadow: 0 0 10px var(--status-glow); }
+        .score-label { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; }
 
-        .score-num {
-            font-size: 3.5rem;
-            font-weight: bold;
-            color: var(--status-color);
-            text-shadow: 0 0 10px var(--status-glow);
+        .bnf-coach-box, .bnf-tool-coach-box {
+            margin-top: 20px; background-color: #151515; padding: 15px; border-radius: 0 8px 8px 0;
         }
+        .bnf-coach-box { border-left: 4px solid var(--status-color); }
+        .bnf-tool-coach-box { border-left: 4px solid var(--tool-status-color); }
+        .bnf-name { color: var(--status-color); font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; }
+        .bnf-tool-name { color: var(--tool-status-color); font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; }
+        .bnf-comment { font-size: 0.95rem; line-height: 1.5; color: #e0e0e0; }
 
-        .score-label {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-top: 5px;
-        }
-
-        .bnf-coach-box {
-            margin-top: 20px;
-            background-color: #151515;
-            border-left: 4px solid var(--status-color);
-            padding: 15px;
-            border-radius: 0 8px 8px 0;
-        }
-
-        .bnf-tool-coach-box {
-            margin-top: 20px;
-            background-color: #151515;
-            border-left: 4px solid var(--tool-status-color);
-            padding: 15px;
-            border-radius: 0 8px 8px 0;
-        }
-
-        .bnf-name {
-            font-size: 0.85rem;
-            color: var(--status-color);
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .bnf-tool-name {
-            font-size: 0.85rem;
-            color: var(--tool-status-color);
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .bnf-comment {
-            font-size: 0.95rem;
-            line-height: 1.5;
-            color: #e0e0e0;
-        }
-
-        .market-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 15px;
-            font-size: 0.9rem;
-        }
-
-        .stat-box {
-            text-align: center;
-        }
-
+        .market-stats { display: flex; justify-content: space-around; margin-top: 15px; font-size: 0.9rem; }
+        .stat-box { text-align: center; }
         .stat-up { color: #ff5252; font-weight: bold; }
         .stat-down { color: #00e676; font-weight: bold; }
-
-        .refresh-btn, .calc-btn {
-            width: 100%;
-            padding: 12px;
-            background-color: #2a2a2a;
-            border: 1px solid #444;
-            color: #fff;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 15px;
-            font-size: 1rem;
-            font-weight: bold;
-        }
-        
-        .calc-btn {
-            background-color: var(--primary-color);
-            border: none;
-            color: #121212;
-        }
-
-        /* フォーム用スタイル */
-        .input-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 6px;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-        input[type="number"], select {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--input-bg);
-            border: 2px solid #333;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-        input[type="number"]:focus, select:focus {
-            border-color: var(--primary-color);
-            outline: none;
-        }
+        .refresh-btn { width: 100%; padding: 12px; background-color: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 8px; cursor: pointer; margin-top: 15px; font-size: 1rem; }
 
         /* ツール出力エリア */
-        .tool-result-zone {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
-            background-color: #151515;
-            border: 1px solid var(--tool-status-color);
-            box-shadow: 0 0 10px var(--tool-status-glow);
-        }
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #222;
-        }
+        .tool-result-zone { margin-top: 20px; padding: 15px; border-radius: 10px; background-color: #151515; border: 1px solid var(--tool-status-color); box-shadow: 0 0 10px var(--tool-status-glow); }
+        .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; }
         .result-row:last-child { border-bottom: none; }
         .res-val { font-weight: bold; font-family: monospace; font-size: 1.1rem; }
         .res-up { color: #ff5252; }
         .res-down { color: #00e676; }
+
+        /* 🤖 AI脳ミソ画面専用スタイル */
+        .panic-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .panic-btn {
+            flex: 1; min-width: 45%; padding: 12px 10px; background-color: #212121;
+            border: 1px solid #ff5252; color: #ff5252; border-radius: 8px;
+            font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: all 0.2s;
+        }
+        .panic-btn:active { background-color: rgba(255, 82, 82, 0.2); }
+        
+        .chat-container {
+            background-color: #151515; border: 1px solid #333; border-radius: 12px;
+            height: 300px; display: flex; flex-direction: column; overflow: hidden;
+        }
+        .chat-timeline { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        
+        .bubble { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; }
+        .bubble.user { background-color: var(--primary-color); color: #121212; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: bold; }
+        .bubble.bnf { background-color: #2a2a2a; color: #e0e0e0; align-self: flex-start; border-bottom-left-radius: 2px; border-left: 3px solid #00b0ff; }
+        .chat-system-tag { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -259,21 +182,17 @@
         <div id="screen-market" class="screen active">
             <div class="card">
                 <h3>🌍 東証プライム・戦況レーダー</h3>
-                
                 <div class="score-display-zone" id="score-zone">
                     <div class="score-num" id="live-score">--</div>
                     <div class="score-label" id="live-status">市場データ読込中...</div>
                 </div>
-
                 <div class="market-stats">
                     <div class="stat-box">値上がり<br><span class="stat-up" id="stat-up-num">--</span></div>
                     <div class="stat-box">値下がり<br><span class="stat-down" id="stat-down-num">--</span></div>
                 </div>
-
                 <button class="refresh-btn" onclick="fetchMarketData()"><i class="fa-solid fa-rotate"></i> 情報を更新</button>
-
                 <div class="bnf-coach-box">
-                    <div class="bnf-name" id="bnf-name-label">B.N.F</div>
+                    <div class="bnf-name">B.N.F</div>
                     <div class="bnf-comment" id="bnf-comment-text">「……。市場のデータを確認しています。少し待ってください」</div>
                 </div>
             </div>
@@ -282,7 +201,6 @@
         <div id="screen-tools" class="screen">
             <div class="card">
                 <h3>🛠️ BNF KAIRI & COUNTER</h3>
-                
                 <div class="input-group">
                     <label for="stock-sector">銘柄セクター（業種属性）</label>
                     <select id="stock-sector" onchange="calculateMetrics()">
@@ -291,47 +209,46 @@
                         <option value="growth">中小型・グロース株（新興市場・ネット株等）</option>
                     </select>
                 </div>
-
                 <div class="input-group">
                     <label for="ma-value">25日移動平均線の値（円）</label>
                     <input type="number" id="ma-value" placeholder="例: 1500" oninput="calculateMetrics()">
                 </div>
-
                 <div class="input-group">
                     <label for="current-price">現在の株価（買った株価）</label>
                     <input type="number" id="current-price" placeholder="例: 1350" oninput="calculateMetrics()">
                 </div>
-
                 <div class="tool-result-zone" id="tool-result">
-                    <div class="result-row">
-                        <span>25日線乖離率</span>
-                        <span class="res-val" id="res-kairi">-- %</span>
-                    </div>
-                    <div class="result-row">
-                        <span>バネ判定</span>
-                        <span class="res-val" id="res-status" style="color:var(--tool-status-color)">未入力</span>
-                    </div>
-                    <div class="result-row">
-                        <span>🟢 マシーン利確（+1.5%目安）</span>
-                        <span class="res-val res-up" id="res-target-win">-- 円</span>
-                    </div>
-                    <div class="result-row">
-                        <span>🔴 マシーン損切（-1.0%目安）</span>
-                        <span class="res-val res-down" id="res-target-loss">-- 円</span>
-                    </div>
+                    <div class="result-row"><span>25日線乖離率</span><span class="res-val" id="res-kairi">-- %</span></div>
+                    <div class="result-row"><span>バネ判定</span><span class="res-val" id="res-status" style="color:var(--tool-status-color)">未入力</span></div>
+                    <div class="result-row"><span>🟢 マシーン利確（+1.5%目安）</span><span class="res-val res-up" id="res-target-win">-- 円</span></div>
+                    <div class="result-row"><span>🔴 マシーン損切（-1.0%目安）</span><span class="res-val res-down" id="res-target-loss">-- 円</span></div>
                 </div>
-
                 <div class="bnf-tool-coach-box">
-                    <div class="bnf-tool-name" id="bnf-tool-label">B.N.F</div>
-                    <div class="bnf-comment" id="bnf-tool-comment">「……。セクターと数値を入力してください。バネの縮み具合と引き際を計算します」</div>
+                    <div class="bnf-tool-name">B.N.F</div>
+                    <div class="bnf-comment" id="bnf-tool-comment">「……。セクターと数値を入力してください」</div>
                 </div>
             </div>
         </div>
 
         <div id="screen-brain" class="screen">
             <div class="card">
-                <h3>🤖 THE BRAIN（BNF・AIコーチ）</h3>
-                <p style="color:var(--text-muted)">対話システム準備中...</p>
+                <h3>🤖 THE BRAIN（感情強制冷却装置）</h3>
+                <label>今のメンタルのバグを選択してください</label>
+                <div class="panic-buttons">
+                    <button class="panic-btn" onclick="triggerBrain('loss')">🛑 損切りしたくない！</button>
+                    <button class="panic-btn" onclick="triggerBrain('flying')">⚡ フライングしそう！</button>
+                    <button class="panic-btn" onclick="triggerBrain('rage')">🔥 連敗してイライラする！</button>
+                    <button class="panic-btn" onclick="triggerBrain('hold')">⏳ 一泊二日、迷う…</button>
+                </div>
+
+                <div class="chat-container">
+                    <div class="chat-timeline" id="chat-box">
+                        <div class="bubble bnf">
+                            <div class="chat-system-tag">B.N.F</div>
+                            「……。感情がブレてルールを破ると、一瞬で資産は溶けます。上のボタンを押すか、マシーンのロジックに従ってください」
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -345,20 +262,16 @@
 
     <div class="nav-bar">
         <div class="nav-item active" onclick="switchScreen('market', this)">
-            <i class="fa-solid fa-earth-asia"></i>
-            <span>地合い</span>
+            <i class="fa-solid fa-earth-asia"></i><span>地合い</span>
         </div>
         <div class="nav-item" onclick="switchScreen('tools', this)">
-            <i class="fa-solid fa-screwdriver-wrench"></i>
-            <span>ツール</span>
+            <i class="fa-solid fa-screwdriver-wrench"></i><span>ツール</span>
         </div>
         <div class="nav-item" onclick="switchScreen('brain', this)">
-            <i class="fa-solid fa-brain"></i>
-            <span>BNF・AI</span>
+            <i class="fa-solid fa-brain"></i><span>BNF・AI</span>
         </div>
         <div class="nav-item" onclick="switchScreen('log', this)">
-            <i class="fa-solid fa-chart-line"></i>
-            <span>ログ分析</span>
+            <i class="fa-solid fa-chart-line"></i><span>ログ分析</span>
         </div>
     </div>
 
@@ -393,8 +306,7 @@
                     up = parseInt(upMatch[1].replace(/,/g, ''));
                     down = parseInt(downMatch[1].replace(/,/g, ''));
                 } else {
-                    up = Math.floor(Math.random() * 1200) + 200;
-                    down = Math.floor(Math.random() * 1200) + 200;
+                    up = Math.floor(Math.random() * 1200) + 200; down = Math.floor(Math.random() * 1200) + 200;
                 }
                 document.getElementById('stat-up-num').innerText = up;
                 document.getElementById('stat-down-num').innerText = down;
@@ -412,7 +324,6 @@
             const scoreEl = document.getElementById('live-score');
             const statusEl = document.getElementById('live-status');
             const commentEl = document.getElementById('bnf-comment-text');
-            const zoneEl = document.getElementById('score-zone');
             scoreEl.innerText = score + "点";
 
             let color = "#888888"; let glow = "rgba(136, 136, 136, 0.2)"; let statusText = ""; let bnfComment = "";
@@ -432,54 +343,39 @@
             document.documentElement.style.setProperty('--status-glow', glow);
             statusEl.innerText = statusText;
             commentEl.innerText = bnfComment;
-            
-            // 地合いが変わったらツール側もリアルタイムで影響を受けるように再計算
             calculateMetrics();
         }
 
-        // 🛠️ ツールロジック（乖離率＋カウンター完全合体）
+        // 🛠️ ツールロジック
         function calculateMetrics() {
             const sector = document.getElementById('stock-sector').value;
             const ma = parseFloat(document.getElementById('ma-value').value);
             const price = parseFloat(document.getElementById('current-price').value);
-
             if (!ma || !price) return;
 
-            // ① 乖離率計算
             const kairi = ((price - ma) / ma) * 100;
             document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
 
-            // ② セクター別ボーダーライン判定
             let yellowBorder = -5; let redBorder = -8;
             if (sector === 'tech') { yellowBorder = -8; redBorder = -12; }
             if (sector === 'growth') { yellowBorder = -15; redBorder = -25; }
 
-            let toolColor = "#ff5252"; // デフォルト赤（罠・危険）
-            let toolGlow = "rgba(255, 82, 82, 0.2)";
-            let statusText = "⚠️ 危険（底抜け注意）";
+            let toolColor = "#ff5252"; let toolGlow = "rgba(255, 82, 82, 0.2)"; let statusText = "⚠️ 危険（底抜け注意）";
             let bnfToolComment = "「……まだバネの縮みが足りない。今買うのはただのフライング。資金を減らしたい趣味がある人だけが買う位置です」";
 
             if (kairi <= redBorder) {
-                toolColor = "#00e676"; // 緑（パニック大好物）
-                toolGlow = "rgba(0, 230, 118, 0.3)";
-                statusText = "🚨 限界突破（BNFゾーン）";
+                toolColor = "#00e676"; toolGlow = "rgba(0, 230, 118, 0.3)"; statusText = "🚨 限界突破（BNFゾーン）";
                 bnfToolComment = "「……よし。完全にバネが歪んでます。地合いスコアが55点以上なら、リバウンドの期待値は極めて高い。一泊二日の原則を頭に入れて仕込むタイミングです」";
             } else if (kairi <= yellowBorder) {
-                toolColor = "#ffb300"; // 黄（チャンス間近）
-                toolGlow = "rgba(255, 179, 0, 0.2)";
-                statusText = "💛 チャンス目前（監視）";
+                toolColor = "#ffb300"; toolGlow = "rgba(255, 179, 0, 0.2)"; statusText = "💛 チャンス目前（監視）";
                 bnfToolComment = "「……バネが縮み始めてます。同じセクターの他の銘柄も一緒に連れ安して底を打つ瞬間を、5分足で狙ってください」";
             }
 
-            // 地合いスコアによる強制補正（地合いが罠なら、どれだけ縮んでも警告を上書き）
             if (currentMarketScore < 55) {
-                toolColor = "#ff5252";
-                toolGlow = "rgba(255, 82, 82, 0.3)";
-                statusText = "🛑 逆張りロック（地合い不良）";
-                bnfToolComment = "「……株のバネが縮んでいても、市場全体（地合い）にパニックの売りが入っていません。全体に支えがない状態の逆張りはただの自殺行為。ロックします」";
+                toolColor = "#ff5252"; toolGlow = "rgba(255, 82, 82, 0.3)"; statusText = "🛑 逆張りロック（地合い不良）";
+                bnfToolComment = "「……株のバネが縮んでいても、市場全体にパニックの売りが入っていません。全体に支えがない状態の逆張りはただの自殺行為。ロックします」";
             }
 
-            // ツール画面のスタイル更新
             document.documentElement.style.setProperty('--tool-status-color', toolColor);
             document.documentElement.style.setProperty('--tool-status-glow', toolGlow);
             document.getElementById('tool-result').style.borderColor = toolColor;
@@ -487,19 +383,54 @@
             document.getElementById('res-status').style.color = toolColor;
             document.getElementById('bnf-tool-comment').innerText = bnfToolComment;
 
-            // ③ BNF COUNTER計算（かぶミニ往復手数料 0.44%を裏で加算）
             const breakEvenPrice = price * 1.0044; 
-            const targetWin = Math.round(breakEvenPrice * 1.015); // +1.5% 利確
-            const targetLoss = Math.round(breakEvenPrice * 0.99);  // -1.0% 損切
-
-            document.getElementById('res-target-win').innerText = targetWin + " 円";
-            document.getElementById('res-target-loss').innerText = targetLoss + " 円";
+            document.getElementById('res-target-win').innerText = Math.round(breakEvenPrice * 1.015) + " 円";
+            document.getElementById('res-target-loss').innerText = Math.round(breakEvenPrice * 0.99) + " 円";
         }
 
-        window.onload = function() {
-            fetchMarketData();
-            setInterval(fetchMarketData, 600000);
-        };
+        // 🤖 AI脳ミソコーチングシステム
+        function triggerBrain(type) {
+            const chatBox = document.getElementById('chat-box');
+            let userMsg = "";
+            let bnfMsg = "";
+
+            switch(type) {
+                case 'loss':
+                    userMsg = "損切りしたくない！戻ってくるのを待ちたい！";
+                    bnfMsg = "「……希望的観測は無意味です。そこから株価がさらに底を抜けたらどうするんですか？自分の買った位置への未練なんて市場は1ミリも考慮してくれません。マシーンとして今すぐ切りなさい」";
+                    break;
+                case 'flying':
+                    userMsg = "まだ乖離率のボーダーに届いてないけど、買いそう！";
+                    bnfMsg = "「……バネがまだ十分に縮みきっていないところで手を出して、今まで何度底が抜けて大ケガをしたんですか。待つのも仕事です。僕なら今の時間はカップ麺食べてます」";
+                    break;
+                case 'rage':
+                    userMsg = "連敗してイライラする！取り返したい！";
+                    bnfMsg = "「……完全に脳が熱くなって、プロリバ（プロの養分リバウンダー）になってますね。取り返そうとして雑なエントリーを重ねるのが一番破産に近い。今すぐiSPEEDを閉じて、大学の講義に集中してください」";
+                    break;
+                case 'hold':
+                    userMsg = "一泊二日、翌日に持ち越していいですか？";
+                    if (currentMarketScore < 55) {
+                        bnfMsg = "「……今の地合いスコアを見てください。全体の下支えがない無風の日に持ち越すのは、ただのギャンブルです。日中に少しでも浮いた、あるいはトントンの位置にいるなら、同値撤退で逃げるのが鉄則です」";
+                    } else {
+                        bnfMsg = "「……市場全体が強烈な大暴落（パニック）で、狙った銘柄の乖離率も限界まで縮んでいるなら、一泊二日の優位性はあります。ただし、翌朝9:15までに反発がなければ即座に投げる覚悟は持っておいてください」";
+                    }
+                    break;
+            }
+
+            // チャットタイムラインに動的追加
+            chatBox.innerHTML += `<div class="bubble user">${userMsg}</div>`;
+            setTimeout(() => {
+                chatBox.innerHTML += `
+                    <div class="bubble bnf">
+                        <div class="chat-system-tag">B.N.F</div>
+                        ${bnfMsg}
+                    </div>`;
+                // 最下部へスクロール自動調整
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 300);
+        }
+
+        window.onload = function() { fetchMarketData(); setInterval(fetchMarketData, 600000); };
     </script>
 </body>
 </html>
