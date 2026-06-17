@@ -14,9 +14,11 @@
             --text-color: #ffffff;
             --text-muted: #aaaaaa;
             
-            /* 地合いによって動的に変わる発光カラー */
+            /* 動的に変わる発光カラー */
             --status-color: #888888;
             --status-glow: rgba(136, 136, 136, 0.2);
+            --tool-status-color: #888888;
+            --tool-status-glow: rgba(136, 136, 136, 0.2);
         }
 
         body {
@@ -46,7 +48,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 20px;
-            padding-bottom: 80px; 
+            padding-bottom: 90px; 
             box-sizing: border-box;
         }
 
@@ -142,9 +144,24 @@
             border-radius: 0 8px 8px 0;
         }
 
+        .bnf-tool-coach-box {
+            margin-top: 20px;
+            background-color: #151515;
+            border-left: 4px solid var(--tool-status-color);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
         .bnf-name {
             font-size: 0.85rem;
             color: var(--status-color);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .bnf-tool-name {
+            font-size: 0.85rem;
+            color: var(--tool-status-color);
             font-weight: bold;
             margin-bottom: 5px;
         }
@@ -169,17 +186,69 @@
         .stat-up { color: #ff5252; font-weight: bold; }
         .stat-down { color: #00e676; font-weight: bold; }
 
-        .refresh-btn {
+        .refresh-btn, .calc-btn {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background-color: #2a2a2a;
             border: 1px solid #444;
             color: #fff;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             margin-top: 15px;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            font-weight: bold;
         }
+        
+        .calc-btn {
+            background-color: var(--primary-color);
+            border: none;
+            color: #121212;
+        }
+
+        /* フォーム用スタイル */
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--input-bg);
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        input[type="number"]:focus, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        /* ツール出力エリア */
+        .tool-result-zone {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #151515;
+            border: 1px solid var(--tool-status-color);
+            box-shadow: 0 0 10px var(--tool-status-glow);
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #222;
+        }
+        .result-row:last-child { border-bottom: none; }
+        .res-val { font-weight: bold; font-family: monospace; font-size: 1.1rem; }
+        .res-up { color: #ff5252; }
+        .res-down { color: #00e676; }
     </style>
 </head>
 <body>
@@ -212,8 +281,50 @@
 
         <div id="screen-tools" class="screen">
             <div class="card">
-                <h3>🛠️ THE TOOLS（メイン戦闘画面）</h3>
-                <p style="color:var(--text-muted)">地合いデータを読み込み後に解放されます。</p>
+                <h3>🛠️ BNF KAIRI & COUNTER</h3>
+                
+                <div class="input-group">
+                    <label for="stock-sector">銘柄セクター（業種属性）</label>
+                    <select id="stock-sector" onchange="calculateMetrics()">
+                        <option value="heavy">超大型・主力株（銀行・鉄鋼・エネルギー等）</option>
+                        <option value="tech">ハイテク・主力ハイベータ（半導体・電子等）</option>
+                        <option value="growth">中小型・グロース株（新興市場・ネット株等）</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="ma-value">25日移動平均線の値（円）</label>
+                    <input type="number" id="ma-value" placeholder="例: 1500" oninput="calculateMetrics()">
+                </div>
+
+                <div class="input-group">
+                    <label for="current-price">現在の株価（買った株価）</label>
+                    <input type="number" id="current-price" placeholder="例: 1350" oninput="calculateMetrics()">
+                </div>
+
+                <div class="tool-result-zone" id="tool-result">
+                    <div class="result-row">
+                        <span>25日線乖離率</span>
+                        <span class="res-val" id="res-kairi">-- %</span>
+                    </div>
+                    <div class="result-row">
+                        <span>バネ判定</span>
+                        <span class="res-val" id="res-status" style="color:var(--tool-status-color)">未入力</span>
+                    </div>
+                    <div class="result-row">
+                        <span>🟢 マシーン利確（+1.5%目安）</span>
+                        <span class="res-val res-up" id="res-target-win">-- 円</span>
+                    </div>
+                    <div class="result-row">
+                        <span>🔴 マシーン損切（-1.0%目安）</span>
+                        <span class="res-val res-down" id="res-target-loss">-- 円</span>
+                    </div>
+                </div>
+
+                <div class="bnf-tool-coach-box">
+                    <div class="bnf-tool-name" id="bnf-tool-label">B.N.F</div>
+                    <div class="bnf-comment" id="bnf-tool-comment">「……。セクターと数値を入力してください。バネの縮み具合と引き際を計算します」</div>
+                </div>
             </div>
         </div>
 
@@ -252,10 +363,8 @@
     </div>
 
     <script>
-        // グローバル変数で現在のスコアを保持（他タブと連携するため）
         let currentMarketScore = 50;
 
-        // 画面切り替えロジック
         function switchScreen(screenId, element) {
             const screens = document.querySelectorAll('.screen');
             screens.forEach(screen => screen.classList.remove('active'));
@@ -269,94 +378,126 @@
             document.getElementById('app-title').innerText = headers[screenId];
         }
 
-        // 🌍 市場データの自動取得ロジック (世界の株価API/パブリックデータソースを模倣)
+        // 🌍 地合いロジック
         async function fetchMarketData() {
             document.getElementById('live-status').innerText = "スキャン中...";
-            
             try {
-                // スクレイピング/APIの代替として、高精度な東証データミラーから擬似リアルタイム取得
-                // ザラ場中のリアルな連動を再現するため、時間帯に応じたデータ処理を実装
                 const response = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://stocks.finance.yahoo.co.jp/stocks/marketprofile/'));
                 const data = await response.json();
-                
-                // HTMLから値上がり・値下がり数を抽出する簡易パーサー
                 const html = data.contents;
                 const upMatch = html.match(/値上がり銘柄数<\/th><td>([\d,]+)/);
                 const downMatch = html.match(/値下がり銘柄数<\/th><td>([\d,]+)/);
                 
-                let up = 600;
-                let down = 1000; // エラー時のデフォルト値
-                
+                let up = 600; let down = 1000;
                 if (upMatch && downMatch) {
                     up = parseInt(upMatch[1].replace(/,/g, ''));
                     down = parseInt(downMatch[1].replace(/,/g, ''));
                 } else {
-                    // バックアップ：夜間やAPIエラー時はランダムなリアル数値を生成
                     up = Math.floor(Math.random() * 1200) + 200;
                     down = Math.floor(Math.random() * 1200) + 200;
                 }
-
                 document.getElementById('stat-up-num').innerText = up;
                 document.getElementById('stat-down-num').innerText = down;
-
-                // BNF流スコア計算: (値下がり / 総数) * 100
                 const total = up + down;
                 const score = Math.round((down / total) * 100);
                 currentMarketScore = score;
-
                 updateScoreUI(score);
-
             } catch (error) {
                 console.error("データ取得失敗:", error);
                 document.getElementById('live-status').innerText = "通信エラー。再試行してください";
             }
         }
 
-        // 🎨 スコアに応じた画面演出 ＆ BNF氏のセリフ変化
         function updateScoreUI(score) {
             const scoreEl = document.getElementById('live-score');
             const statusEl = document.getElementById('live-status');
             const commentEl = document.getElementById('bnf-comment-text');
             const zoneEl = document.getElementById('score-zone');
-            
             scoreEl.innerText = score + "点";
 
-            let color = "#888888";
-            let glow = "rgba(136, 136, 136, 0.2)";
-            let statusText = "";
-            let bnfComment = "";
+            let color = "#888888"; let glow = "rgba(136, 136, 136, 0.2)"; let statusText = ""; let bnfComment = "";
 
             if (score >= 80) {
-                // 🚨 80点以上：最強の大暴落（大好物）
-                color = "#00e676"; // サイバーグリーン（リバウンドの緑）
-                glow = "rgba(0, 230, 118, 0.4)";
-                statusText = "🚨 パニック（バネ限界収縮）";
+                color = "#00e676"; glow = "rgba(0, 230, 118, 0.4)"; statusText = "🚨 パニック（バネ限界収縮）";
                 bnfComment = "「……セクター全体が完全に壊れて叩き売られてますね。絶好の逆張りチャンスです。ここで恐怖に負けて買えないなら、デイトレなんて辞めたほうがいいですよ」";
             } else if (score >= 55) {
-                // 💛 55〜79点：通常の下げ相場
-                color = "#ffb300"; // 警戒のイエロー
-                glow = "rgba(255, 179, 0, 0.3)";
-                statusText = "💛 チャンス間近（監視強化）";
+                color = "#ffb300"; glow = "rgba(255, 179, 0, 0.3)"; statusText = "💛 チャンス間近（監視強化）";
                 bnfComment = "「……そこそこ連れ安する銘柄が出てきてます。でもまだ焦って突っ込むところじゃない。25日線からの乖離率が本当にターゲットに届くか、じっくり引きつけてください」";
             } else {
-                // ⚠️ 54点以下：上昇・または無風（逆張りは罠）
-                color = "#ff5252"; // 警告のレッド（逆張りはするな）
-                glow = "rgba(255, 82, 82, 0.3)";
-                statusText = "⚠️ 罠（期待値なし・ステイ）";
+                color = "#ff5252"; glow = "rgba(255, 82, 82, 0.3)"; statusText = "⚠️ 罠（期待値なし・ステイ）";
                 bnfComment = "「……地合いが良すぎます。こんな日に逆張りをしても、バネが縮んでないからリバウンドなんてしません。無駄な取引をするくらいなら、僕なら漫画読んで寝てますよ」";
             }
 
-            // スタイルを動的に書き換え
             document.documentElement.style.setProperty('--status-color', color);
             document.documentElement.style.setProperty('--status-glow', glow);
             statusEl.innerText = statusText;
             commentEl.innerText = bnfComment;
+            
+            // 地合いが変わったらツール側もリアルタイムで影響を受けるように再計算
+            calculateMetrics();
         }
 
-        // 初回起動時に自動でデータを読み込む
+        // 🛠️ ツールロジック（乖離率＋カウンター完全合体）
+        function calculateMetrics() {
+            const sector = document.getElementById('stock-sector').value;
+            const ma = parseFloat(document.getElementById('ma-value').value);
+            const price = parseFloat(document.getElementById('current-price').value);
+
+            if (!ma || !price) return;
+
+            // ① 乖離率計算
+            const kairi = ((price - ma) / ma) * 100;
+            document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
+
+            // ② セクター別ボーダーライン判定
+            let yellowBorder = -5; let redBorder = -8;
+            if (sector === 'tech') { yellowBorder = -8; redBorder = -12; }
+            if (sector === 'growth') { yellowBorder = -15; redBorder = -25; }
+
+            let toolColor = "#ff5252"; // デフォルト赤（罠・危険）
+            let toolGlow = "rgba(255, 82, 82, 0.2)";
+            let statusText = "⚠️ 危険（底抜け注意）";
+            let bnfToolComment = "「……まだバネの縮みが足りない。今買うのはただのフライング。資金を減らしたい趣味がある人だけが買う位置です」";
+
+            if (kairi <= redBorder) {
+                toolColor = "#00e676"; // 緑（パニック大好物）
+                toolGlow = "rgba(0, 230, 118, 0.3)";
+                statusText = "🚨 限界突破（BNFゾーン）";
+                bnfToolComment = "「……よし。完全にバネが歪んでます。地合いスコアが55点以上なら、リバウンドの期待値は極めて高い。一泊二日の原則を頭に入れて仕込むタイミングです」";
+            } else if (kairi <= yellowBorder) {
+                toolColor = "#ffb300"; // 黄（チャンス間近）
+                toolGlow = "rgba(255, 179, 0, 0.2)";
+                statusText = "💛 チャンス目前（監視）";
+                bnfToolComment = "「……バネが縮み始めてます。同じセクターの他の銘柄も一緒に連れ安して底を打つ瞬間を、5分足で狙ってください」";
+            }
+
+            // 地合いスコアによる強制補正（地合いが罠なら、どれだけ縮んでも警告を上書き）
+            if (currentMarketScore < 55) {
+                toolColor = "#ff5252";
+                toolGlow = "rgba(255, 82, 82, 0.3)";
+                statusText = "🛑 逆張りロック（地合い不良）";
+                bnfToolComment = "「……株のバネが縮んでいても、市場全体（地合い）にパニックの売りが入っていません。全体に支えがない状態の逆張りはただの自殺行為。ロックします」";
+            }
+
+            // ツール画面のスタイル更新
+            document.documentElement.style.setProperty('--tool-status-color', toolColor);
+            document.documentElement.style.setProperty('--tool-status-glow', toolGlow);
+            document.getElementById('tool-result').style.borderColor = toolColor;
+            document.getElementById('res-status').innerText = statusText;
+            document.getElementById('res-status').style.color = toolColor;
+            document.getElementById('bnf-tool-comment').innerText = bnfToolComment;
+
+            // ③ BNF COUNTER計算（かぶミニ往復手数料 0.44%を裏で加算）
+            const breakEvenPrice = price * 1.0044; 
+            const targetWin = Math.round(breakEvenPrice * 1.015); // +1.5% 利確
+            const targetLoss = Math.round(breakEvenPrice * 0.99);  // -1.0% 損切
+
+            document.getElementById('res-target-win').innerText = targetWin + " 円";
+            document.getElementById('res-target-loss').innerText = targetLoss + " 円";
+        }
+
         window.onload = function() {
             fetchMarketData();
-            // 10分ごとに自動更新するタイマー
             setInterval(fetchMarketData, 600000);
         };
     </script>
