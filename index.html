@@ -79,14 +79,14 @@
         .score-num { font-size: 3.5rem; font-weight: bold; color: var(--status-color); }
 
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.9rem; }
-        .btn-fetch { background: linear-gradient(90deg, #00e676, #00b0ff); color: #121212; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-search { background: linear-gradient(90deg, #00e676, #00b0ff); color: #121212; font-size: 1rem; }
         .btn-save { background: #333; color: #fff; border: 1px solid #444; }
 
         .tool-result-zone { margin-top: 20px; padding: 15px; border-radius: 10px; background-color: #151515; border: 1px solid var(--tool-status-color); }
         .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; }
         .res-val { font-weight: bold; font-family: monospace; }
 
-        .chat-container { background-color: #151515; border: 1px solid #333; border-radius: 12px; height: 350px; display: flex; flex-direction: column; overflow: hidden; }
+        .chat-container { background-color: #151515; border: 1px solid #333; border-radius: 12px; height: 320px; display: flex; flex-direction: column; overflow: hidden; }
         .chat-timeline { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .bubble { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 0.9rem; line-height: 1.4; }
         .bubble.bnf { background: #2a2a2a; color: #eee; align-self: flex-start; border-left: 3px solid #00b0ff; }
@@ -95,7 +95,7 @@
 
         .log-item { background: #151515; border-left: 4px solid #ff5252; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
         
-        #api-status-text { text-align: center; font-size: 0.8rem; color: #00e676; margin-top: 5px; font-weight: bold; }
+        #tool-ai-status { text-align: center; font-size: 0.85rem; font-weight: bold; margin-top: 8px; }
     </style>
     
     <script type="module">
@@ -124,22 +124,22 @@
 
         <div id="screen-tools" class="screen">
             <div class="card">
-                <h3>🛠️ リアルタイム全自動判定システム</h3>
+                <h3>🛠️ 銘柄コード1発・全自動判定</h3>
                 
                 <div class="input-group">
-                    <label>銘柄コード入力</label>
+                    <label style="color:#00b0ff; font-weight:bold; font-size:0.9rem;"><i class="fa-solid fa-bolt"></i> 4桁の銘柄コードを入力</label>
                     <div style="display:flex; gap:10px;">
-                        <input type="number" id="stock-code" placeholder="例: 6920" style="flex:1;">
-                        <button class="btn btn-fetch" style="margin:0; width:auto; padding:0 20px;" onclick="fetchRealtimeData()">データ取得</button>
+                        <input type="number" id="stock-code" placeholder="例: 6920" style="flex:1; font-size:1.2rem; font-weight:bold; text-align:center; letter-spacing:2px;">
+                        <button class="btn btn-search" style="margin:0; width:auto; padding:0 25px; font-weight:bold;" onclick="autoFetchWithPrompt()">AI調査</button>
                     </div>
-                    <div id="api-status-text"></div>
+                    <div id="tool-ai-status"></div>
                 </div>
 
                 <div class="input-group">
                     <label>セクター</label>
                     <select id="stock-sector" onchange="calculateMetrics()">
                         <option value="heavy">🏦 バリュー（銀行・鉄鋼）</option>
-                        <option value="tech">⚡ ハイテク・半導体</option>
+                        <option value="tech" selected>⚡ ハイテク・半導体</option>
                         <option value="defensive">💊 ディフェンシブ（内需）</option>
                         <option value="growth">🚀 新興グロース</option>
                         <option value="speculative">🔥 材料株</option>
@@ -147,15 +147,15 @@
                 </div>
 
                 <div class="input-group">
-                    <label>取得されたリアルタイム数値</label>
+                    <label>AIが自動取得したリアルタイム数値</label>
                     <div style="display:flex; gap:10px;">
                         <div>
                             <span style="font-size:0.75rem; color:var(--text-muted);">25日移動平均線</span>
-                            <input type="number" id="ma-value" placeholder="自動入力されます" oninput="calculateMetrics()">
+                            <input type="number" id="ma-value" placeholder="自動入力" oninput="calculateMetrics()">
                         </div>
                         <div>
                             <span style="font-size:0.75rem; color:var(--text-muted);">現在株価</span>
-                            <input type="number" id="current-price" placeholder="自動入力されます" oninput="calculateMetrics()">
+                            <input type="number" id="current-price" placeholder="自動入力" oninput="calculateMetrics()">
                         </div>
                     </div>
                 </div>
@@ -207,67 +207,60 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        // 🚀 高速・CORS回避機能付きの公開日本株API（Stooqデータプロキシ）を使用
-        async function fetchRealtimeData() {
+        // 🧠 数字が入力されたら、必要十分なプロンプトをアプリ側で自動合成して送信する神関数
+        async function autoFetchWithPrompt() {
             const code = document.getElementById('stock-code').value;
-            const statusText = document.getElementById('api-status-text');
+            const statusText = document.getElementById('tool-ai-status');
             
             if(!code || code.length !== 4) {
                 alert("正しい4桁の銘柄コードを入力してください。");
                 return;
             }
 
-            statusText.innerText = "⏳ リアルタイムデータを同期中...";
+            if(!geminiApiKey) {
+                alert("「AI」タブでGemini APIキーを設定してください。");
+                return;
+            }
+
+            statusText.innerText = `⏳ AIが銘柄コード ${code} のデータをWEB検索中...`;
             statusText.style.color = "#00b0ff";
 
             try {
-                // ブラウザのブロックを100%回避するパブリックプロキシ経由で株価ヒストリカルデータを取得
-                const response = await fetch(`https://corsproxy.io/?url=https://stooq.com/q/d/l/?s=${code}.jp&i=d`);
+                const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+                const model = genAI.getGenerativeModel({ 
+                    model: "gemini-2.5-flash",
+                    tools: [{ googleSearch: {} }] 
+                });
+
+                // 🔴 アプリが自動生成する、必要にして十分な超精密プロンプト
+                const prompt = `日本市場の銘柄コード「${code}」について、現在のリアルタイム最新株価と、日足チャートにおける「25日移動平均線（25日線）」の最新数値をGoogle検索を使って調査してください。
+調べたデータは、必ず以下のJSON形式のみで出力してください。説明文、挨拶、マークダウン表記などは一切含めず、純粋なJSONデータだけを出力してください。
+
+フォーマット:
+{"price": 最新の現在株価の数値, "ma": 最新の25日移動平均線の数値}`;
+
+                const result = await model.generateContent(prompt);
+                const responseText = result.response.text();
                 
-                if (!response.ok) throw new Error("通信エラー");
-                
-                const csvText = await response.text();
-                const lines = csvText.trim().split('\n');
-                
-                if (lines.length < 26) { // ヘッダー + 最低25日分のデータが必要
-                    throw new Error("データが不足しています。東証の正しい銘柄コードか確認してください。");
+                // JSONを綺麗に抽出
+                const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
+                if(jsonMatch) {
+                    const data = JSON.parse(jsonMatch[0]);
+                    
+                    if(data.price) document.getElementById('current-price').value = data.price;
+                    if(data.ma) document.getElementById('ma-value').value = data.ma;
+                    
+                    calculateMetrics();
+                    statusText.innerText = "✅ 自動同期完了！";
+                    statusText.style.color = "#00e676";
+                } else {
+                    statusText.innerText = "❌ ネット上の株価データをうまく解析できませんでした。もう一度お試しください。";
+                    statusText.style.color = "#ff5252";
                 }
-
-                // CSVのパース（Date,Open,High,Low,Close,Volume）
-                // 直近25日分の「Close（終値）」を抽出
-                let closes = [];
-                // 下から順（最新の日付から過去へ）にデータを取得
-                for (let i = lines.length - 1; i >= 1; i--) {
-                    const cols = lines[i].split(',');
-                    if (cols.length >= 5) {
-                        const closePrice = parseFloat(cols[4]);
-                        if (!isNaN(closePrice)) {
-                            closes.push(closePrice);
-                        }
-                    }
-                    if (closes.length === 25) break;
-                }
-
-                if (closes.length < 25) throw new Error("計算日数不足");
-
-                // 最新の現在株価（一番最後の行の終値）
-                const currentPrice = Math.round(closes[0]);
-
-                // 25日移動平均の算出
-                const sum = closes.reduce((a, b) => a + b, 0);
-                const ma25 = Math.round(sum / 25);
-
-                // 画面の入力欄にセット
-                document.getElementById('current-price').value = currentPrice;
-                document.getElementById('ma-value').value = ma25;
-                
-                calculateMetrics();
-                statusText.innerText = "✅ 自動同期に成功しました！";
-                statusText.style.color = "#00e676";
 
             } catch (e) {
                 console.error(e);
-                statusText.innerText = "❌ データ取得に失敗。コードを確認するか、手動で入力してください。";
+                statusText.innerText = "❌ 通信エラー、またはAPIキーが無効です。";
                 statusText.style.color = "#ff5252";
             }
         }
