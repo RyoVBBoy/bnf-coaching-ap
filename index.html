@@ -114,13 +114,13 @@
         .res-down { color: #00e676; }
         .log-save-btn { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold; font-size: 0.85rem; }
 
-        /* iSPEED連携ボタン */
-        .ispeed-link-btn {
-            display: none; width: 100%; padding: 10px; background: #bf360c; color: #fff;
+        /* 安全な株探連動ボタンのスタイル */
+        .kabutan-link-btn {
+            display: none; width: 100%; padding: 10px; background: #00796b; color: #fff;
             border: none; border-radius: 6px; cursor: pointer; margin-top: 8px;
             font-weight: bold; font-size: 0.85rem; text-align: center; text-decoration: none; box-sizing: border-box;
         }
-        .ispeed-link-btn i { margin-right: 6px; }
+        .kabutan-link-btn i { margin-right: 6px; }
 
         .chat-container {
             background-color: #151515; border: 1px solid #333; border-radius: 12px;
@@ -189,8 +189,8 @@
                     <input type="number" id="stock-code" placeholder="例: 6920" oninput="matchStockCode(this.value)">
                     <div id="code-status-msg" style="font-size: 0.8rem; color: #00b0ff; margin-top: 4px; font-weight: bold;"></div>
                     
-                    <a id="ispeed-btn" class="ispeed-link-btn" href="#" target="_blank">
-                        <i class="fa-solid fa-bolt"></i> iSPEEDでこの銘柄のチャートを開く
+                    <a id="kabutan-btn" class="kabutan-link-btn" href="#" target="_blank">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> 株探（Kabutan）でチャートと乖離率を見る
                     </a>
                 </div>
 
@@ -309,16 +309,17 @@
         function matchStockCode(code) {
             const msgEl = document.getElementById('code-status-msg');
             const sectorSelect = document.getElementById('stock-sector');
-            const ispeedBtn = document.getElementById('ispeed-btn');
+            const kabutanBtn = document.getElementById('kabutan-btn');
             
             if (code.length < 4) {
                 msgEl.innerText = "";
-                ispeedBtn.style.display = "none";
+                kabutanBtn.style.display = "none";
                 return;
             }
 
-            ispeedBtn.href = `ispeedjsp://chart?code=${code}`;
-            ispeedBtn.style.display = "block";
+            // 株探の対象コードURLに設定（安全なWeb標準リンク）
+            kabutanBtn.href = `https://kabutan.jp/stock/chart?code=${code}`;
+            kabutanBtn.style.display = "block";
 
             if (stockMaster[code]) {
                 const stock = stockMaster[code];
@@ -543,7 +544,7 @@
 ・文頭は「……あ、どうも。」「……うーん、」「……」などから静かに始める。
 ・投資スタイルは徹底した「25日移動平均線からの乖離率を狙った逆張り」。
 ・現在の市場地合いスコア：${currentMarketScore}点（55点未満は逆張りNG、80点以上は大チャンス）
-ユーザーの投資の悩みや愚痴に対して、この地合い点数を踏まえて150文字以内でボソボソと回答してください。`;
+ユーザーの投資の悩みや愚痴に対して、この地合い点数を踏めて150文字以内でボソボソと回答してください。`;
 
                 const result = await model.generateContent([systemPrompt, userText]);
                 const bnfResponseText = result.response.text();
