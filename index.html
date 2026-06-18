@@ -68,16 +68,13 @@
             border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1.1rem; box-sizing: border-box;
         }
 
-        /* 🔗 動的URLリンクボタンのスタイル */
         .btn-link {
             background: #00b0ff; color: #121212; display: flex; justify-content: center;
             align-items: center; gap: 8px; text-decoration: none; font-weight: bold;
             padding: 12px; border-radius: 8px; font-size: 1rem; margin-bottom: 20px;
-            box-sizing: border-box; transition: background 0.2s;
+            box-sizing: border-box;
         }
-        .btn-link:hover { background: #0091ea; }
 
-        /* 📸 画像アップロードエリアのスタイル */
         .upload-zone {
             border: 2px dashed #00e676; padding: 20px; border-radius: 8px;
             text-align: center; background: rgba(0, 230, 118, 0.05); cursor: pointer; margin-bottom: 15px;
@@ -159,12 +156,12 @@
                 <div id="ocr-status"></div>
 
                 <div class="input-group" style="margin-top:20px;">
-                    <label style="color:#00b0ff;">📈 25日移動平均線 (AI自動入力)</label>
+                    <label style="color:#00b0ff;">📈 25日移動平均線 (手動修正も可能)</label>
                     <input type="number" id="ma-value" placeholder="スクショから自動読取" oninput="calculateMetrics()">
                 </div>
 
                 <div class="input-group">
-                    <label style="color:#00e676;">💰 現在のリアルタイム株価 (AI自動入力)</label>
+                    <label style="color:#00e676;">💰 現在のリアルタイム株価 (手動修正も可能)</label>
                     <input type="number" id="current-price" placeholder="スクショから自動読取" oninput="calculateMetrics()">
                 </div>
 
@@ -214,9 +211,8 @@
     <script>
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
-        let base64Image = "";
+        let compressedBase64 = ""; // 圧縮後の画像を保持
 
-        // 🔗 コードが入力されたら、Yahoo!ファイナンスの直リンクボタンを動的に生成する関数
         function updateYahooLink(code) {
             const linkZone = document.getElementById('link-zone');
             if(code && code.length === 4) {
@@ -244,24 +240,51 @@
             calculateMetrics();
         }
 
+        // 🛡️ 高解像度のスクショ画像を、AIが壊れないサイズに自動圧縮する機能
         function handleImageUpload(input) {
             const file = input.files[0];
             if (!file) return;
 
             const preview = document.getElementById('preview-img');
+            const status = document.getElementById('ocr-status');
+            status.innerText = "⏳ 画像を最適化中...";
+            status.style.color = "#ffb300";
+
             const reader = new FileReader();
             reader.onload = function(e) {
-                preview.src = e.target.result;
-                preview.style.display = "inline-block";
-                base64Image = e.target.result.split(',')[1]; 
-                
-                // 画像が読み込まれたら即座にAI解析へ
-                parseImageWithAI();
+                const img = new Image();
+                img.onload = function() {
+                    // キャンバスを使って最大横幅1024pxに縮小（容量を激減させる）
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1024;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // プレビュー表示
+                    preview.src = canvas.toDataURL('image/jpeg', 0.8);
+                    preview.style.display = "inline-block";
+                    
+                    // AI送信用Base64データ
+                    compressedBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                    
+                    // 即時解析
+                    parseImageWithAI();
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        // 🧠 GeminiのVision機能で、画像から「株価」と「25日線」を読み抜く
         async function parseImageWithAI() {
             const status = document.getElementById('ocr-status');
             if (!geminiApiKey) {
@@ -269,28 +292,25 @@
                 return;
             }
 
-            status.innerText = "⏳ AIがスクショ画像をスキャン中...";
+            status.innerText = "⏳ AIがスクショ画像を精密スキャン中...";
             status.style.color = "#00b0ff";
 
             try {
                 const genAI = new window.GoogleGenerativeAI(geminiApiKey);
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-                const prompt = `この画像は株価チャート、もしくは株価詳細画面のスクリーンショットです。
-画像内に写っているテキストや数字、ポップアップ表示などから、以下の2つの数値を特定して読み取ってください。
+                const prompt = `この画像は株価チャート、または株価画面のスクリーンショットです。
+画像内のすべてのテキストから、以下の2つの数値を読み取ってください。
 
-1. 現在の株価（リアルタイムの取引値、あるいは一番大きく目立っている株価の数字）
-2. 25日移動平均線（「25日」「25MA」「移動平均(25)」などのラベルの近くにある数値、またはユーザーがタップして出したポップアップ内の25日線の数値）
+1. 「現在値」または「取引値」、あるいは画面上で最も大きく目立っている現在の株価の数字。
+2. 「25日」「25MA」「移動平均(25)」の横や、ポップアップで表示されている25日移動平均線の数字。
 
-見つけた数値を以下のJSONフォーマットのみで返答してください。説明や日本語の解説は一切含めないでください。
-
-JSONフォーマット:
-{"price": 見つけた株価の数値, "ma": 見つけた25日線の数値}
-`;
+見つけた数値を以下のJSONフォーマットのみで返答してください。説明文は一切不要です。
+{"price": 株価の数値, "ma": 25日線の数値}`;
 
                 const imagePart = {
                     inlineData: {
-                        data: base64Image,
+                        data: compressedBase64,
                         mimeType: "image/jpeg"
                     }
                 };
@@ -305,15 +325,15 @@ JSONフォーマット:
                     if(data.ma) document.getElementById('ma-value').value = Math.round(data.ma);
                     
                     calculateMetrics();
-                    status.innerText = "✅ 画像から数値を自動入力しました！";
+                    status.innerText = "✅ 画像の読み込みに成功しました！";
                     status.style.color = "#00e676";
                 } else {
-                    status.innerText = "❌ 画像から数値がうまく読み取れませんでした。手動で調整してください。";
-                    status.style.color = "#ff5252";
+                    status.innerText = "⚠️ 数字が一部見つかりません。下の白い枠を直接タップして手入力・修正してください。";
+                    status.style.color = "#ffb300";
                 }
             } catch (e) {
                 console.error(e);
-                status.innerText = "❌ AI解析エラーが発生しました。";
+                status.innerText = "❌ エラー：APIキーが正しいか、または画像が不鮮明な可能性があります。手入力も可能です。";
                 status.style.color = "#ff5252";
             }
         }
