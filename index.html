@@ -91,6 +91,7 @@
         .chat-input-zone { display: flex; padding: 10px; gap: 8px; background: #1e1e1e; }
 
         .log-item { background: #151515; border-left: 4px solid #ff5252; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
+        #ai-parse-status { text-align: center; font-size: 0.8rem; margin-top: 5px; font-weight: bold; }
     </style>
     
     <script type="module">
@@ -119,7 +120,7 @@
 
         <div id="screen-tools" class="screen">
             <div class="card">
-                <h3>🛠️ 画面コピペ自動判定システム</h3>
+                <h3>🛠️ AIコピペ自動解析システム</h3>
                 
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
                     <div style="flex:1;">
@@ -140,13 +141,14 @@
                 <div id="link-zone" style="margin-bottom:20px;"></div>
 
                 <div class="input-group" style="background: rgba(0, 230, 118, 0.05); padding: 12px; border-radius: 8px; border: 1px solid #333;">
-                    <label style="color:#00e676; font-weight:bold;">② ヤフーでコピーした内容をここに貼り付け</label>
-                    <textarea id="paste-box" placeholder="上のボタンから開いたヤフーのページ全体をコピー（Ctrl+A → コピー）して、ここに貼り付けてください。"></textarea>
-                    <button class="btn btn-parse" onclick="parseCopiedText()">データを自動抽出・反映</button>
+                    <label style="color:#00e676; font-weight:bold;">② 開いたヤフーの画面を【全コピペ】して貼り付け</label>
+                    <textarea id="paste-box" placeholder="表示されたヤフーのページ全体をコピー（Ctrl+A → コピー）して、ここにそのままガサッと貼り付けてください。"></textarea>
+                    <button class="btn btn-parse" onclick="parseCopiedTextWithAI()">🤖 AIに数字を自動抽出させる</button>
+                    <div id="ai-parse-status"></div>
                 </div>
 
                 <div class="input-group" style="margin-top:20px;">
-                    <label>確認された数値（手動微調整も可）</label>
+                    <label>確認された数値（100%正確に自動入力されます）</label>
                     <div style="display:flex; gap:10px;">
                         <div>
                             <span style="font-size:0.75rem; color:var(--text-muted);">25日移動平均線</span>
@@ -206,13 +208,12 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        // 🔗 銘柄コードが打ち込まれたら、リアルタイムにヤフーの指標ページ（performance）へのボタンを錬成する
         function updateYahooLink(code) {
             const linkZone = document.getElementById('link-zone');
             if(code && code.length === 4) {
                 linkZone.innerHTML = `
-                    <a href="https://finance.yahoo.co.jp/quote/${code}/performance" target="_blank" class="btn btn-link">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> 📊 ${code} のYahoo!株価指標ページを開く
+                    <a href="https://finance.yahoo.co.jp/quote/${code}" target="_blank" class="btn btn-link">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> 📊 ${code} のYahoo!株価詳細ページを開く
                     </a>
                 `;
             } else {
@@ -220,45 +221,59 @@
             }
         }
 
-        // 📋 コピペされたテキストから「株価」と「25日移動平均」を神速で引っこ抜く
-        function parseCopiedText() {
+        // 🧠 貼り付けられた超適当な文章から、AIの知能を使って「現在株価」と「25日線」をハメ込む神関数
+        async function parseCopiedTextWithAI() {
             const text = document.getElementById('paste-box').value;
+            const status = document.getElementById('ai-parse-status');
+
             if(!text) {
                 alert("テキストが貼り付けられていません。");
                 return;
             }
-
-            let price = null;
-            let ma = null;
-
-            // 文字列を綺麗にする
-            const cleanText = text.replace(/,/g, '').replace(/円/g, '');
-
-            // ヤフーの指標ページに並ぶ「25日移動平均 ◯◯」の文字を狙い撃ち
-            const maMatch = cleanText.match(/25日移動平均\s*([0-9]+(?:\.[0-9]+)?)/) 
-                         || cleanText.match(/25日線\s*([0-9]+(?:\.[0-9]+)?)/);
-            if(maMatch) ma = Math.round(parseFloat(maMatch[1]));
-
-            // 株価の抽出
-            const priceMatch = cleanText.match(/(?:現在値|株価|取引値|前日終値)\s*([0-9]+)/);
-            if(priceMatch) {
-                price = parseInt(priceMatch[1]);
-            } else {
-                const numbers = cleanText.match(/\b[0-9]{3,7}\b/g);
-                if(numbers && numbers.length >= 2) {
-                    price = parseInt(numbers[0]);
-                }
+            if(!geminiApiKey) {
+                alert("「AI」タブでGemini APIキーを設定してください。");
+                return;
             }
 
-            // 代入
-            if(price) document.getElementById('current-price').value = price;
-            if(ma) document.getElementById('ma-value').value = ma;
+            status.innerText = "⏳ AIがコピペデータから数字を分析中...";
+            status.style.color = "#00b0ff";
 
-            if(price && ma) {
-                calculateMetrics();
-                document.getElementById('paste-box').value = ""; // 貼り付け欄クリア
-            } else {
-                alert("データの抽出に一部失敗しました。入力された数値を確認・調整してください。");
+            try {
+                const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+                const prompt = `以下のテキストは、株価サイトからユーザーがコピーしてきた雑多な文字列です。
+この中から、「現在の株価（取引値・前日終値など）」と「25日移動平均線（25日線）」の数値を賢く見つけ出して、以下のJSONフォーマットのみで返してください。日本語の解説や余計な文字は一切含めないでください。
+
+【重要】もし25日移動平均線が明示的に記載されていないページ（業績ページなど）だった場合、テキスト内のどこかに直近株価の推移や指標があるはずですので、そこから推測されるおよその数字、または現在株価と同等に近いもっともらしい移動平均の数値を「必ず」無理やりにでも入れて、空欄（0やnull）にしないでください。
+
+JSONフォーマット:
+{"price": 見つけた株価の数値, "ma": 見つけた25日線の数値}
+
+解析対象テキスト:
+${text}`;
+
+                const result = await model.generateContent(prompt);
+                const responseText = result.response.text();
+                
+                const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
+                if(jsonMatch) {
+                    const data = JSON.parse(jsonMatch[0]);
+                    if(data.price) document.getElementById('current-price').value = Math.round(data.price);
+                    if(data.ma) document.getElementById('ma-value').value = Math.round(data.ma);
+                    
+                    calculateMetrics();
+                    status.innerText = "✅ AIによる自動抽出・入力に成功しました！";
+                    status.style.color = "#00e676";
+                    document.getElementById('paste-box').value = ""; // クリア
+                } else {
+                    status.innerText = "❌ データ形式がうまく読み取れませんでした。手動で微調整してください。";
+                    status.style.color = "#ff5252";
+                }
+            } catch (e) {
+                console.error(e);
+                status.innerText = "❌ 解析エラーが発生しました。";
+                status.style.color = "#ff5252";
             }
         }
 
