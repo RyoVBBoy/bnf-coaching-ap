@@ -114,6 +114,14 @@
         .res-down { color: #00e676; }
         .log-save-btn { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold; font-size: 0.85rem; }
 
+        /* 🚀 新しいiSPEED連携ボタンのスタイル */
+        .ispeed-link-btn {
+            display: none; width: 100%; padding: 10px; background: #bf360c; color: #fff;
+            border: none; border-radius: 6px; cursor: pointer; margin-top: 8px;
+            font-weight: bold; font-size: 0.85rem; text-align: center; text-decoration: none; box-sizing: border-box;
+        }
+        .ispeed-link-btn i { margin-right: 6px; }
+
         .chat-container {
             background-color: #151515; border: 1px solid #333; border-radius: 12px;
             height: 380px; display: flex; flex-direction: column; overflow: hidden;
@@ -180,6 +188,10 @@
                     <label for="stock-code">銘柄コード（4桁）</label>
                     <input type="number" id="stock-code" placeholder="例: 6920" oninput="matchStockCode(this.value)">
                     <div id="code-status-msg" style="font-size: 0.8rem; color: #00b0ff; margin-top: 4px; font-weight: bold;"></div>
+                    
+                    <a id="ispeed-btn" class="ispeed-link-btn" href="#" target="_blank">
+                        <i class="fa-solid fa-bolt"></i> iSPEEDでこの銘柄のチャートを開く
+                    </a>
                 </div>
 
                 <div class="input-group">
@@ -273,50 +285,48 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        // 🧠 主要銘柄のマスターデータベース（ここに書かれたコードは名前とセクターが完全一致します）
         const stockMaster = {
-            // バリュー・主力株
             "8306": { name: "三菱UFJ", sector: "heavy" },
             "8316": { name: "三井住友", sector: "heavy" },
             "5401": { name: "日本製鉄", sector: "heavy" },
             "7203": { name: "トヨタ自動車", sector: "heavy" },
             "8058": { name: "三菱商事", sector: "heavy" },
             "9101": { name: "日本郵船", sector: "heavy" },
-            // ハイテク・半導体
             "6920": { name: "レーザーテック", sector: "tech" },
             "8035": { name: "東京エレクトロン", sector: "tech" },
             "6146": { name: "ディスコ", sector: "tech" },
             "6758": { name: "ソニーG", sector: "tech" },
             "6501": { name: "日立製作所", sector: "tech" },
             "9984": { name: "ソフトバンクG", sector: "tech" },
-            // ディフェンシブ
             "2914": { name: "JT", sector: "defensive" },
             "4502": { name: "武田薬品", sector: "defensive" },
             "9432": { name: "NTT", sector: "defensive" },
             "9020": { name: "JR東日本", sector: "defensive" },
-            // 有名な新興グロース
             "5253": { name: "カバー", sector: "growth" },
             "215A": { name: "タイミー", sector: "growth" }
         };
 
-        // 🔢 銘柄コード入力時の自動判別ロジック
         function matchStockCode(code) {
             const msgEl = document.getElementById('code-status-msg');
             const sectorSelect = document.getElementById('stock-sector');
+            const ispeedBtn = document.getElementById('ispeed-btn');
             
             if (code.length < 4) {
                 msgEl.innerText = "";
+                ispeedBtn.style.display = "none"; // 4桁未満ならiSPEEDボタンを隠す
                 return;
             }
 
-            // 1. マスターデータに完全一致するかチェック
+            // 📲 4桁入力されたら、iSPEEDを直接連動させて開くURLスキームを設定
+            ispeedBtn.href = `ispeedjsp://chart?code=${code}`;
+            ispeedBtn.style.display = "block"; // ボタンを表示
+
             if (stockMaster[code]) {
                 const stock = stockMaster[code];
                 msgEl.innerText = `🎯 検出: ${stock.name}`;
                 sectorSelect.value = stock.sector;
             } else {
-                // 2. 完全一致しなかった場合、コードの法則からセクターを自動予測
-                let predictedSector = "growth"; // デフォルトはグロース
+                let predictedSector = "growth";
                 let typeName = "その他銘柄（自動判定）";
 
                 const num = parseInt(code);
@@ -330,7 +340,6 @@
                 sectorSelect.value = predictedSector;
             }
 
-            // セクターが変わったので再計算
             calculateMetrics();
         }
 
@@ -371,7 +380,7 @@
 
             if (currentMarketScore >= 80) {
                 color = "#00e676"; glow = "rgba(0, 230, 118, 0.4)"; statusText = "🚨 パニック（バネ限界収縮）";
-                bnfComment = "……セクター全体が完全に壊れて叩き売られてますね。絶好の逆張りチャンスです。ここで恐怖に負けて買えないなら、デイトレなんて辞めたほうがいいですよ」";
+                bnfComment = "「……セクター全体が完全に壊れて叩き売られてますね。絶好の逆張りチャンスです。ここで恐怖に負けて買えないなら、デイトレなんて辞めたほうがいいですよ」";
             } else if (currentMarketScore >= 55) {
                 color = "#ffb300"; glow = "rgba(255, 179, 0, 0.3)"; statusText = "💛 チャンス間近（監視強化）";
                 bnfComment = "「……そこそこ連れ安する銘柄が出てきてます。でもまだ焦って突っ込むところじゃない。25日線からの乖離率が本当にターゲットに届くか、じっくり引きつけてください」";
@@ -432,7 +441,6 @@
             document.getElementById('res-target-loss').innerText = Math.round(breakEvenPrice * 0.99) + " 円";
         }
 
-        // 💾 ログ保存に「銘柄コード」を含めるようアップデート
         function saveTradeLog() {
             const codeInput = document.getElementById('stock-code').value.trim();
             const sectorText = document.getElementById('stock-sector').options[document.getElementById('stock-sector').selectedIndex].text;
@@ -446,8 +454,6 @@
 
             const now = new Date();
             const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-            
-            // コードが空欄なら「----」にする
             const finalCode = codeInput ? `【${codeInput}】` : "";
 
             const newLog = {
@@ -535,10 +541,10 @@
                 const systemPrompt = `
 あなたは伝説のデイトレーダー「BNF（小手川隆）」です。以下のルールを完璧に守って回答してください。
 ・口調は常に「ボソボソとした喋り方」「丁寧語（〜です、〜ます）」「感情を全く出さない冷徹なリアリスト」。
-・文頭は「……あ、どうも。」「……うーん、」「……」などから静かに始める。
+・文頭は「……あ、どうも。」「……うーん、」「……`などから静かに始める。
 ・投資スタイルは徹底した「25日移動平均線からの乖離率を狙った逆張り」。
 ・現在の市場地合いスコア：${currentMarketScore}点（55点未満は逆張りNG、80点以上は大チャンス）
-ユーザーの投資の悩みや愚痴に対して、この地合い点数を踏まえて150文字以内でボソボソと回答してください。
+ユーザーの投資の悩みや愚痴に対して、この地合い点数を踏めて150文字以内でボソボソと回答してください。
 `;
 
                 const result = await model.generateContent([systemPrompt, userText]);
