@@ -66,12 +66,13 @@
         .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; }
         
-        .magic-parse-area {
-            width: 100%; height: 70px; background: #1a1a1a; border: 2px dashed #00e676;
-            border-radius: 8px; color: #00e676; padding: 10px; font-size: 0.8rem;
-            box-sizing: border-box; margin-bottom: 15px; resize: none;
+        /* スクショ解析ゾーンのスタイル */
+        .screenshot-zone {
+            background: #004d40; border: 2px dashed #00e676; padding: 15px;
+            border-radius: 8px; text-align: center; cursor: pointer; margin-bottom: 15px;
         }
-        .magic-parse-area:focus { border-color: #d500f9; outline: none; }
+        .screenshot-zone i { font-size: 1.8rem; color: #00e676; margin-bottom: 5px; }
+        #preview-img { max-width: 100%; max-height: 150px; margin-top: 10px; display: none; border-radius: 6px; }
 
         input[type="number"], select, input[type="text"] {
             width: 100%; padding: 12px; background-color: var(--input-bg);
@@ -129,17 +130,20 @@
 
         <div id="screen-tools" class="screen">
             <div class="card">
-                <h3>🛠️ テクニカル画面全コピペ解析</h3>
+                <h3>🛠️ AI画像認識・自動判定</h3>
                 
                 <div class="input-group">
                     <label>銘柄コード</label>
                     <input type="number" id="stock-code" placeholder="例: 6920" oninput="matchStockCode(this.value)">
-                    <a id="kabutan-btn" class="btn btn-kabutan" style="display:none;" href="#" target="_blank">株探でテクニカルデータを開く</a>
+                    <a id="kabutan-btn" class="btn btn-kabutan" style="display:none;" href="#" target="_blank">株探を開く</a>
                 </div>
 
-                <div class="input-group" style="background:#004d40; padding:12px; border-radius:8px;">
-                    <label style="color:#fff; font-weight:bold;">✨ 画面全体コピペ欄（ページ全部をここにペースト）</label>
-                    <textarea class="magic-parse-area" id="magic-paste" placeholder="開いたページ全体をコピーして、そのままここに貼り付けてください..."></textarea>
+                <div class="screenshot-zone" onclick="document.getElementById('file-input').click()">
+                    <i class="fa-solid fa-camera"></i>
+                    <div id="upload-status" style="font-weight:bold; font-size:0.9rem;">株探のスクショをここにUP（自動解析）</div>
+                    <div style="font-size:0.7rem; color:#a5d6a7; margin-top:3px;">※チャート画面のスクショでOKです</div>
+                    <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="analyzeScreenshot(this)">
+                    <img id="preview-img" alt="Preview">
                 </div>
 
                 <div class="input-group">
@@ -154,15 +158,15 @@
                 </div>
 
                 <div class="input-group">
-                    <label>自動抽出された数値</label>
+                    <label>AIが読み取った数値</label>
                     <div style="display:flex; gap:10px;">
                         <div>
                             <span style="font-size:0.75rem; color:var(--text-muted);">25日線</span>
-                            <input type="number" id="ma-value" placeholder="自動抽出" oninput="calculateMetrics()">
+                            <input type="number" id="ma-value" placeholder="自動入力" oninput="calculateMetrics()">
                         </div>
                         <div>
                             <span style="font-size:0.75rem; color:var(--text-muted);">現在株価</span>
-                            <input type="number" id="current-price" placeholder="自動抽出" oninput="calculateMetrics()">
+                            <input type="number" id="current-price" placeholder="自動入力" oninput="calculateMetrics()">
                         </div>
                     </div>
                 </div>
@@ -214,56 +218,71 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        // 📝 テクニカルページ用に最適化した解析
-        document.getElementById('magic-paste').addEventListener('input', function(e) {
-            const srcText = e.target.value;
-            if(!srcText || srcText.includes("✅")) return;
+        // 📝 スクショ画像をGemini AIに解析させて数値を抜く神機能
+        async function analyzeScreenshot(input) {
+            const file = input.files[0];
+            if(!file) return;
 
-            const cleanText = srcText.replace(/,/g, '');
-            let detectedPrice = null;
-            let detectedMA = null;
+            if(!geminiApiKey) {
+                alert("AI機能を使うには「AI」タブでGemini APIキーを登録してください！");
+                return;
+            }
 
-            // 1. 25日線の数値をピンポイントで探す
-            const lines = cleanText.split('\n');
-            for(let line of lines) {
-                // 表の中の「25日」という行を探す
-                if(line.includes("25日") && !line.includes("乖離")) {
-                    const nums = line.match(/\d+(\.\d+)?/g);
-                    if(nums && nums.length >= 1) {
-                        // 「25」という文字自体を拾わないようにチェック
-                        let val = parseFloat(nums[0] === "25" ? nums[1] : nums[0]);
-                        if(val > 10) { // 異常に小さい数値（マージン等）を除外
-                            detectedMA = Math.round(val);
-                            break;
-                        }
-                    }
+            const statusText = document.getElementById('upload-status');
+            const previewImg = document.getElementById('preview-img');
+            
+            statusText.innerText = "⏳ AIが画像から数値をスキャン中...";
+            
+            // プレビュー表示
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewImg.style.display = "block";
+            }
+            reader.readAsDataURL(file);
+
+            try {
+                // 画像をAPIに渡せる形式に変換
+                const base64Data = await fileToBase64(file);
+                const imagePart = {
+                    inlineData: { data: base64Data.split(',')[1], mimeType: file.type }
+                };
+
+                const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+                const prompt = "この株式チャートまたは株探のスクリーンショット画像から、現在の株価（現在値）と25日移動平均線（25日線）の数値を読み取り、次のJSONフォーマットだけで返してください。余計な説明文は一切書かないでください。フォーマット: {\"price\": 現在の株価の数値, \"ma\": 25日線の数値}";
+
+                const result = await model.generateContent([prompt, imagePart]);
+                const responseText = result.response.text();
+                
+                // JSONを抽出
+                const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
+                if(jsonMatch) {
+                    const data = JSON.parse(jsonMatch[0]);
+                    if(data.price) document.getElementById('current-price').value = data.price;
+                    if(data.ma) document.getElementById('ma-value').value = data.ma;
+                    
+                    calculateMetrics();
+                    statusText.innerText = "✅ 解析完了！数値を入力しました";
+                } else {
+                    statusText.innerText = "❌ 数値を読み取れませんでした。手動で入力するか、別のスクショを試してください。";
                 }
-            }
 
-            // 2. 現在値（株価）を探す
-            const priceMatch = cleanText.match(/(現在値|株価|株価四本値)[:：\s]*\b(\d+)\b/);
-            if(priceMatch) {
-                detectedPrice = parseInt(priceMatch[2]);
-            } else {
-                // バックアップ：テキスト内の最初の大きめの4〜6桁の数値（株価であることが多い）
-                const allNums = cleanText.match(/\b\d{3,6}\b/g);
-                if(allNums && allNums.length > 0) {
-                    detectedPrice = parseInt(allNums[0]);
-                }
+            } catch (e) {
+                console.error(e);
+                statusText.innerText = "❌ AI解析エラー（キーの有効性か画像を確認してください）";
             }
+        }
 
-            // 反映
-            if(detectedPrice) document.getElementById('current-price').value = detectedPrice;
-            if(detectedMA) document.getElementById('ma-value').value = detectedMA;
-
-            if(detectedPrice && detectedMA) {
-                calculateMetrics();
-                e.target.value = "✅ 数値の抽出に成功しました！";
-                setTimeout(() => { e.target.value = ""; }, 2000);
-            } else {
-                e.target.value = "❌ データの抽出に失敗しました。ページが完全に読み込まれてから全コピーしてください。";
-            }
-        });
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
 
         function switchScreen(id, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -276,8 +295,7 @@
         function matchStockCode(code) {
             const btn = document.getElementById('kabutan-btn');
             if(code.length === 4) {
-                // 🟢 「株価特報」ではなく、確実に移動平均線の数字がある「テクニカル表」のページにリンクを設定
-                btn.href = `https://kabutan.jp/stock/chart?code=${code}&mode=t`;
+                btn.href = `https://kabutan.jp/stock/chart?code=${code}`;
                 btn.style.display = "block";
             } else { btn.style.display = "none"; }
         }
