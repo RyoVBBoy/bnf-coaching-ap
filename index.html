@@ -52,74 +52,35 @@
             box-sizing: border-box;
         }
 
-        .screen {
-            display: none;
-        }
-
-        .screen.active {
-            display: block;
-        }
+        .screen { display: none; }
+        .screen.active { display: block; }
 
         .nav-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 65px;
-            background-color: var(--card-bg);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            border-top: 1px solid #333;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
-            z-index: 1000;
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 65px;
+            background-color: var(--card-bg); display: flex; justify-content: space-around;
+            align-items: center; border-top: 1px solid #333; box-shadow: 0 -2px 10px rgba(0,0,0,0.5); z-index: 1000;
         }
-
         .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.75rem;
-            cursor: pointer;
-            width: 25%;
-            transition: color 0.2s;
+            display: flex; flex-direction: column; align-items: center; color: var(--text-muted);
+            text-decoration: none; font-size: 0.75rem; cursor: pointer; width: 25%; transition: color 0.2s;
         }
-
-        .nav-item i {
-            font-size: 1.4rem;
-            margin-bottom: 4px;
-        }
-
-        .nav-item.active {
-            color: var(--primary-color);
-        }
+        .nav-item i { font-size: 1.4rem; margin-bottom: 4px; }
+        .nav-item.active { color: var(--primary-color); }
 
         .card {
-            background-color: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            background-color: var(--card-bg); padding: 20px; border-radius: 12px;
+            margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        h3 {
-            margin-top: 0;
-            color: #00b0ff;
-            font-size: 1.1rem;
-            border-bottom: 1px solid #333;
-            padding-bottom: 8px;
-        }
+        h3 { margin-top: 0; color: #00b0ff; font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 8px; }
 
-        /* フォーム用スタイル */
         .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; }
-        input[type="number"], select {
+        input[type="number"], select, input[type="text"] {
             width: 100%; padding: 12px; background-color: var(--input-bg);
             border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1rem; box-sizing: border-box;
         }
-        input[type="number"]:focus, select:focus { border-color: var(--primary-color); outline: none; }
+        input:focus, select:focus { border-color: var(--primary-color); outline: none; }
 
         /* 地合いスコア専用UI */
         .score-display-zone {
@@ -165,30 +126,20 @@
         .bubble.bnf { background-color: #2a2a2a; color: #e0e0e0; align-self: flex-start; border-bottom-left-radius: 2px; border-left: 3px solid #00b0ff; }
         .chat-system-tag { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; font-weight: bold; }
 
-        /* チャット入力ゾーン */
-        .chat-input-zone {
-            display: flex; padding: 10px; background-color: #1e1e1e; border-top: 1px solid #333; gap: 8px;
-        }
-        .chat-input-zone input {
-            flex: 1; padding: 12px; background-color: var(--input-bg); border: 1px solid #444;
-            border-radius: 8px; color: #fff; font-size: 0.95rem;
-        }
-        .chat-input-zone input:focus { border-color: var(--primary-color); outline: none; }
-        .chat-send-btn {
-            background-color: var(--primary-color); color: #121212; border: none;
-            padding: 0 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem;
-        }
+        .chat-input-zone { display: flex; padding: 10px; background-color: #1e1e1e; border-top: 1px solid #333; gap: 8px; }
+        .chat-send-btn { background-color: var(--primary-color); color: #121212; border: none; padding: 0 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; }
 
-        /* タイピングアニメーション */
         .typing-dots { display: flex; gap: 4px; padding: 4px 0; }
-        .typing-dots span {
-            width: 6px; height: 6px; background-color: var(--text-muted); border-radius: 50%;
-            animation: blink 1.4s infinite both;
-        }
+        .typing-dots span { width: 6px; height: 6px; background-color: var(--text-muted); border-radius: 50%; animation: blink 1.4s infinite both; }
         .typing-dots span:nth-child(2) { animation-delay: .2s; }
         .typing-dots span:nth-child(3) { animation-delay: .4s; }
         @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
     </style>
+    
+    <script type="module">
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+        window.GoogleGenerativeAI = GoogleGenerativeAI;
+    </script>
 </head>
 <body>
 
@@ -248,18 +199,27 @@
 
         <div id="screen-brain" class="screen">
             <div class="card" style="padding: 10px; margin-bottom: 0;">
-                <h3>🤖 THE BRAIN（対話型AIコーチ）</h3>
+                <h3>🤖 THE BRAIN（本物のGemini搭載）</h3>
                 
+                <div id="api-key-setup" style="padding: 10px; background:#111; border-radius:8px; margin-bottom:10px;">
+                    <label style="color:#00b0ff; font-weight:bold;">🔑 Gemini APIキーを入力してください：</label>
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <input type="text" id="api-key-input" placeholder="AIzaSy..." style="font-family:monospace; font-size:0.85rem;">
+                        <button onclick="saveApiKey()" style="background:var(--primary-color); border:none; border-radius:6px; font-weight:bold; padding:0 15px; cursor:pointer;">接続</button>
+                    </div>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin:5px 0 0 0;">※キーはあなたのブラウザだけに安全に記憶され、外部に送信されません。</p>
+                </div>
+
                 <div class="chat-container">
                     <div class="chat-timeline" id="chat-box">
                         <div class="bubble bnf">
                             <div class="chat-system-tag">B.N.F</div>
-                            「……。何か迷いでもあるんですか。僕で良ければ、ボソボソと事実だけを答えますけど……」
+                            「……。何か迷いでもあるんですか。本物のGeminiの脳ミソを借りて、僕がボソボソとお答えしますけど……」
                         </div>
                     </div>
                     
                     <div class="chat-input-zone">
-                        <input type="text" id="chat-input" placeholder="損切り、フライング、持ち越しなどの悩みを相談..." onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                        <input type="text" id="chat-input" placeholder="損切り、焦り、ポジポジ病の相談を自由にどうぞ..." onkeypress="if(event.key === 'Enter') sendChatMessage()">
                         <button class="chat-send-btn" onclick="sendChatMessage()">送信</button>
                     </div>
                 </div>
@@ -291,6 +251,7 @@
 
     <script>
         let currentMarketScore = 50;
+        let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
         function switchScreen(screenId, element) {
             const screens = document.querySelectorAll('.screen');
@@ -303,6 +264,17 @@
 
             const headers = { 'market': 'MARKET SCORE', 'tools': 'THE TOOLS', 'brain': 'THE BRAIN', 'log': 'ERROR RADAR' };
             document.getElementById('app-title').innerText = headers[screenId];
+        }
+
+        // APIキー保存用
+        function saveApiKey() {
+            const key = document.getElementById('api-key-input').value.trim();
+            if(key) {
+                localStorage.setItem("gemini_api_key", key);
+                geminiApiKey = key;
+                document.getElementById('api-key-setup').style.display = 'none';
+                alert("Geminiへの接続パスワードを設定しました！");
+            }
         }
 
         // 🌍 地合いロジック
@@ -402,20 +374,25 @@
             document.getElementById('res-target-loss').innerText = Math.round(breakEvenPrice * 0.99) + " 円";
         }
 
-        // 🤖 新・AIチャットボットシステム（対話生成型）
-        function sendChatMessage() {
+        // 🤖 本物のGemini APIを使ったチャットシステム
+        async function sendChatMessage() {
             const inputEl = document.getElementById('chat-input');
             const chatBox = document.getElementById('chat-box');
             const userText = inputEl.value.trim();
 
             if (!userText) return;
 
-            // 1. ユーザーの吹き出しを追加
+            if (!geminiApiKey) {
+                alert("先にGemini APIキーを入力して『接続』を押してください！");
+                return;
+            }
+
+            // ユーザーの吹き出し追加
             chatBox.innerHTML += `<div class="bubble user">${userText}</div>`;
-            inputEl.value = ""; // 入力欄をクリア
+            inputEl.value = "";
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // 2. 「入力中…」のダミー吹き出しを追加してリアリティを出す
+            // タイピング中演出
             const typingId = "typing-" + Date.now();
             chatBox.innerHTML += `
                 <div class="bubble bnf" id="${typingId}">
@@ -424,37 +401,53 @@
                 </div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // 3. 1秒後にAIがキーワードを自動解析して返答
-            setTimeout(() => {
+            try {
+                // Geminiエンジンの初期化
+                const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+                // 高速かつレスポンスのいい最新軽量モデルを使用
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+                // BNF氏の思考・性格・口調、さらに現在の「アプリ内データ」をプロンプトとして完全注入！
+                const systemPrompt = `
+あなたは伝説のデイトレーダー「BNF（小手川隆）」です。
+以下のルールとキャラクター設定を完璧に守って、ユーザーの相談に回答してください。
+
+【キャラクター設定】
+・口調は常に「ボソボソとした喋り方」「丁寧語（〜です、〜ます、〜ですよ）」「感情を全く出さない冷徹なリアリスト」。
+・文頭は「……あ、どうも。」や「……うーん、」、「……」などから静かに始めてください。
+・莫大な資産（200億円以上）を持っていますが、本人は非常に無欲で、プレッシャーに弱く、トレード中以外は「カップ麺を食べている」「漫画を読んで寝ている」ような人物です。
+・投資スタイルは徹底した「25日移動平均線からの乖離率を狙った逆張り（短期リバウンド狙い）」。
+・感情で売買する人間を「プロリバ（プロの養分リバウンダー）」と呼び、優位性のない取引を「お金を減らす趣味」と一蹴します。
+
+【現在の市場状況（アプリのリアルタイム連動データ）】
+・東証プライム地合いスコア：${currentMarketScore}点（100点満点中。55点未満は無風・安全相場で逆張りは危険。80点以上はパニック大暴落で逆張り絶好のチャンス）
+
+ユーザーが今の投資の悩みやメンタルのブレを相談してきます。上記のキャラになりきり、かつ現在の地合い点数を踏まえたアドバイスを150文字以内でボソボソと答えてください。
+`;
+
+                const result = await model.generateContent([systemPrompt, userText]);
+                const bnfResponseText = result.response.text();
+
+                // 画面のタイピング演出を本物のAI回答に書き換え
                 const typingBubble = document.getElementById(typingId);
-                let bnfAnswer = "「……すみません、ちょっと僕にはよく分からないです。ただ、自分の感情で売買してたら遅かれ早かれマーケットからは退場させられますよ」";
-
-                // キーワードマッチングによる高度な思考シミュレーション
-                if (userText.match(/(損切|そんぎり|切る|切れない|マイナス)/)) {
-                    bnfAnswer = "「……希望的観測は無意味ですよ。ここから株価がさらに底を抜けたらどうするんですか？自分の買った位置への未練なんて市場は1ミリも考慮してくれません。マシーンとして今すぐ切りなさい」";
-                } else if (userText.match(/(フライング|早い|買いそう|ポジポジ|我慢)/)) {
-                    bnfAnswer = "「……バネがまだ十分に縮みきっていないところで手を出して、今まで何度底が抜けて大ケガをしたんですか。待つのも仕事です。僕なら今の時間はカップ麺食べてますよ」";
-                } else if (userText.match(/(連敗|ムカつく|イライラ|負け|取り返す)/)) {
-                    bnfAnswer = "「……完全に脳が熱くなって、プロの養分リバウンダーになってますね。取り返そうとして雑なエントリーを重ねるのが一番破産に近い。今すぐ取引ツールを閉じて、大学の講義に集中するか、寝てください」";
-                } else if (userText.match(/(持ち越し|一泊|明日|ホールド)/)) {
-                    if (currentMarketScore < 55) {
-                        bnfAnswer = "「……今の地合いスコアを見てください。全体の下支え（パニック）がない無風の日に持ち越すのは、ただのギャンブルです。日中に少しでも浮いた、あるいはトントンの位置にいるなら、同値撤退で逃げるのが鉄則です」";
-                    } else {
-                        bnfAnswer = "「……市場全体が強烈な大暴落で、狙った銘柄の乖離率も限界まで縮んでいるなら、一泊二日の優位性はあります。ただし、翌朝9:15までに反発がなければ即座に投げる覚悟は持っておいてください」";
-                    }
-                } else if (userText.match(/(利益|利確|目標|上がった)/)) {
-                    bnfAnswer = "「……目標にあと少し届かなくても、頭が重くなったら欲張らずに手前で利益を確保するか、最悪でも買い値まで戻ったら同値撤退で逃げるべきです。利益を逃すより、大損に巻き込まれる方が致命的ですから」";
-                } else if (userText.match(/(こんにちは|挨拶|はじめまして|誰)/)) {
-                    bnfAnswer = "「……あ、どうも。BNFです。トレードのことで何か迷いでもあるんですか。数字の事実だけなら答えますけど……」";
-                }
-
-                // 「入力中…」を消して、本物のセリフに書き換える
-                typingBubble.innerHTML = `<div class="chat-system-tag">B.N.F</div>${bnfAnswer}`;
+                typingBubble.innerHTML = `<div class="chat-system-tag">B.N.F</div>${bnfResponseText}`;
                 chatBox.scrollTop = chatBox.scrollHeight;
-            }, 1200);
+
+            } catch (error) {
+                console.error("Geminiエラー:", error);
+                const typingBubble = document.getElementById(typingId);
+                typingBubble.innerHTML = `<div class="chat-system-tag">B.N.F</div>「……あ、なんかエラーが出ちゃいました。APIキーが間違っているか、通信が切れたかもしれないです」`;
+            }
         }
 
-        window.onload = function() { fetchMarketData(); setInterval(fetchMarketData, 600000); };
+        window.onload = function() {
+            fetchMarketData();
+            setInterval(fetchMarketData, 600000);
+            // すでにキーが保存されていれば入力欄を非表示にする
+            if(geminiApiKey) {
+                document.getElementById('api-key-setup').style.display = 'none';
+            }
+        };
     </script>
 </body>
 </html>
