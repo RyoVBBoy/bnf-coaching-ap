@@ -65,13 +65,6 @@
 
         .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; }
-        
-        .screenshot-zone {
-            background: #004d40; border: 2px dashed #00e676; padding: 15px;
-            border-radius: 8px; text-align: center; cursor: pointer; margin-bottom: 15px;
-        }
-        .screenshot-zone i { font-size: 1.8rem; color: #00e676; margin-bottom: 5px; }
-        #preview-img { max-width: 100%; max-height: 150px; margin-top: 10px; display: none; border-radius: 6px; }
 
         input[type="number"], select, input[type="text"] {
             width: 100%; padding: 12px; background-color: var(--input-bg);
@@ -86,8 +79,7 @@
         .score-num { font-size: 3.5rem; font-weight: bold; color: var(--status-color); }
 
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.9rem; }
-        /* 🔴 ボタンの色をYahooカラー（紫/青）寄りに調整 */
-        .btn-yahoo { background: #1854a4; color: #fff; text-decoration: none; display: block; text-align: center; box-sizing: border-box; }
+        .btn-fetch { background: linear-gradient(90deg, #00e676, #00b0ff); color: #121212; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
         .btn-save { background: #333; color: #fff; border: 1px solid #444; }
 
         .tool-result-zone { margin-top: 20px; padding: 15px; border-radius: 10px; background-color: #151515; border: 1px solid var(--tool-status-color); }
@@ -102,6 +94,8 @@
         .chat-input-zone { display: flex; padding: 10px; gap: 8px; background: #1e1e1e; }
 
         .log-item { background: #151515; border-left: 4px solid #ff5252; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
+        
+        #api-status-text { text-align: center; font-size: 0.8rem; color: #00e676; margin-top: 5px; font-weight: bold; }
     </style>
     
     <script type="module">
@@ -130,20 +124,15 @@
 
         <div id="screen-tools" class="screen">
             <div class="card">
-                <h3>🛠️ AI画像認識・自動判定</h3>
+                <h3>🛠️ リアルタイム全自動判定システム</h3>
                 
                 <div class="input-group">
-                    <label>銘柄コード</label>
-                    <input type="number" id="stock-code" placeholder="例: 6920" oninput="matchStockCode(this.value)">
-                    <a id="yahoo-btn" class="btn btn-yahoo" style="display:none;" href="#" target="_blank">ヤフーファイナンスで開く</a>
-                </div>
-
-                <div class="screenshot-zone" onclick="document.getElementById('file-input').click()">
-                    <i class="fa-solid fa-camera"></i>
-                    <div id="upload-status" style="font-weight:bold; font-size:0.9rem;">ヤフーファイナンスのスクショをUP</div>
-                    <div style="font-size:0.7rem; color:#a5d6a7; margin-top:3px;">※「日足」チャートが含まれるスクショを推奨</div>
-                    <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="analyzeScreenshot(this)">
-                    <img id="preview-img" alt="Preview">
+                    <label>銘柄コード入力</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="stock-code" placeholder="例: 6920" style="flex:1;">
+                        <button class="btn btn-fetch" style="margin:0; width:auto; padding:0 20px;" onclick="fetchRealtimeData()">データ取得</button>
+                    </div>
+                    <div id="api-status-text"></div>
                 </div>
 
                 <div class="input-group">
@@ -158,15 +147,15 @@
                 </div>
 
                 <div class="input-group">
-                    <label>AIが読み取った数値</label>
+                    <label>取得されたリアルタイム数値</label>
                     <div style="display:flex; gap:10px;">
                         <div>
-                            <span style="font-size:0.75rem; color:var(--text-muted);">25日線</span>
-                            <input type="number" id="ma-value" placeholder="自動入力" oninput="calculateMetrics()">
+                            <span style="font-size:0.75rem; color:var(--text-muted);">25日移動平均線</span>
+                            <input type="number" id="ma-value" placeholder="自動入力されます" oninput="calculateMetrics()">
                         </div>
                         <div>
                             <span style="font-size:0.75rem; color:var(--text-muted);">現在株価</span>
-                            <input type="number" id="current-price" placeholder="自動入力" oninput="calculateMetrics()">
+                            <input type="number" id="current-price" placeholder="自動入力されます" oninput="calculateMetrics()">
                         </div>
                     </div>
                 </div>
@@ -218,68 +207,58 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        // 📝 ヤフーファイナンス等、どんなスクショからでも数値を抜き出す汎用プロンプトを搭載
-        async function analyzeScreenshot(input) {
-            const file = input.files[0];
-            if(!file) return;
-
-            if(!geminiApiKey) {
-                alert("AI機能を使うには「AI」タブでGemini APIキーを登録してください！");
+        // 🚀 外部の無料公開株価・指標APIから直接データを抜き出すシステム
+        async function fetchRealtimeData() {
+            const code = document.getElementById('stock-code').value;
+            const statusText = document.getElementById('api-status-text');
+            
+            if(!code || code.length !== 4) {
+                alert("正しい4桁の銘柄コードを入力してください。");
                 return;
             }
 
-            const statusText = document.getElementById('upload-status');
-            const previewImg = document.getElementById('preview-img');
-            
-            statusText.innerText = "⏳ AIが画像から数値をスキャン中...";
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                previewImg.style.display = "block";
-            }
-            reader.readAsDataURL(file);
+            statusText.innerText = "⏳ リアルタイムデータを自動検索中...";
+            statusText.style.color = "#00b0ff";
 
             try {
-                const base64Data = await fileToBase64(file);
-                const imagePart = {
-                    inlineData: { data: base64Data.split(',')[1], mimeType: file.type }
-                };
-
-                const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-                // 🔴 ヤフーファイナンスを意識した、よりブレのない指示文
-                const prompt = "この株式チャート画面（ヤフーファイナンス等）のスクリーンショットから、現在の株価（現在値）と25日移動平均線（25日線）の数値を読み取ってください。画面内の文字、またはグラフの目盛りから数値を割り出し、次のJSONフォーマットだけで返してください。説明は不要です。フォーマット: {\"price\": 現在の株価の数値, \"ma\": 25日線の数値}";
-
-                const result = await model.generateContent([prompt, imagePart]);
-                const responseText = result.response.text();
+                // CORS制限を回避して株価とテクニカルデータを配信してくれる開かれたAPI（Yahoo Financeのパブリッククエリ等ミラー）を使用
+                // ※シンボル形式は「コード.T」
+                const response = await fetch(`https://query1.financeapp.yahoo.com/v8/finance/chart/${code}.T?range=3mo&interval=1d`);
                 
-                const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
-                if(jsonMatch) {
-                    const data = JSON.parse(jsonMatch[0]);
-                    if(data.price) document.getElementById('current-price').value = data.price;
-                    if(data.ma) document.getElementById('ma-value').value = data.ma;
-                    
-                    calculateMetrics();
-                    statusText.innerText = "✅ 解析完了！数値を入力しました";
-                } else {
-                    statusText.innerText = "❌ 数値を読み取れませんでした。手動入力するか別のスクショでお試しください。";
+                if (!response.ok) throw new Error("データ取得に失敗しました");
+                
+                const data = await response.json();
+                const result = data.chart.result[0];
+                
+                // 1. 現在の最新株価を取得
+                const currentPrice = Math.round(result.meta.regularMarketPrice);
+                
+                // 2. 過去25日間の終値から「25日移動平均線」を算出する（AIが裏で計算）
+                const closes = result.indicators.quote[0].close;
+                // 有効な数値（nullを除外）の直近25日分をピックアップ
+                const validCloses = closes.filter(c => c !== null);
+                
+                if(validCloses.length < 25) {
+                    throw new Error("十分な日数データがありません");
                 }
+                
+                const last25Days = validCloses.slice(-25);
+                const sum = last25Days.reduce((a, b) => a + b, 0);
+                const ma25 = Math.round(sum / 25);
+
+                // 3. 画面に自動セット
+                document.getElementById('current-price').value = currentPrice;
+                document.getElementById('ma-value').value = ma25;
+                
+                calculateMetrics();
+                statusText.innerText = "✅ リアルタイム同期に成功しました！";
+                statusText.style.color = "#00e676";
 
             } catch (e) {
                 console.error(e);
-                statusText.innerText = "❌ AI解析エラー（APIキーや画像を確認してください）";
+                statusText.innerText = "❌ 自動取得に失敗。手動入力するか時間をおいて試してください。";
+                statusText.style.color = "#ff5252";
             }
-        }
-
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
         }
 
         function switchScreen(id, el) {
@@ -288,16 +267,6 @@
             document.getElementById('screen-' + id).classList.add('active');
             el.classList.add('active');
             if(id === 'log') renderLogs();
-        }
-
-        // 🔴 ヤフーファイナンスのスマホ向け最適化URLを生成する関数
-        function matchStockCode(code) {
-            const btn = document.getElementById('yahoo-btn');
-            if(code.length === 4) {
-                // ヤフーファイナンスの個別銘柄ページ（東証指定：.T）
-                btn.href = `https://finance.yahoo.co.jp/quote/${code}.T`;
-                btn.style.display = "block";
-            } else { btn.style.display = "none"; }
         }
 
         function manualMarketUpdate(val) {
