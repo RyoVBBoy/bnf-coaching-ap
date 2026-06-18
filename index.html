@@ -14,7 +14,6 @@
             --text-color: #ffffff;
             --text-muted: #aaaaaa;
             --status-color: #888888;
-            --status-glow: rgba(136, 136, 136, 0.2);
         }
 
         body {
@@ -68,7 +67,14 @@
             width: 100%; padding: 12px; background-color: var(--input-bg);
             border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1.1rem; box-sizing: border-box;
         }
-        input[type="number"]:focus { border-color: #00b0ff; outline: none; }
+
+        /* 📸 画像アップロードエリアの装飾 */
+        .upload-zone {
+            border: 2px dashed #00e676; padding: 20px; border-radius: 8px;
+            text-align: center; background: rgba(0, 230, 118, 0.05); cursor: pointer; margin-bottom: 15px;
+        }
+        .upload-zone i { font-size: 2rem; color: #00e676; margin-bottom: 8px; }
+        #preview-img { max-width: 100%; max-height: 150px; margin-top: 10px; border-radius: 6px; display: none; }
 
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1rem; }
         .btn-save { background: linear-gradient(90deg, #00b0ff, #d500f9); color: #fff; }
@@ -85,6 +91,7 @@
         .chat-input-zone { display: flex; padding: 10px; gap: 8px; background: #1e1e1e; }
 
         .log-item { background: #151515; border-left: 4px solid #ff5252; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
+        #ocr-status { text-align: center; font-size: 0.85rem; margin-top: 6px; font-weight: bold; }
     </style>
     
     <script type="module">
@@ -113,9 +120,18 @@
 
         <div id="screen-tools" class="screen">
             <div class="card">
-                <h3>🛠️ 瞬速・手入力判定ツール</h3>
+                <h3>📸 チャートスクショ自動判定</h3>
                 
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+                    <i class="fa-solid fa-camera"></i>
+                    <div style="font-size:0.9rem; font-weight:bold;">チャートのスクショを選択・撮影</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">タップして数値を出した状態の画像がベストです</div>
+                    <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleImageUpload(this)">
+                    <img id="preview-img" alt="プレビュー">
+                </div>
+                <div id="ocr-status"></div>
+
+                <div style="display:flex; gap:10px; margin-bottom:15px; margin-top:10px;">
                     <div style="flex:1;">
                         <label>銘柄コード</label>
                         <input type="number" id="stock-code" placeholder="例: 6920">
@@ -132,20 +148,20 @@
                 </div>
 
                 <div class="input-group">
-                    <label style="color:#00b0ff; font-weight:bold;">📈 25日移動平均線の数値</label>
-                    <input type="number" id="ma-value" placeholder="例: 28500" oninput="calculateMetrics()">
+                    <label style="color:#00b0ff;">📈 25日移動平均線 (AI自動入力)</label>
+                    <input type="number" id="ma-value" placeholder="スクショから自動読取" oninput="calculateMetrics()">
                 </div>
 
                 <div class="input-group">
-                    <label style="color:#00e676; font-weight:bold;">💰 現在のリアルタイム株価</label>
-                    <input type="number" id="current-price" placeholder="例: 25400" oninput="calculateMetrics()">
+                    <label style="color:#00e676;">💰 現在のリアルタイム株価 (AI自動入力)</label>
+                    <input type="number" id="current-price" placeholder="スクショから自動読取" oninput="calculateMetrics()">
                 </div>
 
                 <div class="tool-result-zone" id="tool-result">
-                    <div class="result-row"><span>移動平均線からの乖離率</span><span class="res-val" id="res-kairi" style="color:#ff5252;">-- %</span></div>
-                    <div class="result-row"><span>BNFシグナル判定</span><span class="res-val" id="res-status">未入力</span></div>
+                    <div class="result-row"><span>乖離率</span><span class="res-val" id="res-kairi">-- %</span></div>
+                    <div class="result-row"><span>判定</span><span class="res-val" id="res-status">未入力</span></div>
                 </div>
-                <button class="btn btn-save" onclick="saveTradeLog()"><i class="fa-solid fa-floppy-disk"></i> この判定結果をログに保存</button>
+                <button class="btn btn-save" onclick="saveTradeLog()"><i class="fa-solid fa-floppy-disk"></i> ログに保存</button>
             </div>
         </div>
 
@@ -187,6 +203,7 @@
     <script>
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
+        let base64Image = "";
 
         function switchScreen(id, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -202,7 +219,84 @@
             calculateMetrics();
         }
 
-        // 数字が打ち込まれた瞬間、1文字ごとにリアルタイム計算する超高速ロジック
+        // 📸 画像が選ばれたらBase64に変換してAIへ投げる準備をする
+        function handleImageUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const preview = document.getElementById('preview-img');
+            const status = document.getElementById('ocr-status');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = "inline-block";
+                base64Image = e.target.result.split(',')[1]; // Base64の純粋なデータ部のみ抽出
+                
+                // 即座にAI画像解析を実行
+                parseImageWithAI();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 🧠 Geminiの目（Vision機能）を使って画像から数値を抜き出す
+        async function parseImageWithAI() {
+            const status = document.getElementById('ocr-status');
+            if (!geminiApiKey) {
+                alert("「AI」タブでGemini APIキーを設定してください。");
+                return;
+            }
+
+            status.innerText = "⏳ AIがスクショ画像をスキャン中...";
+            status.style.color = "#00b0ff";
+
+            try {
+                const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+                // 画像認識が必要なため最新のflashモデルを使用
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+                const prompt = `この画像は株価チャート、もしくは株価詳細画面のスクリーンショットです。
+画像内に写っているテキストや数字、ポップアップ表示などから、以下の2つの数値を読み取ってください。
+
+1. 現在の株価（リアルタイムの取引値、あるいは一番大きく目立っている株価の数字）
+2. 25日移動平均線（「25日」「25MA」「移動平均(25)」などのラベルの近くにある数値、またはユーザーがタップして出したポップアップ内の25日線の数値）
+
+見つけた数値を以下のJSONフォーマットのみで返答してください。説明や挨拶は一切含めないでください。
+
+JSONフォーマット:
+{"price": 見つけた株価の数値, "ma": 見つけた25日線の数値}
+`;
+
+                const imagePart = {
+                    inlineData: {
+                        data: base64Image,
+                        mimeType: "image/jpeg"
+                    }
+                };
+
+                const result = await model.generateContent([prompt, imagePart]);
+                const responseText = result.response.text();
+                
+                const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
+                if(jsonMatch) {
+                    const data = JSON.parse(jsonMatch[0]);
+                    if(data.price) document.getElementById('current-price').value = Math.round(data.price);
+                    if(data.ma) document.getElementById('ma-value').value = Math.round(data.ma);
+                    
+                    calculateMetrics();
+                    status.innerText = "✅ 画像から数値を自動入力しました！";
+                    status.style.color = "#00e676";
+                } else {
+                    status.innerText = "❌ 画像から数値がうまく読み取れませんでした。手動で入力してください。";
+                    status.style.color = "#ff5252";
+                }
+            } catch (e) {
+                console.error(e);
+                status.innerText = "❌ AI解析エラーが発生しました。";
+                status.style.color = "#ff5252";
+            }
+        }
+
         function calculateMetrics() {
             const ma = parseFloat(document.getElementById('ma-value').value);
             const price = parseFloat(document.getElementById('current-price').value);
@@ -210,17 +304,11 @@
             if(!ma || !price) {
                 document.getElementById('res-kairi').innerText = "-- %";
                 document.getElementById('res-status').innerText = "未入力";
-                document.getElementById('res-status').style.color = "#888";
                 return;
             }
 
             const kairi = ((price - ma) / ma) * 100;
-            const resKairi = document.getElementById('res-kairi');
-            resKairi.innerText = kairi.toFixed(2) + " %";
-            
-            // 乖離率の方向で色分け
-            if(kairi < 0) { resKairi.style.color = "#00e676"; } 
-            else { resKairi.style.color = "#ff5252"; }
+            document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
 
             let status = "静観（バネ未収縮）";
             let color = "#888";
@@ -247,7 +335,7 @@
             let logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
             logs.unshift(log);
             localStorage.setItem("bnf_logs", JSON.stringify(logs));
-            alert("ログに記録しました！");
+            alert("保存しました");
         }
 
         function renderLogs() {
