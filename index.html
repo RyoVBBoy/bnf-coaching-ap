@@ -75,7 +75,8 @@
         textarea:focus { border-color: #00e676; }
 
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.9rem; }
-        .btn-parse { background: linear-gradient(90deg, #00b0ff, #00e676); color: #121212; font-size: 1rem; }
+        .btn-link { background: #00b0ff; color: #121212; display: flex; justify-content: center; align-items: center; gap: 8px; text-decoration: none; font-size: 1rem; box-sizing: border-box; }
+        .btn-parse { background: linear-gradient(90deg, #00e676, #b2ff59); color: #121212; font-size: 1rem; }
         .btn-save { background: #333; color: #fff; border: 1px solid #444; }
 
         .tool-result-zone { margin-top: 20px; padding: 15px; border-radius: 10px; background-color: #151515; border: 1px solid var(--tool-status-color); }
@@ -118,18 +119,12 @@
 
         <div id="screen-tools" class="screen">
             <div class="card">
-                <h3>🛠️ 100%正確・画面コピペ自動判定</h3>
+                <h3>🛠️ 画面コピペ自動判定システム</h3>
                 
-                <div class="input-group" style="background: rgba(0, 230, 118, 0.05); padding: 12px; border-radius: 8px; border: 1px solid #333;">
-                    <label style="color:#00e676; font-weight:bold;"><i class="fa-solid fa-copy"></i> ヤフーの「株価指標」ページを全コピペ</label>
-                    <textarea id="paste-box" placeholder="「yahoo株価指標ページ」で画面全体をコピー（Ctrl+A → コピー）して、ここに貼り付けてください。一発で同期します。"></textarea>
-                    <button class="btn btn-parse" onclick="parseCopiedText()">データを抽出・自動入力</button>
-                </div>
-
-                <div style="display:flex; gap:10px; margin-bottom:15px; margin-top:15px;">
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
                     <div style="flex:1;">
-                        <label>銘柄コード</label>
-                        <input type="number" id="stock-code" placeholder="例: 6920">
+                        <label style="color:#00b0ff; font-weight:bold;">① 銘柄コード入力</label>
+                        <input type="number" id="stock-code" placeholder="例: 6920" oninput="updateYahooLink(this.value)">
                     </div>
                     <div style="flex:1;">
                         <label>セクター</label>
@@ -142,8 +137,16 @@
                     </div>
                 </div>
 
-                <div class="input-group">
-                    <label>確認された正確な数値</label>
+                <div id="link-zone" style="margin-bottom:20px;"></div>
+
+                <div class="input-group" style="background: rgba(0, 230, 118, 0.05); padding: 12px; border-radius: 8px; border: 1px solid #333;">
+                    <label style="color:#00e676; font-weight:bold;">② ヤフーでコピーした内容をここに貼り付け</label>
+                    <textarea id="paste-box" placeholder="上のボタンから開いたヤフーのページ全体をコピー（Ctrl+A → コピー）して、ここに貼り付けてください。"></textarea>
+                    <button class="btn btn-parse" onclick="parseCopiedText()">データを自動抽出・反映</button>
+                </div>
+
+                <div class="input-group" style="margin-top:20px;">
+                    <label>確認された数値（手動微調整も可）</label>
                     <div style="display:flex; gap:10px;">
                         <div>
                             <span style="font-size:0.75rem; color:var(--text-muted);">25日移動平均線</span>
@@ -203,7 +206,21 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        // 📋 ヤフーの「株価指標」ページのテキスト構造から完璧に抽出するアルゴリズム
+        // 🔗 銘柄コードが打ち込まれたら、リアルタイムにヤフーの指標ページ（performance）へのボタンを錬成する
+        function updateYahooLink(code) {
+            const linkZone = document.getElementById('link-zone');
+            if(code && code.length === 4) {
+                linkZone.innerHTML = `
+                    <a href="https://finance.yahoo.co.jp/quote/${code}/performance" target="_blank" class="btn btn-link">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> 📊 ${code} のYahoo!株価指標ページを開く
+                    </a>
+                `;
+            } else {
+                linkZone.innerHTML = "";
+            }
+        }
+
+        // 📋 コピペされたテキストから「株価」と「25日移動平均」を神速で引っこ抜く
         function parseCopiedText() {
             const text = document.getElementById('paste-box').value;
             if(!text) {
@@ -213,44 +230,35 @@
 
             let price = null;
             let ma = null;
-            let code = null;
 
-            // カンマや円マークを事前に除去して綺麗にする
+            // 文字列を綺麗にする
             const cleanText = text.replace(/,/g, '').replace(/円/g, '');
 
-            // 1. 4桁の銘柄コードを検出
-            const codeMatch = cleanText.match(/\b([1-9][0-9]{3})\b/);
-            if(codeMatch) code = codeMatch[1];
-
-            // 2. ヤフーの指標ページ（performance）に並んでいる「25日移動平均」の値を狙い撃ち
-            // 例: 「25日移動平均 28540」や「25日移動平均（単線） 28540」
+            // ヤフーの指標ページに並ぶ「25日移動平均 ◯◯」の文字を狙い撃ち
             const maMatch = cleanText.match(/25日移動平均\s*([0-9]+(?:\.[0-9]+)?)/) 
                          || cleanText.match(/25日線\s*([0-9]+(?:\.[0-9]+)?)/);
             if(maMatch) ma = Math.round(parseFloat(maMatch[1]));
 
-            // 3. 現在株価（前日終値、あるいは単体の大きな価格など）を抽出
+            // 株価の抽出
             const priceMatch = cleanText.match(/(?:現在値|株価|取引値|前日終値)\s*([0-9]+)/);
             if(priceMatch) {
                 price = parseInt(priceMatch[1]);
             } else {
-                // 指標ページの上部にある大きな株価（単独の行にあることが多い数字）を引っ掛ける
                 const numbers = cleanText.match(/\b[0-9]{3,7}\b/g);
                 if(numbers && numbers.length >= 2) {
                     price = parseInt(numbers[0]);
                 }
             }
 
-            // 画面の各フォームにカチッと代入
-            if(code) document.getElementById('stock-code').value = code;
+            // 代入
             if(price) document.getElementById('current-price').value = price;
             if(ma) document.getElementById('ma-value').value = ma;
 
             if(price && ma) {
                 calculateMetrics();
-                document.getElementById('paste-box').value = ""; // 貼り付け欄をクリア
+                document.getElementById('paste-box').value = ""; // 貼り付け欄クリア
             } else {
-                // 救済策：もし片方しか入らなかった場合、手動入力を促す
-                alert("データの抽出を試みましたが、一部の数値が見つかりませんでした。入力欄を確認し、足りない箇所は手動で補正してください。");
+                alert("データの抽出に一部失敗しました。入力された数値を確認・調整してください。");
             }
         }
 
