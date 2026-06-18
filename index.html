@@ -112,10 +112,10 @@
     <div class="content-area">
         <div id="screen-market" class="screen active">
             <div class="card">
-                <h3>🌍 地合いコントロール</h3>
+                <h3>地合いコントロール</h3>
                 <div class="score-display-zone" id="score-zone">
                     <div class="score-num" id="live-score">50点</div>
-                    <div class="score-label" id="live-status">📊 ニュートラル</div>
+                    <div class="score-label" id="live-status">ニュートラル</div>
                 </div>
                 <input type="range" id="market-slider" min="0" max="100" value="50" style="width:100%; margin-top:20px;" oninput="manualMarketUpdate(this.value)">
                 <div class="bnf-coach-box" style="margin-top:20px; color:var(--text-muted); font-size:0.9rem;">
@@ -126,7 +126,7 @@
 
         <div id="screen-tools" class="screen">
             <div class="card">
-                <h3>📸 動的URL表示 ＆ スクショ自動判定</h3>
+                <h3>動的URL表示 ＆ スクショ自動判定</h3>
                 
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
                     <div style="flex:1;">
@@ -136,10 +136,10 @@
                     <div style="flex:1;">
                         <label>セクター</label>
                         <select id="stock-sector" onchange="calculateMetrics()">
-                            <option value="heavy">🏦 バリュー</option>
-                            <option value="tech" selected>⚡ ハイテク・半導体</option>
-                            <option value="defensive">💊 内需</option>
-                            <option value="growth">🚀 新興グロース</option>
+                            <option value="heavy">バリュー</option>
+                            <option value="tech" selected>ハイテク・半導体</option>
+                            <option value="defensive">内需</option>
+                            <option value="growth">新興グロース</option>
                         </select>
                     </div>
                 </div>
@@ -175,7 +175,7 @@
 
         <div id="screen-brain" class="screen">
             <div class="card" style="padding:10px;">
-                <h3>🤖 BNF AI COACH</h3>
+                <h3>BNF AI COACH</h3>
                 <div id="api-key-setup" style="margin-bottom:10px;">
                     <input type="text" id="api-key-input" placeholder="Gemini APIキーを入力" style="font-size:0.8rem;">
                     <button onclick="saveApiKey()" class="btn" style="background:var(--primary-color); margin-top:5px;">接続</button>
@@ -194,7 +194,7 @@
 
         <div id="screen-log" class="screen">
             <div class="card">
-                <h3>📊 ログ分析</h3>
+                <h3>ログ分析</h3>
                 <div id="log-container"></div>
                 <button class="btn" style="background:#cf6679; margin-top:20px;" onclick="clearLogs()">リセット</button>
             </div>
@@ -211,14 +211,14 @@
     <script>
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
-        let compressedBase64 = ""; // 圧縮後の画像を保持
+        let compressedBase64 = "";
 
         function updateYahooLink(code) {
             const linkZone = document.getElementById('link-zone');
             if(code && code.length === 4) {
                 linkZone.innerHTML = `
                     <a href="https://finance.yahoo.co.jp/quote/${code}" target="_blank" class="btn-link">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> 📊 ${code} のYahoo!株価詳細を開く
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> ${code} のYahoo!株価詳細を開く
                     </a>
                 `;
             } else {
@@ -240,21 +240,19 @@
             calculateMetrics();
         }
 
-        // 🛡️ 高解像度のスクショ画像を、AIが壊れないサイズに自動圧縮する機能
         function handleImageUpload(input) {
             const file = input.files[0];
             if (!file) return;
 
             const preview = document.getElementById('preview-img');
             const status = document.getElementById('ocr-status');
-            status.innerText = "⏳ 画像を最適化中...";
+            status.innerText = "画像を最適化中...";
             status.style.color = "#ffb300";
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
-                    // キャンバスを使って最大横幅1024pxに縮小（容量を激減させる）
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 1024;
                     let width = img.width;
@@ -270,14 +268,10 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // プレビュー表示
                     preview.src = canvas.toDataURL('image/jpeg', 0.8);
                     preview.style.display = "inline-block";
-                    
-                    // AI送信用Base64データ
                     compressedBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
                     
-                    // 即時解析
                     parseImageWithAI();
                 };
                 img.src = e.target.result;
@@ -288,11 +282,11 @@
         async function parseImageWithAI() {
             const status = document.getElementById('ocr-status');
             if (!geminiApiKey) {
-                alert("「AI」タブでGemini APIキーを設定してください。");
+                alert("AIタブでGemini APIキーを設定してください。");
                 return;
             }
 
-            status.innerText = "⏳ AIがスクショ画像を精密スキャン中...";
+            status.innerText = "AIがスクショ画像を精密スキャン中...";
             status.style.color = "#00b0ff";
 
             try {
@@ -302,8 +296,8 @@
                 const prompt = `この画像は株価チャート、または株価画面のスクリーンショットです。
 画像内のすべてのテキストから、以下の2つの数値を読み取ってください。
 
-1. 「現在値」または「取引値」、あるいは画面上で最も大きく目立っている現在の株価の数字。
-2. 「25日」「25MA」「移動平均(25)」の横や、ポップアップで表示されている25日移動平均線の数字。
+1. 現在値または取引値、あるいは画面上で最も大きく目立っている現在の株価の数字。
+2. 25日、25MA、移動平均(25)の横や、ポップアップで表示されている25日移動平均線の数字。
 
 見つけた数値を以下のJSONフォーマットのみで返答してください。説明文は一切不要です。
 {"price": 株価の数値, "ma": 25日線の数値}`;
@@ -325,15 +319,15 @@
                     if(data.ma) document.getElementById('ma-value').value = Math.round(data.ma);
                     
                     calculateMetrics();
-                    status.innerText = "✅ 画像の読み込みに成功しました！";
+                    status.innerText = "画像の読み込みに成功しました！";
                     status.style.color = "#00e676";
                 } else {
-                    status.innerText = "⚠️ 数字が一部見つかりません。下の白い枠を直接タップして手入力・修正してください。";
+                    status.innerText = "数字が一部見つかりません。下の白い枠を直接タップして手入力・修正してください。";
                     status.style.color = "#ffb300";
                 }
             } catch (e) {
                 console.error(e);
-                status.innerText = "❌ エラー：APIキーが正しいか、または画像が不鮮明な可能性があります。手入力も可能です。";
+                status.innerText = "エラー：APIキーが正しいか、または画像が不鮮明な可能性があります。手入力も可能です。";
                 status.style.color = "#ff5252";
             }
         }
@@ -354,8 +348,8 @@
             let status = "静観（バネ未収縮）";
             let color = "#888";
             
-            if(kairi < -15) { status = "🚨 限界突破（BNF買いゾーン）"; color = "#00e676"; }
-            else if(kairi < -8) { status = "💛 チャンス目前（監視）"; color = "#ffb300"; }
+            if(kairi < -15) { status = "限界突破（BNF買いゾーン）"; color = "#00e676"; }
+            else if(kairi < -8) { status = "チャンス目前（監視）"; color = "#ffb300"; }
             
             const resZone = document.getElementById('res-status');
             resZone.innerText = status;
