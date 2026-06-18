@@ -207,7 +207,7 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        // 🚀 外部の無料公開株価・指標APIから直接データを抜き出すシステム
+        // 🚀 高速・CORS回避機能付きの公開日本株API（Stooqデータプロキシ）を使用
         async function fetchRealtimeData() {
             const code = document.getElementById('stock-code').value;
             const statusText = document.getElementById('api-status-text');
@@ -217,46 +217,57 @@
                 return;
             }
 
-            statusText.innerText = "⏳ リアルタイムデータを自動検索中...";
+            statusText.innerText = "⏳ リアルタイムデータを同期中...";
             statusText.style.color = "#00b0ff";
 
             try {
-                // CORS制限を回避して株価とテクニカルデータを配信してくれる開かれたAPI（Yahoo Financeのパブリッククエリ等ミラー）を使用
-                // ※シンボル形式は「コード.T」
-                const response = await fetch(`https://query1.financeapp.yahoo.com/v8/finance/chart/${code}.T?range=3mo&interval=1d`);
+                // ブラウザのブロックを100%回避するパブリックプロキシ経由で株価ヒストリカルデータを取得
+                const response = await fetch(`https://corsproxy.io/?url=https://stooq.com/q/d/l/?s=${code}.jp&i=d`);
                 
-                if (!response.ok) throw new Error("データ取得に失敗しました");
+                if (!response.ok) throw new Error("通信エラー");
                 
-                const data = await response.json();
-                const result = data.chart.result[0];
+                const csvText = await response.text();
+                const lines = csvText.trim().split('\n');
                 
-                // 1. 現在の最新株価を取得
-                const currentPrice = Math.round(result.meta.regularMarketPrice);
-                
-                // 2. 過去25日間の終値から「25日移動平均線」を算出する（AIが裏で計算）
-                const closes = result.indicators.quote[0].close;
-                // 有効な数値（nullを除外）の直近25日分をピックアップ
-                const validCloses = closes.filter(c => c !== null);
-                
-                if(validCloses.length < 25) {
-                    throw new Error("十分な日数データがありません");
+                if (lines.length < 26) { // ヘッダー + 最低25日分のデータが必要
+                    throw new Error("データが不足しています。東証の正しい銘柄コードか確認してください。");
                 }
-                
-                const last25Days = validCloses.slice(-25);
-                const sum = last25Days.reduce((a, b) => a + b, 0);
+
+                // CSVのパース（Date,Open,High,Low,Close,Volume）
+                // 直近25日分の「Close（終値）」を抽出
+                let closes = [];
+                // 下から順（最新の日付から過去へ）にデータを取得
+                for (let i = lines.length - 1; i >= 1; i--) {
+                    const cols = lines[i].split(',');
+                    if (cols.length >= 5) {
+                        const closePrice = parseFloat(cols[4]);
+                        if (!isNaN(closePrice)) {
+                            closes.push(closePrice);
+                        }
+                    }
+                    if (closes.length === 25) break;
+                }
+
+                if (closes.length < 25) throw new Error("計算日数不足");
+
+                // 最新の現在株価（一番最後の行の終値）
+                const currentPrice = Math.round(closes[0]);
+
+                // 25日移動平均の算出
+                const sum = closes.reduce((a, b) => a + b, 0);
                 const ma25 = Math.round(sum / 25);
 
-                // 3. 画面に自動セット
+                // 画面の入力欄にセット
                 document.getElementById('current-price').value = currentPrice;
                 document.getElementById('ma-value').value = ma25;
                 
                 calculateMetrics();
-                statusText.innerText = "✅ リアルタイム同期に成功しました！";
+                statusText.innerText = "✅ 自動同期に成功しました！";
                 statusText.style.color = "#00e676";
 
             } catch (e) {
                 console.error(e);
-                statusText.innerText = "❌ 自動取得に失敗。手動入力するか時間をおいて試してください。";
+                statusText.innerText = "❌ データ取得に失敗。コードを確認するか、手動で入力してください。";
                 statusText.style.color = "#ff5252";
             }
         }
