@@ -66,20 +66,18 @@
         .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; }
         
-        /* 魔法の解析ボックス用スタイル */
         .magic-parse-area {
-            width: 100%; height: 60px; background: #1a1a1a; border: 2px dashed #444;
+            width: 100%; height: 70px; background: #1a1a1a; border: 2px dashed #00e676;
             border-radius: 8px; color: #00e676; padding: 10px; font-size: 0.8rem;
             box-sizing: border-box; margin-bottom: 15px; resize: none;
         }
-        .magic-parse-area:focus { border-color: #00e676; outline: none; }
+        .magic-parse-area:focus { border-color: #d500f9; outline: none; }
 
         input[type="number"], select, input[type="text"] {
             width: 100%; padding: 12px; background-color: var(--input-bg);
             border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1rem; box-sizing: border-box;
         }
 
-        /* 地合いスコア表示 */
         .score-display-zone {
             text-align: center; padding: 20px 0; border-radius: 10px;
             background: linear-gradient(180deg, var(--card-bg) 0%, var(--status-glow) 100%);
@@ -87,7 +85,6 @@
         }
         .score-num { font-size: 3.5rem; font-weight: bold; color: var(--status-color); }
 
-        /* ボタン類 */
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.9rem; }
         .btn-kabutan { background: #00796b; color: #fff; text-decoration: none; display: block; text-align: center; box-sizing: border-box; }
         .btn-save { background: #333; color: #fff; border: 1px solid #444; }
@@ -96,7 +93,6 @@
         .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; }
         .res-val { font-weight: bold; font-family: monospace; }
 
-        /* チャット */
         .chat-container { background-color: #151515; border: 1px solid #333; border-radius: 12px; height: 350px; display: flex; flex-direction: column; overflow: hidden; }
         .chat-timeline { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .bubble { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 0.9rem; line-height: 1.4; }
@@ -104,7 +100,6 @@
         .bubble.user { background: var(--primary-color); color: #121212; align-self: flex-end; font-weight: bold; }
         .chat-input-zone { display: flex; padding: 10px; gap: 8px; background: #1e1e1e; }
 
-        /* ログ */
         .log-item { background: #151515; border-left: 4px solid #ff5252; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
     </style>
     
@@ -134,7 +129,7 @@
 
         <div id="screen-tools" class="screen">
             <div class="card">
-                <h3>🛠️ 解析・判定</h3>
+                <h3>🛠️ 高精度・画面全コピペ解析</h3>
                 
                 <div class="input-group">
                     <label>銘柄コード</label>
@@ -142,9 +137,9 @@
                     <a id="kabutan-btn" class="btn btn-kabutan" style="display:none;" href="#" target="_blank">株探でデータを確認</a>
                 </div>
 
-                <div class="input-group" style="background:#004d40; padding:10px; border-radius:8px;">
-                    <label style="color:#fff; font-weight:bold;">✨ 魔法の解析ボックス（ここにコピペ）</label>
-                    <textarea class="magic-parse-area" id="magic-paste" placeholder="株探の情報を適当にコピーしてここに貼り付ければ、自動で数値が入ります..."></textarea>
+                <div class="input-group" style="background:#004d40; padding:12px; border-radius:8px;">
+                    <label style="color:#fff; font-weight:bold;">✨ 画面全体コピペ欄（ページ全部をここにペースト）</label>
+                    <textarea class="magic-parse-area" id="magic-paste" placeholder="株探のページ全体をコピーして、そのままここに貼り付けてください..."></textarea>
                 </div>
 
                 <div class="input-group">
@@ -159,10 +154,16 @@
                 </div>
 
                 <div class="input-group">
-                    <label>25日平均 / 現在株価</label>
+                    <label>自動抽出された数値</label>
                     <div style="display:flex; gap:10px;">
-                        <input type="number" id="ma-value" placeholder="25日線" oninput="calculateMetrics()">
-                        <input type="number" id="current-price" placeholder="株価" oninput="calculateMetrics()">
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">25日線</span>
+                            <input type="number" id="ma-value" placeholder="自動抽出" oninput="calculateMetrics()">
+                        </div>
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">現在株価</span>
+                            <input type="number" id="current-price" placeholder="自動抽出" oninput="calculateMetrics()">
+                        </div>
                     </div>
                 </div>
 
@@ -213,20 +214,53 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        // 📝 魔法の解析ロジック
+        // 📝 画面全体コピペ超高精度解析ロジック
         document.getElementById('magic-paste').addEventListener('input', function(e) {
-            const text = e.target.value;
-            // 数値を抽出する正規表現（カンマを除去して数字を拾う）
-            const prices = text.replace(/,/g, '').match(/\d+(\.\d+)?/g);
-            
-            if (prices && prices.length >= 2) {
-                // 文脈から推測：大きい方が株価、あるいは並び順で判定
-                // 株探のテキスト構成に合わせて、現在値と25日線を自動抽出
-                document.getElementById('current-price').value = prices[0];
-                document.getElementById('ma-value').value = prices[1];
+            const srcText = e.target.value;
+            if(!srcText || srcText.includes("✅")) return;
+
+            // 1. まずカンマを消して数字の並びを綺麗にする
+            const cleanText = srcText.replace(/,/g, '');
+
+            let detectedPrice = null;
+            let detectedMA = null;
+
+            // パターンA: 移動平均線（25日線の数値）のピンポイント抽出
+            // 「25日 1435.5」や「25日線 1500」のような並びを探す
+            const maRegex = /(25日|25日線|25日移動平均)\s*[-+:：:\s]*\b(\d+(\.\d+)?)\b/;
+            const maMatch = cleanText.match(maRegex);
+            if(maMatch && maMatch[2]) {
+                detectedMA = Math.round(parseFloat(maMatch[2]));
+            }
+
+            // パターンB: 現在値（株価）の抽出
+            // 株探特有の構造「現在値」「前日比」の周辺、またはページ冒頭の大きな数字から抽出
+            const priceRegex = /(現在値|株価|株価四本値)\s*[-+:：:\s]*\b(\d+)\b/;
+            const priceMatch = cleanText.match(priceRegex);
+            if(priceMatch && priceMatch[2]) {
+                detectedPrice = parseInt(priceMatch[2]);
+            }
+
+            // バックアップロジック：上記で拾えなかった場合、単純に文章中の純粋な数値の塊を拾う
+            if(!detectedMA || !detectedPrice) {
+                const allNumbers = cleanText.match(/\b\d+(\.\d+)?\b/g);
+                if(allNumbers && allNumbers.length >= 2) {
+                    // 通常、現在値は先頭に大きく出るので1番目、25日線は表の中なのでそれ以降
+                    if(!detectedPrice) detectedPrice = parseInt(allNumbers[0]);
+                    if(!detectedMA) detectedMA = Math.round(parseFloat(allNumbers[1]));
+                }
+            }
+
+            // 反映処理
+            if(detectedPrice) document.getElementById('current-price').value = detectedPrice;
+            if(detectedMA) document.getElementById('ma-value').value = detectedMA;
+
+            if(detectedPrice || detectedMA) {
                 calculateMetrics();
-                // 成功したらクリア
-                setTimeout(() => { e.target.value = "✅ 解析完了"; }, 500);
+                e.target.value = "✅ 画面全体データの解析に成功しました！";
+                setTimeout(() => { e.target.value = ""; }, 3000);
+            } else {
+                e.target.value = "❌ 数字が見つかりません。もう一度ページ全体をコピーしてください。";
             }
         });
 
@@ -255,17 +289,16 @@
         function calculateMetrics() {
             const ma = parseFloat(document.getElementById('ma-value').value);
             const price = parseFloat(document.getElementById('current-price').value);
-            const sector = document.getElementById('stock-sector').value;
             if(!ma || !price) return;
 
             const kairi = ((price - ma) / ma) * 100;
             document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
 
-            let status = "静観";
+            let status = "静観（バネ未収縮）";
             let color = "#888";
             
-            if(kairi < -15) { status = "🚨 限界突破"; color = "#00e676"; }
-            else if(kairi < -8) { status = "💛 チャンス"; color = "#ffb300"; }
+            if(kairi < -15) { status = "🚨 限界突破（BNF買いゾーン）"; color = "#00e676"; }
+            else if(kairi < -8) { status = "💛 チャンス目前（監視）"; color = "#ffb300"; }
             
             const resZone = document.getElementById('res-status');
             resZone.innerText = status;
@@ -273,27 +306,43 @@
         }
 
         function saveTradeLog() {
+            const code = document.getElementById('stock-code').value;
+            const kairi = document.getElementById('res-kairi').innerText;
+            if(kairi === "-- %") return;
+
             const log = {
                 time: new Date().toLocaleString(),
-                code: document.getElementById('stock-code').value,
-                kairi: document.getElementById('res-kairi').innerText,
+                code: code || "不明",
+                kairi: kairi,
                 status: document.getElementById('res-status').innerText
             };
             let logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
             logs.unshift(log);
             localStorage.setItem("bnf_logs", JSON.stringify(logs));
-            alert("保存しました");
+            alert("エラーレーダーに保存しました！");
         }
 
         function renderLogs() {
             const container = document.getElementById('log-container');
             const logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
+            if(logs.length === 0) {
+                container.innerHTML = "<p style='color:#aaa; text-align:center;'>ログはありません</p>";
+                return;
+            }
             container.innerHTML = logs.map(l => `
                 <div class="log-item">
-                    <div>${l.time} 【${l.code}】</div>
-                    <div style="font-weight:bold; font-size:1rem;">${l.kairi} (${l.status})</div>
+                    <div style="color:#aaa; font-size:0.75rem;">${l.time}</div>
+                    <div style="font-weight:bold; color:#00b0ff; margin:3px 0;">銘柄: ${l.code}</div>
+                    <div style="font-weight:bold; font-size:1rem;">乖離率: ${l.kairi} (${l.status})</div>
                 </div>
             `).join('');
+        }
+
+        function clearLogs() {
+            if(confirm("すべてリセットしますか？")) {
+                localStorage.removeItem("bnf_logs");
+                renderLogs();
+            }
         }
 
         function saveApiKey() {
@@ -314,7 +363,7 @@
 
             try {
                 const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
                 const result = await model.generateContent(`あなたはBNFです。地合いスコア${currentMarketScore}点。ボソボソと答えて。：${userText}`);
                 chatBox.innerHTML += `<div class="bubble bnf">${result.response.text()}</div>`;
             } catch (e) { chatBox.innerHTML += `<div class="bubble bnf">……。エラー。</div>`; }
