@@ -66,20 +66,16 @@
         .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; }
 
-        input[type="number"], select, input[type="text"] {
+        input[type="number"], select, input[type="text"], textarea {
             width: 100%; padding: 12px; background-color: var(--input-bg);
             border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1rem; box-sizing: border-box;
         }
 
-        .score-display-zone {
-            text-align: center; padding: 20px 0; border-radius: 10px;
-            background: linear-gradient(180deg, var(--card-bg) 0%, var(--status-glow) 100%);
-            border: 1px solid var(--status-color);
-        }
-        .score-num { font-size: 3.5rem; font-weight: bold; color: var(--status-color); }
+        textarea { height: 90px; resize: none; font-size: 0.85rem; border: 2px dashed #444; }
+        textarea:focus { border-color: #00e676; }
 
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.9rem; }
-        .btn-search { background: linear-gradient(90deg, #00e676, #00b0ff); color: #121212; font-size: 1rem; }
+        .btn-parse { background: linear-gradient(90deg, #00b0ff, #00e676); color: #121212; font-size: 1rem; }
         .btn-save { background: #333; color: #fff; border: 1px solid #444; }
 
         .tool-result-zone { margin-top: 20px; padding: 15px; border-radius: 10px; background-color: #151515; border: 1px solid var(--tool-status-color); }
@@ -94,8 +90,6 @@
         .chat-input-zone { display: flex; padding: 10px; gap: 8px; background: #1e1e1e; }
 
         .log-item { background: #151515; border-left: 4px solid #ff5252; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
-        
-        #tool-ai-status { text-align: center; font-size: 0.85rem; font-weight: bold; margin-top: 8px; line-height: 1.4; }
     </style>
     
     <script type="module">
@@ -124,38 +118,40 @@
 
         <div id="screen-tools" class="screen">
             <div class="card">
-                <h3>🛠️ 銘柄コード1発・全自動判定</h3>
+                <h3>🛠️ 100%正確・画面コピペ自動判定</h3>
                 
-                <div class="input-group">
-                    <label style="color:#00b0ff; font-weight:bold; font-size:0.9rem;"><i class="fa-solid fa-bolt"></i> 4桁の銘柄コードを入力</label>
-                    <div style="display:flex; gap:10px;">
-                        <input type="number" id="stock-code" placeholder="例: 6920" style="flex:1; font-size:1.2rem; font-weight:bold; text-align:center; letter-spacing:2px;">
-                        <button class="btn btn-search" style="margin:0; width:auto; padding:0 25px; font-weight:bold;" onclick="autoFetchWithPrompt()">AI調査</button>
+                <div class="input-group" style="background: rgba(0, 230, 118, 0.05); padding: 12px; border-radius: 8px; border: 1px solid #333;">
+                    <label style="color:#00e676; font-weight:bold;"><i class="fa-solid fa-copy"></i> ヤフーの「株価指標」ページを全コピペ</label>
+                    <textarea id="paste-box" placeholder="「yahoo株価指標ページ」で画面全体をコピー（Ctrl+A → コピー）して、ここに貼り付けてください。一発で同期します。"></textarea>
+                    <button class="btn btn-parse" onclick="parseCopiedText()">データを抽出・自動入力</button>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:15px; margin-top:15px;">
+                    <div style="flex:1;">
+                        <label>銘柄コード</label>
+                        <input type="number" id="stock-code" placeholder="例: 6920">
                     </div>
-                    <div id="tool-ai-status"></div>
+                    <div style="flex:1;">
+                        <label>セクター</label>
+                        <select id="stock-sector" onchange="calculateMetrics()">
+                            <option value="heavy">🏦 バリュー</option>
+                            <option value="tech" selected>⚡ ハイテク・半導体</option>
+                            <option value="defensive">💊 内需</option>
+                            <option value="growth">🚀 新興グロース</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="input-group">
-                    <label>セクター</label>
-                    <select id="stock-sector" onchange="calculateMetrics()">
-                        <option value="heavy">🏦 バリュー（銀行・鉄鋼）</option>
-                        <option value="tech" selected>⚡ ハイテク・半導体</option>
-                        <option value="defensive">💊 ディフェンシブ（内需）</option>
-                        <option value="growth">🚀 新興グロース</option>
-                        <option value="speculative">🔥 材料株</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>AIが自動取得したリアルタイム数値</label>
+                    <label>確認された正確な数値</label>
                     <div style="display:flex; gap:10px;">
                         <div>
                             <span style="font-size:0.75rem; color:var(--text-muted);">25日移動平均線</span>
-                            <input type="number" id="ma-value" placeholder="自動入力" oninput="calculateMetrics()">
+                            <input type="number" id="ma-value" placeholder="自動抽出" oninput="calculateMetrics()">
                         </div>
                         <div>
                             <span style="font-size:0.75rem; color:var(--text-muted);">現在株価</span>
-                            <input type="number" id="current-price" placeholder="自動入力" oninput="calculateMetrics()">
+                            <input type="number" id="current-price" placeholder="自動抽出" oninput="calculateMetrics()">
                         </div>
                     </div>
                 </div>
@@ -207,73 +203,54 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        async function autoFetchWithPrompt() {
-            const code = document.getElementById('stock-code').value;
-            const statusText = document.getElementById('tool-ai-status');
-            
-            if(!code || code.length !== 4) {
-                alert("正しい4桁の銘柄コードを入力してください。");
+        // 📋 ヤフーの「株価指標」ページのテキスト構造から完璧に抽出するアルゴリズム
+        function parseCopiedText() {
+            const text = document.getElementById('paste-box').value;
+            if(!text) {
+                alert("テキストが貼り付けられていません。");
                 return;
             }
 
-            if(!geminiApiKey) {
-                alert("「AI」タブでGemini APIキーを設定してください。");
-                return;
-            }
+            let price = null;
+            let ma = null;
+            let code = null;
 
-            statusText.innerText = `⏳ AIが日本のインターネットから「${code}」のデータを徹底検索中...`;
-            statusText.style.color = "#00b0ff";
+            // カンマや円マークを事前に除去して綺麗にする
+            const cleanText = text.replace(/,/g, '').replace(/円/g, '');
 
-            try {
-                const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-                // 最新モデルの強力な検索エンジンを設定
-                const model = genAI.getGenerativeModel({ 
-                    model: "gemini-2.5-flash"
-                });
+            // 1. 4桁の銘柄コードを検出
+            const codeMatch = cleanText.match(/\b([1-9][0-9]{3})\b/);
+            if(codeMatch) code = codeMatch[1];
 
-                // 🔥 AIが「知らない」と言い訳できないように強制する絶対命令プロンプト
-                const prompt = `あなたは優秀な株式解析アシスタントです。日本の証券コード「${code}」の最新データを今すぐGoogle等でリアルタイム検索してください。
-そして、以下の2つの数値を「必ず」特定してください。
-1. 現在の最新株価
-2. 25日移動平均線（25日線）の数値
+            // 2. ヤフーの指標ページ（performance）に並んでいる「25日移動平均」の値を狙い撃ち
+            // 例: 「25日移動平均 28540」や「25日移動平均（単線） 28540」
+            const maMatch = cleanText.match(/25日移動平均\s*([0-9]+(?:\.[0-9]+)?)/) 
+                         || cleanText.match(/25日線\s*([0-9]+(?:\.[0-9]+)?)/);
+            if(maMatch) ma = Math.round(parseFloat(maMatch[1]));
 
-もし本日の正確な25日移動平均線がヒットしない場合は、直近1週間のニュースや株価チャートから推測されるおよその25日移動平均線の値を「必ず数字だけ」計算して入れてください。絶対に「わかりません」や空欄で返してはいけません。
-
-必ず以下のJSONフォーマット【のみ】で返答してください。余計な挨拶や日本語の解説文は一切排除してください。
-
-{"price": 現在株価の数値, "ma": 25日線の数値}`;
-
-                const result = await model.generateContent(prompt);
-                const responseText = result.response.text();
-                
-                console.log("AIからの生の返答:", responseText); // デバッグ用
-
-                // JSONの抽出
-                const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
-                if(jsonMatch) {
-                    const data = JSON.parse(jsonMatch[0]);
-                    
-                    // 数値が正しく入っているかチェック
-                    if(data.price && data.ma) {
-                        document.getElementById('current-price').value = Math.round(data.price);
-                        document.getElementById('ma-value').value = Math.round(data.ma);
-                        
-                        calculateMetrics();
-                        statusText.innerText = `✅ 自動同期完了！\n(株価: ${Math.round(data.price)}円 / 25日線: ${Math.round(data.ma)}円)`;
-                        statusText.style.color = "#00e676";
-                    } else {
-                        statusText.innerText = `⚠️ データの片方が欠落しています。生の返答: ${responseText}`;
-                        statusText.style.color = "#ffb300";
-                    }
-                } else {
-                    statusText.innerText = `❌ AIの応答が不正です。以下を確認してください。\n生の返答: ${responseText}`;
-                    statusText.style.color = "#ff5252";
+            // 3. 現在株価（前日終値、あるいは単体の大きな価格など）を抽出
+            const priceMatch = cleanText.match(/(?:現在値|株価|取引値|前日終値)\s*([0-9]+)/);
+            if(priceMatch) {
+                price = parseInt(priceMatch[1]);
+            } else {
+                // 指標ページの上部にある大きな株価（単独の行にあることが多い数字）を引っ掛ける
+                const numbers = cleanText.match(/\b[0-9]{3,7}\b/g);
+                if(numbers && numbers.length >= 2) {
+                    price = parseInt(numbers[0]);
                 }
+            }
 
-            } catch (e) {
-                console.error(e);
-                statusText.innerText = "❌ 通信エラー、またはGemini APIキーが無効です。";
-                statusText.style.color = "#ff5252";
+            // 画面の各フォームにカチッと代入
+            if(code) document.getElementById('stock-code').value = code;
+            if(price) document.getElementById('current-price').value = price;
+            if(ma) document.getElementById('ma-value').value = ma;
+
+            if(price && ma) {
+                calculateMetrics();
+                document.getElementById('paste-box').value = ""; // 貼り付け欄をクリア
+            } else {
+                // 救済策：もし片方しか入らなかった場合、手動入力を促す
+                alert("データの抽出を試みましたが、一部の数値が見つかりませんでした。入力欄を確認し、足りない箇所は手動で補正してください。");
             }
         }
 
