@@ -66,7 +66,6 @@
         .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; }
         
-        /* スクショ解析ゾーンのスタイル */
         .screenshot-zone {
             background: #004d40; border: 2px dashed #00e676; padding: 15px;
             border-radius: 8px; text-align: center; cursor: pointer; margin-bottom: 15px;
@@ -87,7 +86,8 @@
         .score-num { font-size: 3.5rem; font-weight: bold; color: var(--status-color); }
 
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.9rem; }
-        .btn-kabutan { background: #00796b; color: #fff; text-decoration: none; display: block; text-align: center; box-sizing: border-box; }
+        /* 🔴 ボタンの色をYahooカラー（紫/青）寄りに調整 */
+        .btn-yahoo { background: #1854a4; color: #fff; text-decoration: none; display: block; text-align: center; box-sizing: border-box; }
         .btn-save { background: #333; color: #fff; border: 1px solid #444; }
 
         .tool-result-zone { margin-top: 20px; padding: 15px; border-radius: 10px; background-color: #151515; border: 1px solid var(--tool-status-color); }
@@ -135,13 +135,13 @@
                 <div class="input-group">
                     <label>銘柄コード</label>
                     <input type="number" id="stock-code" placeholder="例: 6920" oninput="matchStockCode(this.value)">
-                    <a id="kabutan-btn" class="btn btn-kabutan" style="display:none;" href="#" target="_blank">株探を開く</a>
+                    <a id="yahoo-btn" class="btn btn-yahoo" style="display:none;" href="#" target="_blank">ヤフーファイナンスで開く</a>
                 </div>
 
                 <div class="screenshot-zone" onclick="document.getElementById('file-input').click()">
                     <i class="fa-solid fa-camera"></i>
-                    <div id="upload-status" style="font-weight:bold; font-size:0.9rem;">株探のスクショをここにUP（自動解析）</div>
-                    <div style="font-size:0.7rem; color:#a5d6a7; margin-top:3px;">※チャート画面のスクショでOKです</div>
+                    <div id="upload-status" style="font-weight:bold; font-size:0.9rem;">ヤフーファイナンスのスクショをUP</div>
+                    <div style="font-size:0.7rem; color:#a5d6a7; margin-top:3px;">※「日足」チャートが含まれるスクショを推奨</div>
                     <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="analyzeScreenshot(this)">
                     <img id="preview-img" alt="Preview">
                 </div>
@@ -218,7 +218,7 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        // 📝 スクショ画像をGemini AIに解析させて数値を抜く神機能
+        // 📝 ヤフーファイナンス等、どんなスクショからでも数値を抜き出す汎用プロンプトを搭載
         async function analyzeScreenshot(input) {
             const file = input.files[0];
             if(!file) return;
@@ -233,7 +233,6 @@
             
             statusText.innerText = "⏳ AIが画像から数値をスキャン中...";
             
-            // プレビュー表示
             const reader = new FileReader();
             reader.onload = function(e) {
                 previewImg.src = e.target.result;
@@ -242,7 +241,6 @@
             reader.readAsDataURL(file);
 
             try {
-                // 画像をAPIに渡せる形式に変換
                 const base64Data = await fileToBase64(file);
                 const imagePart = {
                     inlineData: { data: base64Data.split(',')[1], mimeType: file.type }
@@ -251,12 +249,12 @@
                 const genAI = new window.GoogleGenerativeAI(geminiApiKey);
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-                const prompt = "この株式チャートまたは株探のスクリーンショット画像から、現在の株価（現在値）と25日移動平均線（25日線）の数値を読み取り、次のJSONフォーマットだけで返してください。余計な説明文は一切書かないでください。フォーマット: {\"price\": 現在の株価の数値, \"ma\": 25日線の数値}";
+                // 🔴 ヤフーファイナンスを意識した、よりブレのない指示文
+                const prompt = "この株式チャート画面（ヤフーファイナンス等）のスクリーンショットから、現在の株価（現在値）と25日移動平均線（25日線）の数値を読み取ってください。画面内の文字、またはグラフの目盛りから数値を割り出し、次のJSONフォーマットだけで返してください。説明は不要です。フォーマット: {\"price\": 現在の株価の数値, \"ma\": 25日線の数値}";
 
                 const result = await model.generateContent([prompt, imagePart]);
                 const responseText = result.response.text();
                 
-                // JSONを抽出
                 const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
                 if(jsonMatch) {
                     const data = JSON.parse(jsonMatch[0]);
@@ -266,12 +264,12 @@
                     calculateMetrics();
                     statusText.innerText = "✅ 解析完了！数値を入力しました";
                 } else {
-                    statusText.innerText = "❌ 数値を読み取れませんでした。手動で入力するか、別のスクショを試してください。";
+                    statusText.innerText = "❌ 数値を読み取れませんでした。手動入力するか別のスクショでお試しください。";
                 }
 
             } catch (e) {
                 console.error(e);
-                statusText.innerText = "❌ AI解析エラー（キーの有効性か画像を確認してください）";
+                statusText.innerText = "❌ AI解析エラー（APIキーや画像を確認してください）";
             }
         }
 
@@ -292,10 +290,12 @@
             if(id === 'log') renderLogs();
         }
 
+        // 🔴 ヤフーファイナンスのスマホ向け最適化URLを生成する関数
         function matchStockCode(code) {
-            const btn = document.getElementById('kabutan-btn');
+            const btn = document.getElementById('yahoo-btn');
             if(code.length === 4) {
-                btn.href = `https://kabutan.jp/stock/chart?code=${code}`;
+                // ヤフーファイナンスの個別銘柄ページ（東証指定：.T）
+                btn.href = `https://finance.yahoo.co.jp/quote/${code}.T`;
                 btn.style.display = "block";
             } else { btn.style.display = "none"; }
         }
