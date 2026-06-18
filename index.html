@@ -82,7 +82,6 @@
         }
         input:focus, select:focus { border-color: var(--primary-color); outline: none; }
 
-        /* スライダー専用スタイル */
         input[type="range"] {
             width: 100%; -webkit-appearance: none; background: #333; height: 8px; border-radius: 4px; outline: none; margin: 15px 0;
         }
@@ -90,7 +89,6 @@
             -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: var(--primary-color); cursor: pointer; box-shadow: 0 0 10px var(--primary-color);
         }
 
-        /* 地合いスコア専用UI */
         .score-display-zone {
             text-align: center; padding: 20px 0; border-radius: 10px;
             background: linear-gradient(180deg, var(--card-bg) 0%, var(--status-glow) 100%);
@@ -108,7 +106,6 @@
         .bnf-tool-name { color: var(--tool-status-color); font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; }
         .bnf-comment { font-size: 0.95rem; line-height: 1.5; color: #e0e0e0; }
 
-        /* ツール出力エリア */
         .tool-result-zone { margin-top: 20px; padding: 15px; border-radius: 10px; background-color: #151515; border: 1px solid var(--tool-status-color); box-shadow: 0 0 10px var(--tool-status-glow); }
         .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; }
         .result-row:last-child { border-bottom: none; }
@@ -117,7 +114,6 @@
         .res-down { color: #00e676; }
         .log-save-btn { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold; font-size: 0.85rem; }
 
-        /* 🤖 AIチャットボット専用スタイル */
         .chat-container {
             background-color: #151515; border: 1px solid #333; border-radius: 12px;
             height: 380px; display: flex; flex-direction: column; overflow: hidden;
@@ -138,7 +134,6 @@
         .typing-dots span:nth-child(3) { animation-delay: .4s; }
         @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
 
-        /* 📊 ログ専用スタイル */
         .log-item { background: #151515; border-left: 4px solid #ff5252; padding: 12px; border-radius: 0 8px 8px 0; margin-bottom: 10px; font-size: 0.85rem; }
         .log-meta { display: flex; justify-content: space-between; color: var(--text-muted); margin-bottom: 5px; font-size: 0.75rem; }
         .log-clear-btn { width: 100%; padding: 12px; background: #cf6679; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; display: none; }
@@ -180,12 +175,21 @@
         <div id="screen-tools" class="screen">
             <div class="card">
                 <h3>🛠️ BNF KAIRI & COUNTER</h3>
+                
                 <div class="input-group">
-                    <label for="stock-sector">銘柄セクター（業種属性）</label>
+                    <label for="stock-code">銘柄コード（4桁）</label>
+                    <input type="number" id="stock-code" placeholder="例: 6920" oninput="matchStockCode(this.value)">
+                    <div id="code-status-msg" style="font-size: 0.8rem; color: #00b0ff; margin-top: 4px; font-weight: bold;"></div>
+                </div>
+
+                <div class="input-group">
+                    <label for="stock-sector">銘柄セクター（自動連動・手動変更も可）</label>
                     <select id="stock-sector" onchange="calculateMetrics()">
-                        <option value="heavy">超大型・主力株（銀行・鉄鋼・エネルギー等）</option>
-                        <option value="tech">ハイテク・主力ハイベータ（半導体・電子等）</option>
-                        <option value="growth">中小型・グロース株（新興市場・ネット株等）</option>
+                        <option value="heavy">🏦 重厚長大・バリュー（銀行・鉄鋼・自動車など）</option>
+                        <option value="tech">⚡ ハイテク・半導体（レーザーテック・ソニーなど）</option>
+                        <option value="defensive">💊 ディフェンシブ（食品・医薬品・通信・鉄道など）</option>
+                        <option value="growth">🚀 中小型・グロース株（東証グロース市場新興株）</option>
+                        <option value="speculative">🔥 仕手株・大荒れ材料株（急騰後の急落低位株など）</option>
                     </select>
                 </div>
                 <div class="input-group">
@@ -206,7 +210,7 @@
                 
                 <div class="bnf-tool-coach-box">
                     <div class="bnf-tool-name">B.N.F</div>
-                    <div class="bnf-comment" id="bnf-tool-comment">「……。セクターと数値を入力してください」</div>
+                    <div class="bnf-comment" id="bnf-tool-comment">「……。銘柄コードか数値を入力してください」</div>
                 </div>
             </div>
         </div>
@@ -269,6 +273,67 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
+        // 🧠 主要銘柄のマスターデータベース（ここに書かれたコードは名前とセクターが完全一致します）
+        const stockMaster = {
+            // バリュー・主力株
+            "8306": { name: "三菱UFJ", sector: "heavy" },
+            "8316": { name: "三井住友", sector: "heavy" },
+            "5401": { name: "日本製鉄", sector: "heavy" },
+            "7203": { name: "トヨタ自動車", sector: "heavy" },
+            "8058": { name: "三菱商事", sector: "heavy" },
+            "9101": { name: "日本郵船", sector: "heavy" },
+            // ハイテク・半導体
+            "6920": { name: "レーザーテック", sector: "tech" },
+            "8035": { name: "東京エレクトロン", sector: "tech" },
+            "6146": { name: "ディスコ", sector: "tech" },
+            "6758": { name: "ソニーG", sector: "tech" },
+            "6501": { name: "日立製作所", sector: "tech" },
+            "9984": { name: "ソフトバンクG", sector: "tech" },
+            // ディフェンシブ
+            "2914": { name: "JT", sector: "defensive" },
+            "4502": { name: "武田薬品", sector: "defensive" },
+            "9432": { name: "NTT", sector: "defensive" },
+            "9020": { name: "JR東日本", sector: "defensive" },
+            // 有名な新興グロース
+            "5253": { name: "カバー", sector: "growth" },
+            "215A": { name: "タイミー", sector: "growth" }
+        };
+
+        // 🔢 銘柄コード入力時の自動判別ロジック
+        function matchStockCode(code) {
+            const msgEl = document.getElementById('code-status-msg');
+            const sectorSelect = document.getElementById('stock-sector');
+            
+            if (code.length < 4) {
+                msgEl.innerText = "";
+                return;
+            }
+
+            // 1. マスターデータに完全一致するかチェック
+            if (stockMaster[code]) {
+                const stock = stockMaster[code];
+                msgEl.innerText = `🎯 検出: ${stock.name}`;
+                sectorSelect.value = stock.sector;
+            } else {
+                // 2. 完全一致しなかった場合、コードの法則からセクターを自動予測
+                let predictedSector = "growth"; // デフォルトはグロース
+                let typeName = "その他銘柄（自動判定）";
+
+                const num = parseInt(code);
+                if (num >= 8000 && num <= 8999) { predictedSector = "heavy"; typeName = "金融・商社系バリュー株"; }
+                else if (num >= 5000 && num <= 5999) { predictedSector = "heavy"; typeName = "鉄鋼・エネルギー重厚長大"; }
+                else if (num >= 6000 && num <= 6999) { predictedSector = "tech"; typeName = "ハイテク・機械系"; }
+                else if (num >= 4000 && num <= 4999) { predictedSector = "defensive"; typeName = "医薬品・化学系"; }
+                else if (num >= 9000 && num <= 9499) { predictedSector = "defensive"; typeName = "陸運・インフラ通信"; }
+                
+                msgEl.innerText = `🔍 推測: ${typeName}`;
+                sectorSelect.value = predictedSector;
+            }
+
+            // セクターが変わったので再計算
+            calculateMetrics();
+        }
+
         function switchScreen(screenId, element) {
             const screens = document.querySelectorAll('.screen');
             screens.forEach(screen => screen.classList.remove('active'));
@@ -306,7 +371,7 @@
 
             if (currentMarketScore >= 80) {
                 color = "#00e676"; glow = "rgba(0, 230, 118, 0.4)"; statusText = "🚨 パニック（バネ限界収縮）";
-                bnfComment = "「……セクター全体が完全に壊れて叩き売られてますね。絶好の逆張りチャンスです。ここで恐怖に負けて買えないなら、デイトレなんて辞めたほうがいいですよ」";
+                bnfComment = "……セクター全体が完全に壊れて叩き売られてますね。絶好の逆張りチャンスです。ここで恐怖に負けて買えないなら、デイトレなんて辞めたほうがいいですよ」";
             } else if (currentMarketScore >= 55) {
                 color = "#ffb300"; glow = "rgba(255, 179, 0, 0.3)"; statusText = "💛 チャンス間近（監視強化）";
                 bnfComment = "「……そこそこ連れ安する銘柄が出てきてます。でもまだ焦って突っ込むところじゃない。25日線からの乖離率が本当にターゲットに届くか、じっくり引きつけてください」";
@@ -333,15 +398,18 @@
             document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
 
             let yellowBorder = -5; let redBorder = -8;
-            if (sector === 'tech') { yellowBorder = -8; redBorder = -12; }
-            if (sector === 'growth') { yellowBorder = -15; redBorder = -25; }
+            if (sector === 'defensive') { yellowBorder = -3; redBorder = -6; }
+            if (sector === 'heavy')     { yellowBorder = -5; redBorder = -8; }
+            if (sector === 'tech')      { yellowBorder = -10; redBorder = -15; }
+            if (sector === 'growth')    { yellowBorder = -15; redBorder = -25; }
+            if (sector === 'speculative'){ yellowBorder = -20; redBorder = -40; }
 
             let toolColor = "#ff5252"; let toolGlow = "rgba(255, 82, 82, 0.2)"; let statusText = "⚠️ 危険（底抜け注意）";
             let bnfToolComment = "「……まだバネの縮みが足りない。今買うのはただのフライング。資金を減らしたい趣味がある人だけが買う位置です」";
 
             if (kairi <= redBorder) {
                 toolColor = "#00e676"; toolGlow = "rgba(0, 230, 118, 0.3)"; statusText = "🚨 限界突破（BNFゾーン）";
-                bnfToolComment = "「……よし。完全にバネが歪んでます。地合いスコアが55点以上なら、リバウンドの期待値は極めて高い。一泊二日の原則を頭に入れて仕込むタイミングです」";
+                bnfToolComment = "「……よし。このセクターでここまで乖離すれば完全にバネが歪んでます。地合いスコアが55点以上なら、リバウンドの期待値は極めて高い。仕込みのタイミングです」";
             } else if (kairi <= yellowBorder) {
                 toolColor = "#ffb300"; toolGlow = "rgba(255, 179, 0, 0.2)"; statusText = "💛 チャンス目前（監視）";
                 bnfToolComment = "「……バネが縮み始めてます。同じセクターの他の銘柄も一緒に連れ安して底を打つ瞬間を、5分足で狙ってください」";
@@ -364,7 +432,9 @@
             document.getElementById('res-target-loss').innerText = Math.round(breakEvenPrice * 0.99) + " 円";
         }
 
+        // 💾 ログ保存に「銘柄コード」を含めるようアップデート
         function saveTradeLog() {
+            const codeInput = document.getElementById('stock-code').value.trim();
             const sectorText = document.getElementById('stock-sector').options[document.getElementById('stock-sector').selectedIndex].text;
             const kairiText = document.getElementById('res-kairi').innerText;
             const statusText = document.getElementById('res-status').innerText;
@@ -376,11 +446,14 @@
 
             const now = new Date();
             const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            // コードが空欄なら「----」にする
+            const finalCode = codeInput ? `【${codeInput}】` : "";
 
             const newLog = {
                 time: timeStr,
                 score: currentMarketScore,
-                sector: sectorText,
+                sector: finalCode + sectorText,
                 kairi: kairiText,
                 status: statusText
             };
@@ -465,7 +538,7 @@
 ・文頭は「……あ、どうも。」「……うーん、」「……」などから静かに始める。
 ・投資スタイルは徹底した「25日移動平均線からの乖離率を狙った逆張り」。
 ・現在の市場地合いスコア：${currentMarketScore}点（55点未満は逆張りNG、80点以上は大チャンス）
-ユーザーの投資の悩みや愚痴に対して、この地合い点数を踏めて150文字以内でボソボソと回答してください。
+ユーザーの投資の悩みや愚痴に対して、この地合い点数を踏まえて150文字以内でボソボソと回答してください。
 `;
 
                 const result = await model.generateContent([systemPrompt, userText]);
@@ -482,7 +555,6 @@
             }
         }
 
-        // ⚠️ ここを修正：起動時にエラーが起きないように初期設定を整理しました
         window.onload = function() {
             manualMarketUpdate(50); 
             if(geminiApiKey) { 
