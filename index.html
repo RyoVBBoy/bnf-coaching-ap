@@ -171,12 +171,12 @@
                 <div id="ocr-status"></div>
 
                 <div class="input-group" style="margin-top:20px;">
-                    <label style="color:#00b0ff;">📈 25日移動平均線 (手動修正も可能)</label>
+                    <label style="color:#00b0ff;">25日移動平均線 (手動修正も可能)</label>
                     <input type="number" id="ma-value" placeholder="スクショから自動読取" oninput="calculateMetrics()">
                 </div>
 
                 <div class="input-group">
-                    <label style="color:#00e676;">💰 現在のリアルタイム株価 (手動修正も可能)</label>
+                    <label style="color:#00e676;">現在のリアルタイム株価 (手動修正も可能)</label>
                     <input type="number" id="current-price" placeholder="スクショから自動読取" oninput="calculateMetrics()">
                 </div>
 
@@ -202,7 +202,7 @@
                     </div>
                     <button onclick="saveApiKey()" class="btn" style="background:var(--primary-color);">接続</button>
                     <div class="key-warning">
-                        ⚠️ このAPIキーはブラウザ内（localStorage）に保存され、Google APIへの通信に直接使われます。共有PCで使う場合や、このページを他人に配布する場合は注意してください。
+                        このAPIキーはブラウザ内（localStorage）に保存され、Google APIへの通信に直接使われます。共有PCで使う場合や、このページを他人に配布する場合は注意してください。
                     </div>
                 </div>
 
@@ -245,7 +245,6 @@
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
         let compressedBase64 = "";
 
-        // --- XSS対策: 文字列をエスケープしてからinnerHTMLに渡す ---
         function escapeHtml(str) {
             const div = document.createElement('div');
             div.textContent = String(str);
@@ -273,7 +272,6 @@
             if(id === 'log') renderLogs();
         }
 
-        // --- 地合いスコアに応じてステータス・BNFコメントを切り替える ---
         function updateMarketComment(score) {
             const statusEl = document.getElementById('live-status');
             const commentEl = document.getElementById('bnf-comment-text');
@@ -293,7 +291,7 @@
                 color = "#888888";
             } else if (score >= 20) {
                 status = "やや悲観";
-                comment = "「そろそろ面白くなってきましたね」";
+                comment = "清算が進んできましたね";
                 color = "#00b0ff";
             } else {
                 status = "極度の悲観（チャンス）";
@@ -317,7 +315,6 @@
             const file = input.files[0];
             if (!file) return;
 
-            // --- ファイル形式・サイズの検証 ---
             if (!file.type.startsWith('image/')) {
                 alert("画像ファイルを選択してください。");
                 input.value = "";
@@ -426,7 +423,6 @@
             }
         }
 
-        // --- 乖離率の計算。地合いスコアでしきい値を調整する ---
         function calculateMetrics() {
             const ma = parseFloat(document.getElementById('ma-value').value);
             const price = parseFloat(document.getElementById('current-price').value);
@@ -441,9 +437,7 @@
             const kairi = ((price - ma) / ma) * 100;
             document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
 
-            // 地合いスコアが高い（楽観）ほどしきい値を厳しく（より大きな下落を要求）
-            // 地合いスコアが低い（悲観・パニック）ほどしきい値を緩める
-            const marketAdjustment = (currentMarketScore - 50) / 10; // -5 ～ +5
+            const marketAdjustment = (currentMarketScore - 50) / 10;
             const thresholdWarning = -8 - marketAdjustment;
             const thresholdBuy = -15 - marketAdjustment;
 
@@ -506,7 +500,6 @@
             }
         }
 
-        // --- APIキー入力欄の表示/非表示切替 ---
         function toggleKeyVisibility() {
             const input = document.getElementById('api-key-input');
             const icon = document.getElementById('key-eye-icon');
