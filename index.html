@@ -134,19 +134,19 @@
                 <div class="input-group">
                     <label>銘柄コード</label>
                     <input type="number" id="stock-code" placeholder="例: 6920" oninput="matchStockCode(this.value)">
-                    <a id="kabutan-btn" class="btn btn-kabutan" style="display:none;" href="#" target="_blank">株探でデータを確認</a>
+                    <a id="kabutan-btn" class="btn btn-kabutan" style="display:none;" href="#" target="_blank">株探で数値データを開く</a>
                 </div>
 
                 <div class="input-group" style="background:#004d40; padding:12px; border-radius:8px;">
                     <label style="color:#fff; font-weight:bold;">✨ 画面全体コピペ欄（ページ全部をここにペースト）</label>
-                    <textarea class="magic-parse-area" id="magic-paste" placeholder="株探のページ全体をコピーして、そのままここに貼り付けてください..."></textarea>
+                    <textarea class="magic-parse-area" id="magic-paste" placeholder="開いたページ全体をコピーして、そのままここに貼り付けてください..."></textarea>
                 </div>
 
                 <div class="input-group">
                     <label>セクター</label>
                     <select id="stock-sector" onchange="calculateMetrics()">
                         <option value="heavy">🏦 バリュー（銀行・鉄鋼）</option>
-                        <option value="tech">⚡ ハイテク・半導体</option>
+                        <option value="tech">⚡ ハイテク・半動体</option>
                         <option value="defensive">💊 ディフェンシブ（内需）</option>
                         <option value="growth">🚀 新興グロース</option>
                         <option value="speculative">🔥 材料株</option>
@@ -214,40 +214,40 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        // 📝 画面全体コピペ超高精度解析ロジック
+        // 📝 株探の「特報・テクニカル」ページ用に最適化した解析ロジック
         document.getElementById('magic-paste').addEventListener('input', function(e) {
             const srcText = e.target.value;
             if(!srcText || srcText.includes("✅")) return;
 
-            // 1. まずカンマを消して数字の並びを綺麗にする
             const cleanText = srcText.replace(/,/g, '');
 
             let detectedPrice = null;
             let detectedMA = null;
 
-            // パターンA: 移動平均線（25日線の数値）のピンポイント抽出
-            // 「25日 1435.5」や「25日線 1500」のような並びを探す
-            const maRegex = /(25日|25日線|25日移動平均)\s*[-+:：:\s]*\b(\d+(\.\d+)?)\b/;
-            const maMatch = cleanText.match(maRegex);
-            if(maMatch && maMatch[2]) {
-                detectedMA = Math.round(parseFloat(maMatch[2]));
+            // 1. 25日移動平均線の数値をピンポイントで探す
+            // 「25日線比」「25日移動平均」などの表の並びに対応
+            const maLines = cleanText.split('\n');
+            for(let line of maLines) {
+                if(line.includes("25日")) {
+                    const nums = line.match(/\d+(\.\d+)?/g);
+                    if(nums && nums.length >= 1) {
+                        // 25日という文字の後に最初に出てくる数字
+                        detectedMA = Math.round(parseFloat(nums[0] === "25" ? nums[1] : nums[0]));
+                        break;
+                    }
+                }
             }
 
-            // パターンB: 現在値（株価）の抽出
-            // 株探特有の構造「現在値」「前日比」の周辺、またはページ冒頭の大きな数字から抽出
-            const priceRegex = /(現在値|株価|株価四本値)\s*[-+:：:\s]*\b(\d+)\b/;
-            const priceMatch = cleanText.match(priceRegex);
-            if(priceMatch && priceMatch[2]) {
+            // 2. 現在値（株価）を探す
+            // ページの最初の方にあるカンマなしの単体の大きな数字、または「現在値」の隣
+            const priceMatch = cleanText.match(/(現在値|株価)[:：\s]*\b(\d+)\b/);
+            if(priceMatch) {
                 detectedPrice = parseInt(priceMatch[2]);
-            }
-
-            // バックアップロジック：上記で拾えなかった場合、単純に文章中の純粋な数値の塊を拾う
-            if(!detectedMA || !detectedPrice) {
-                const allNumbers = cleanText.match(/\b\d+(\.\d+)?\b/g);
-                if(allNumbers && allNumbers.length >= 2) {
-                    // 通常、現在値は先頭に大きく出るので1番目、25日線は表の中なのでそれ以降
-                    if(!detectedPrice) detectedPrice = parseInt(allNumbers[0]);
-                    if(!detectedMA) detectedMA = Math.round(parseFloat(allNumbers[1]));
+            } else {
+                // バックアップ：ページ上部に出てくる4桁〜5桁の主要な数字
+                const allNums = cleanText.match(/\b\d{3,6}\b/g);
+                if(allNums && allNums.length > 0) {
+                    detectedPrice = parseInt(allNums[0]);
                 }
             }
 
@@ -255,12 +255,12 @@
             if(detectedPrice) document.getElementById('current-price').value = detectedPrice;
             if(detectedMA) document.getElementById('ma-value').value = detectedMA;
 
-            if(detectedPrice || detectedMA) {
+            if(detectedPrice && detectedMA) {
                 calculateMetrics();
-                e.target.value = "✅ 画面全体データの解析に成功しました！";
-                setTimeout(() => { e.target.value = ""; }, 3000);
+                e.target.value = "✅ 数値の抽出に成功しました！";
+                setTimeout(() => { e.target.value = ""; }, 2000);
             } else {
-                e.target.value = "❌ 数字が見つかりません。もう一度ページ全体をコピーしてください。";
+                e.target.value = "❌ 25日線か株価が見つかりません。ページ全体をコピーできているか確認してください。";
             }
         });
 
@@ -275,7 +275,8 @@
         function matchStockCode(code) {
             const btn = document.getElementById('kabutan-btn');
             if(code.length === 4) {
-                btn.href = `https://kabutan.jp/stock/chart?code=${code}`;
+                // 🟢 チャートではなく、文字データが詰まっている「株価特報」のページへリンク
+                btn.href = `https://kabutan.jp/stock/news?code=${code}&b=am`;
                 btn.style.display = "block";
             } else { btn.style.display = "none"; }
         }
@@ -319,7 +320,7 @@
             let logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
             logs.unshift(log);
             localStorage.setItem("bnf_logs", JSON.stringify(logs));
-            alert("エラーレーダーに保存しました！");
+            alert("保存しました");
         }
 
         function renderLogs() {
