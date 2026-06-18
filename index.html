@@ -15,8 +15,6 @@
             --text-muted: #aaaaaa;
             --status-color: #888888;
             --status-glow: rgba(136, 136, 136, 0.2);
-            --tool-status-color: #888888;
-            --tool-status-glow: rgba(136, 136, 136, 0.2);
         }
 
         body {
@@ -66,22 +64,18 @@
         .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; }
 
-        input[type="number"], select, input[type="text"], textarea {
+        input[type="number"], select, input[type="text"] {
             width: 100%; padding: 12px; background-color: var(--input-bg);
-            border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1rem; box-sizing: border-box;
+            border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1.1rem; box-sizing: border-box;
         }
+        input[type="number"]:focus { border-color: #00b0ff; outline: none; }
 
-        textarea { height: 90px; resize: none; font-size: 0.85rem; border: 2px dashed #444; }
-        textarea:focus { border-color: #00e676; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1rem; }
+        .btn-save { background: linear-gradient(90deg, #00b0ff, #d500f9); color: #fff; }
 
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.9rem; }
-        .btn-link { background: #00b0ff; color: #121212; display: flex; justify-content: center; align-items: center; gap: 8px; text-decoration: none; font-size: 1rem; box-sizing: border-box; }
-        .btn-parse { background: linear-gradient(90deg, #00e676, #b2ff59); color: #121212; font-size: 1rem; }
-        .btn-save { background: #333; color: #fff; border: 1px solid #444; }
-
-        .tool-result-zone { margin-top: 20px; padding: 15px; border-radius: 10px; background-color: #151515; border: 1px solid var(--tool-status-color); }
-        .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; }
-        .res-val { font-weight: bold; font-family: monospace; }
+        .tool-result-zone { margin-top: 20px; padding: 15px; border-radius: 10px; background-color: #151515; border: 1px solid var(--status-color); }
+        .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; }
+        .res-val { font-weight: bold; font-family: monospace; font-size: 1.2rem; }
 
         .chat-container { background-color: #151515; border: 1px solid #333; border-radius: 12px; height: 320px; display: flex; flex-direction: column; overflow: hidden; }
         .chat-timeline { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
@@ -91,7 +85,6 @@
         .chat-input-zone { display: flex; padding: 10px; gap: 8px; background: #1e1e1e; }
 
         .log-item { background: #151515; border-left: 4px solid #ff5252; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
-        #ai-parse-status { text-align: center; font-size: 0.8rem; margin-top: 5px; font-weight: bold; }
     </style>
     
     <script type="module">
@@ -120,12 +113,12 @@
 
         <div id="screen-tools" class="screen">
             <div class="card">
-                <h3>🛠️ AIコピペ自動解析システム</h3>
+                <h3>🛠️ 瞬速・手入力判定ツール</h3>
                 
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
                     <div style="flex:1;">
-                        <label style="color:#00b0ff; font-weight:bold;">① 銘柄コード入力</label>
-                        <input type="number" id="stock-code" placeholder="例: 6920" oninput="updateYahooLink(this.value)">
+                        <label>銘柄コード</label>
+                        <input type="number" id="stock-code" placeholder="例: 6920">
                     </div>
                     <div style="flex:1;">
                         <label>セクター</label>
@@ -138,34 +131,21 @@
                     </div>
                 </div>
 
-                <div id="link-zone" style="margin-bottom:20px;"></div>
-
-                <div class="input-group" style="background: rgba(0, 230, 118, 0.05); padding: 12px; border-radius: 8px; border: 1px solid #333;">
-                    <label style="color:#00e676; font-weight:bold;">② 開いたヤフーの画面を【全コピペ】して貼り付け</label>
-                    <textarea id="paste-box" placeholder="表示されたヤフーのページ全体をコピー（Ctrl+A → コピー）して、ここにそのままガサッと貼り付けてください。"></textarea>
-                    <button class="btn btn-parse" onclick="parseCopiedTextWithAI()">🤖 AIに数字を自動抽出させる</button>
-                    <div id="ai-parse-status"></div>
+                <div class="input-group">
+                    <label style="color:#00b0ff; font-weight:bold;">📈 25日移動平均線の数値</label>
+                    <input type="number" id="ma-value" placeholder="例: 28500" oninput="calculateMetrics()">
                 </div>
 
-                <div class="input-group" style="margin-top:20px;">
-                    <label>確認された数値（100%正確に自動入力されます）</label>
-                    <div style="display:flex; gap:10px;">
-                        <div>
-                            <span style="font-size:0.75rem; color:var(--text-muted);">25日移動平均線</span>
-                            <input type="number" id="ma-value" placeholder="自動抽出" oninput="calculateMetrics()">
-                        </div>
-                        <div>
-                            <span style="font-size:0.75rem; color:var(--text-muted);">現在株価</span>
-                            <input type="number" id="current-price" placeholder="自動抽出" oninput="calculateMetrics()">
-                        </div>
-                    </div>
+                <div class="input-group">
+                    <label style="color:#00e676; font-weight:bold;">💰 現在のリアルタイム株価</label>
+                    <input type="number" id="current-price" placeholder="例: 25400" oninput="calculateMetrics()">
                 </div>
 
                 <div class="tool-result-zone" id="tool-result">
-                    <div class="result-row"><span>乖離率</span><span class="res-val" id="res-kairi">-- %</span></div>
-                    <div class="result-row"><span>判定</span><span class="res-val" id="res-status">未入力</span></div>
+                    <div class="result-row"><span>移動平均線からの乖離率</span><span class="res-val" id="res-kairi" style="color:#ff5252;">-- %</span></div>
+                    <div class="result-row"><span>BNFシグナル判定</span><span class="res-val" id="res-status">未入力</span></div>
                 </div>
-                <button class="btn btn-save" onclick="saveTradeLog()">ログに記録</button>
+                <button class="btn btn-save" onclick="saveTradeLog()"><i class="fa-solid fa-floppy-disk"></i> この判定結果をログに保存</button>
             </div>
         </div>
 
@@ -208,75 +188,6 @@
         let currentMarketScore = 50;
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
 
-        function updateYahooLink(code) {
-            const linkZone = document.getElementById('link-zone');
-            if(code && code.length === 4) {
-                linkZone.innerHTML = `
-                    <a href="https://finance.yahoo.co.jp/quote/${code}" target="_blank" class="btn btn-link">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> 📊 ${code} のYahoo!株価詳細ページを開く
-                    </a>
-                `;
-            } else {
-                linkZone.innerHTML = "";
-            }
-        }
-
-        // 🧠 貼り付けられた超適当な文章から、AIの知能を使って「現在株価」と「25日線」をハメ込む神関数
-        async function parseCopiedTextWithAI() {
-            const text = document.getElementById('paste-box').value;
-            const status = document.getElementById('ai-parse-status');
-
-            if(!text) {
-                alert("テキストが貼り付けられていません。");
-                return;
-            }
-            if(!geminiApiKey) {
-                alert("「AI」タブでGemini APIキーを設定してください。");
-                return;
-            }
-
-            status.innerText = "⏳ AIがコピペデータから数字を分析中...";
-            status.style.color = "#00b0ff";
-
-            try {
-                const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-                const prompt = `以下のテキストは、株価サイトからユーザーがコピーしてきた雑多な文字列です。
-この中から、「現在の株価（取引値・前日終値など）」と「25日移動平均線（25日線）」の数値を賢く見つけ出して、以下のJSONフォーマットのみで返してください。日本語の解説や余計な文字は一切含めないでください。
-
-【重要】もし25日移動平均線が明示的に記載されていないページ（業績ページなど）だった場合、テキスト内のどこかに直近株価の推移や指標があるはずですので、そこから推測されるおよその数字、または現在株価と同等に近いもっともらしい移動平均の数値を「必ず」無理やりにでも入れて、空欄（0やnull）にしないでください。
-
-JSONフォーマット:
-{"price": 見つけた株価の数値, "ma": 見つけた25日線の数値}
-
-解析対象テキスト:
-${text}`;
-
-                const result = await model.generateContent(prompt);
-                const responseText = result.response.text();
-                
-                const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
-                if(jsonMatch) {
-                    const data = JSON.parse(jsonMatch[0]);
-                    if(data.price) document.getElementById('current-price').value = Math.round(data.price);
-                    if(data.ma) document.getElementById('ma-value').value = Math.round(data.ma);
-                    
-                    calculateMetrics();
-                    status.innerText = "✅ AIによる自動抽出・入力に成功しました！";
-                    status.style.color = "#00e676";
-                    document.getElementById('paste-box').value = ""; // クリア
-                } else {
-                    status.innerText = "❌ データ形式がうまく読み取れませんでした。手動で微調整してください。";
-                    status.style.color = "#ff5252";
-                }
-            } catch (e) {
-                console.error(e);
-                status.innerText = "❌ 解析エラーが発生しました。";
-                status.style.color = "#ff5252";
-            }
-        }
-
         function switchScreen(id, el) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -291,13 +202,25 @@ ${text}`;
             calculateMetrics();
         }
 
+        // 数字が打ち込まれた瞬間、1文字ごとにリアルタイム計算する超高速ロジック
         function calculateMetrics() {
             const ma = parseFloat(document.getElementById('ma-value').value);
             const price = parseFloat(document.getElementById('current-price').value);
-            if(!ma || !price) return;
+            
+            if(!ma || !price) {
+                document.getElementById('res-kairi').innerText = "-- %";
+                document.getElementById('res-status').innerText = "未入力";
+                document.getElementById('res-status').style.color = "#888";
+                return;
+            }
 
             const kairi = ((price - ma) / ma) * 100;
-            document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
+            const resKairi = document.getElementById('res-kairi');
+            resKairi.innerText = kairi.toFixed(2) + " %";
+            
+            // 乖離率の方向で色分け
+            if(kairi < 0) { resKairi.style.color = "#00e676"; } 
+            else { resKairi.style.color = "#ff5252"; }
 
             let status = "静観（バネ未収縮）";
             let color = "#888";
@@ -324,7 +247,7 @@ ${text}`;
             let logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
             logs.unshift(log);
             localStorage.setItem("bnf_logs", JSON.stringify(logs));
-            alert("保存しました");
+            alert("ログに記録しました！");
         }
 
         function renderLogs() {
@@ -338,7 +261,7 @@ ${text}`;
                 <div class="log-item">
                     <div style="color:#aaa; font-size:0.75rem;">${l.time}</div>
                     <div style="font-weight:bold; color:#00b0ff; margin:3px 0;">銘柄: ${l.code}</div>
-                    <div style="font-weight:bold; font-size:1rem;">乖離率: ${l.kairi} (${l.status})</div>
+                    <div style="font-weight:bold; font-size:1.1rem;">乖離率: ${l.kairi} (${l.status})</div>
                 </div>
             `).join('');
         }
