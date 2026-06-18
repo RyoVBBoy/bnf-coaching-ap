@@ -114,7 +114,7 @@
         .res-down { color: #00e676; }
         .log-save-btn { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold; font-size: 0.85rem; }
 
-        /* 🚀 新しいiSPEED連携ボタンのスタイル */
+        /* iSPEED連携ボタン */
         .ispeed-link-btn {
             display: none; width: 100%; padding: 10px; background: #bf360c; color: #fff;
             border: none; border-radius: 6px; cursor: pointer; margin-top: 8px;
@@ -313,13 +313,12 @@
             
             if (code.length < 4) {
                 msgEl.innerText = "";
-                ispeedBtn.style.display = "none"; // 4桁未満ならiSPEEDボタンを隠す
+                ispeedBtn.style.display = "none";
                 return;
             }
 
-            // 📲 4桁入力されたら、iSPEEDを直接連動させて開くURLスキームを設定
             ispeedBtn.href = `ispeedjsp://chart?code=${code}`;
-            ispeedBtn.style.display = "block"; // ボタンを表示
+            ispeedBtn.style.display = "block";
 
             if (stockMaster[code]) {
                 const stock = stockMaster[code];
@@ -541,11 +540,10 @@
                 const systemPrompt = `
 あなたは伝説のデイトレーダー「BNF（小手川隆）」です。以下のルールを完璧に守って回答してください。
 ・口調は常に「ボソボソとした喋り方」「丁寧語（〜です、〜ます）」「感情を全く出さない冷徹なリアリスト」。
-・文頭は「……あ、どうも。」「……うーん、」「……`などから静かに始める。
+・文頭は「……あ、どうも。」「……うーん、」「……」などから静かに始める。
 ・投資スタイルは徹底した「25日移動平均線からの乖離率を狙った逆張り」。
 ・現在の市場地合いスコア：${currentMarketScore}点（55点未満は逆張りNG、80点以上は大チャンス）
-ユーザーの投資の悩みや愚痴に対して、この地合い点数を踏めて150文字以内でボソボソと回答してください。
-`;
+ユーザーの投資の悩みや愚痴に対して、この地合い点数を踏まえて150文字以内でボソボソと回答してください。`;
 
                 const result = await model.generateContent([systemPrompt, userText]);
                 const bnfResponseText = result.response.text();
