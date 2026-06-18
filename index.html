@@ -68,7 +68,7 @@
             border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1.1rem; box-sizing: border-box;
         }
 
-        /* 📸 画像アップロードエリアの装飾 */
+        /* 📸 画像アップロードエリアのスタイル */
         .upload-zone {
             border: 2px dashed #00e676; padding: 20px; border-radius: 8px;
             text-align: center; background: rgba(0, 230, 118, 0.05); cursor: pointer; margin-bottom: 15px;
@@ -125,7 +125,7 @@
                 <div class="upload-zone" onclick="document.getElementById('file-input').click()">
                     <i class="fa-solid fa-camera"></i>
                     <div style="font-size:0.9rem; font-weight:bold;">チャートのスクショを選択・撮影</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">タップして数値を出した状態の画像がベストです</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">数値をポップアップ等で表示させた状態の画像がベストです</div>
                     <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleImageUpload(this)">
                     <img id="preview-img" alt="プレビュー">
                 </div>
@@ -148,12 +148,12 @@
                 </div>
 
                 <div class="input-group">
-                    <label style="color:#00b0ff;">📈 25日移動平均線 (AI自動入力)</label>
+                    <label style="color:#00b0ff;">📈 25日移動平均線 (AIが自動入力)</label>
                     <input type="number" id="ma-value" placeholder="スクショから自動読取" oninput="calculateMetrics()">
                 </div>
 
                 <div class="input-group">
-                    <label style="color:#00e676;">💰 現在のリアルタイム株価 (AI自動入力)</label>
+                    <label style="color:#00e676;">💰 現在のリアルタイム株価 (AIが自動入力)</label>
                     <input type="number" id="current-price" placeholder="スクショから自動読取" oninput="calculateMetrics()">
                 </div>
 
@@ -219,27 +219,24 @@
             calculateMetrics();
         }
 
-        // 📸 画像が選ばれたらBase64に変換してAIへ投げる準備をする
         function handleImageUpload(input) {
             const file = input.files[0];
             if (!file) return;
 
             const preview = document.getElementById('preview-img');
-            const status = document.getElementById('ocr-status');
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 preview.src = e.target.result;
                 preview.style.display = "inline-block";
-                base64Image = e.target.result.split(',')[1]; // Base64の純粋なデータ部のみ抽出
+                base64Image = e.target.result.split(',')[1]; 
                 
-                // 即座にAI画像解析を実行
+                // 画像が読み込まれたら即座にAI解析へ
                 parseImageWithAI();
             };
             reader.readAsDataURL(file);
         }
 
-        // 🧠 Geminiの目（Vision機能）を使って画像から数値を抜き出す
+        // 🧠 GeminiのVision（画像認識）機能を使って数字を読み取る
         async function parseImageWithAI() {
             const status = document.getElementById('ocr-status');
             if (!geminiApiKey) {
@@ -252,16 +249,15 @@
 
             try {
                 const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-                // 画像認識が必要なため最新のflashモデルを使用
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
                 const prompt = `この画像は株価チャート、もしくは株価詳細画面のスクリーンショットです。
-画像内に写っているテキストや数字、ポップアップ表示などから、以下の2つの数値を読み取ってください。
+画像内に写っているテキストや数字、ポップアップ表示などから、以下の2つの数値を特定して読み取ってください。
 
 1. 現在の株価（リアルタイムの取引値、あるいは一番大きく目立っている株価の数字）
 2. 25日移動平均線（「25日」「25MA」「移動平均(25)」などのラベルの近くにある数値、またはユーザーがタップして出したポップアップ内の25日線の数値）
 
-見つけた数値を以下のJSONフォーマットのみで返答してください。説明や挨拶は一切含めないでください。
+見つけた数値を以下のJSONフォーマットのみで返答してください。説明や日本語の解説は一切含めないでください。
 
 JSONフォーマット:
 {"price": 見つけた株価の数値, "ma": 見つけた25日線の数値}
@@ -287,7 +283,7 @@ JSONフォーマット:
                     status.innerText = "✅ 画像から数値を自動入力しました！";
                     status.style.color = "#00e676";
                 } else {
-                    status.innerText = "❌ 画像から数値がうまく読み取れませんでした。手動で入力してください。";
+                    status.innerText = "❌ 画像から数値がうまく読み取れませんでした。枠内をタップして手動で調整してください。";
                     status.style.color = "#ff5252";
                 }
             } catch (e) {
