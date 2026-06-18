@@ -56,6 +56,8 @@
         .card {
             background-color: var(--card-bg); padding: 20px; border-radius: 12px;
             margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: border-color 0.3s ease;
+            border: 1px solid #333;
         }
 
         h3 { margin-top: 0; color: #00b0ff; font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 8px; }
@@ -113,6 +115,38 @@
             background: none; border: none; color: #00b0ff; text-decoration: underline;
             cursor: pointer; font-size: 0.8rem; padding: 0;
         }
+
+        .score-display-zone {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #333;
+        }
+        .score-num {
+            font-size: 3rem;
+            font-weight: 900;
+            font-family: monospace;
+            line-height: 1;
+            margin-bottom: 5px;
+            transition: color 0.3s ease;
+        }
+        .score-label {
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+        .factor-select-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .guide-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
     </style>
     
     <script type="module">
@@ -126,15 +160,50 @@
 
     <div class="content-area">
         <div id="screen-market" class="screen active">
-            <div class="card">
-                <h3>地合いコントロール</h3>
-                <div class="score-display-zone" id="score-zone">
+            <div class="card" id="market-card">
+                <h3>現在の市場環境をチェック</h3>
+                
+                <div class="score-display-zone" style="margin-bottom: 20px;">
                     <div class="score-num" id="live-score">50点</div>
                     <div class="score-label" id="live-status">ニュートラル</div>
                 </div>
-                <input type="range" id="market-slider" min="0" max="100" value="50" style="width:100%; margin-top:20px;" oninput="manualMarketUpdate(this.value)">
-                <div class="bnf-coach-box" style="margin-top:20px; color:var(--text-muted); font-size:0.9rem;">
-                    B.N.F: <span id="bnf-comment-text">「……。普通ですね」</span>
+
+                <div class="factor-select-group">
+                    <div class="input-group">
+                        <label>① 指数（日経平均・TOPIX）の下落度合い</label>
+                        <select id="check-index" onchange="autoCalculateMarket()">
+                            <option value="30">上昇している、またはヨコヨコで安定している</option>
+                            <option value="20" selected>少し下がっている（前日比 -1% 前後の一時的な調整）</option>
+                            <option value="10">かなり下がっている（前日比 -2%〜-3% 以上の明確な急落）</option>
+                            <option value="0">パニック暴落（前日比 -4% 以上、または数日連続の大暴落）</option>
+                        </select>
+                        <div class="guide-text">相場全体の下げの勢いを確認します。</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>② 値下がり銘柄数の割合（パニック度）</label>
+                        <select id="check-stocks" onchange="autoCalculateMarket()">
+                            <option value="30">値上がり銘柄の方が多い、またはトントン</option>
+                            <option value="20" selected>値下がり銘柄がやや多い（全体の 60% 程度が下落）</option>
+                            <option value="10">全面安に近い（全体の 80% 以上が下落。画面がほぼ真っ赤）</option>
+                            <option value="0">完全なパニック（全体の 90% 以上が値下がり。逃げ場なし）</option>
+                        </select>
+                        <div class="guide-text">市場全体で個人投資家がパニックで投げ売りしているかの指標です。</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>③ 主力株（半導体や大型株）の連動性</label>
+                        <select id="check-leaders" onchange="autoCalculateMarket()">
+                            <option value="40">主力株はしっかり買われている、または耐えている</option>
+                            <option value="20" selected>業種ごとにマチマチ（一部の銘柄だけが下がっている）</option>
+                            <option value="0">主力株も全滅（レーザーテック等の主要銘柄も一緒に投げられている）</option>
+                        </select>
+                        <div class="guide-text">ターゲットにする銘柄が、地合いに巻き込まれて無理やり下げられているかを見ます。</div>
+                    </div>
+                </div>
+
+                <div class="bnf-coach-box" style="margin-top:25px; color:var(--text-muted); font-size:0.9rem; border-top: 1px solid #333; padding-top: 15px;">
+                    B.N.Fの視点: <span id="bnf-comment-text">「……。普通ですね」</span>
                 </div>
             </div>
         </div>
@@ -272,42 +341,64 @@
             if(id === 'log') renderLogs();
         }
 
-        function updateMarketComment(score) {
+        // --- 3つの客観的な選択肢からスコアを100点満点に自動計算する新ロジック ---
+        function autoCalculateMarket() {
+            const idxVal = parseInt(document.getElementById('check-index').value, 10);
+            const stkVal = parseInt(document.getElementById('check-stocks').value, 10);
+            const ledVal = parseInt(document.getElementById('check-leaders').value, 10);
+
+            // 合計値は 0 〜 100 になる
+            currentMarketScore = idxVal + stkVal + ledVal;
+            
+            uiUpdateMarket(currentMarketScore);
+        }
+
+        // --- 地合いUIとステータスの同期処理 ---
+        function uiUpdateMarket(score) {
+            document.getElementById('live-score').innerText = score + "点";
+            
             const statusEl = document.getElementById('live-status');
             const commentEl = document.getElementById('bnf-comment-text');
-            let status, comment, color;
+            const scoreNumEl = document.getElementById('live-score');
+            const marketCard = document.getElementById('market-card');
+            
+            let status, comment, color, cardBorder;
 
+            // スコアが「低い」ほど、市場がパニック（＝逆張りの大チャンス）になります
             if (score >= 80) {
-                status = "過熱（楽観）";
-                comment = "「みんな儲かってる時って、一番危ないんですよね」";
-                color = "#ff5252";
+                status = "過熱・上昇（逆張り厳禁）";
+                comment = "「みんな儲かってる時って、一番危ないんですよね。今は動く時じゃないです」";
+                color = "#ff5252"; // 赤（警告）
+                cardBorder = "rgba(255, 82, 82, 0.3)";
             } else if (score >= 60) {
-                status = "やや楽観";
-                comment = "「まあ、悪くはないですね」";
-                color = "#ffb300";
+                status = "やや楽観・通常";
+                comment = "「まあ、悪くはないですが、わざわざここで無理に買う必要もないですね」";
+                color = "#ffb300"; // 黄
+                cardBorder = "rgba(255, 179, 0, 0.3)";
             } else if (score >= 40) {
                 status = "ニュートラル";
-                comment = "「……。普通ですね」";
-                color = "#888888";
+                comment = "「……。普通ですね。しっかり引き付けないとやられます」";
+                color = "#888888"; // 灰
+                cardBorder = "#333";
             } else if (score >= 20) {
-                status = "やや悲観";
-                comment = "清算が進んできましたね";
-                color = "#00b0ff";
+                status = "警戒・連れ安発生（監視強化）";
+                comment = "「いい感じに投げが出てきましたね。そろそろ面白くなってきました」";
+                color = "#00b0ff"; // 青
+                cardBorder = "rgba(0, 176, 255, 0.3)";
             } else {
-                status = "極度の悲観（チャンス）";
-                comment = "「みんなが投げてる時が、一番美味しいんですよ」";
-                color = "#00e676";
+                status = "極度のパニック・セリクラ（大チャンス）";
+                comment = "「みんなが恐怖で投げてる時が、一番美味しいんですよ。これぞ逆張りです」";
+                color = "#00e676"; // 緑（GOサイン）
+                cardBorder = "rgba(0, 230, 118, 0.4)";
             }
 
             statusEl.innerText = status;
             statusEl.style.color = color;
+            scoreNumEl.style.color = color;
+            marketCard.style.borderColor = cardBorder;
             commentEl.innerText = comment;
-        }
 
-        function manualMarketUpdate(val) {
-            currentMarketScore = parseInt(val, 10);
-            document.getElementById('live-score').innerText = val + "点";
-            updateMarketComment(currentMarketScore);
+            // ツール画面側の乖離率しきい値計算にも即座に連動
             calculateMetrics();
         }
 
@@ -320,7 +411,7 @@
                 input.value = "";
                 return;
             }
-            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+            const MAX_FILE_SIZE = 10 * 1024 * 1024;
             if (file.size > MAX_FILE_SIZE) {
                 alert("ファイルサイズが大きすぎます（10MB以下の画像を選択してください）。");
                 input.value = "";
@@ -423,6 +514,7 @@
             }
         }
 
+        // --- 乖離率計算。スコアが低い（＝パニック）ほど、買いのハードル（しきい値）が下がってチャンス判定が出やすくなる ---
         function calculateMetrics() {
             const ma = parseFloat(document.getElementById('ma-value').value);
             const price = parseFloat(document.getElementById('current-price').value);
@@ -437,6 +529,7 @@
             const kairi = ((price - ma) / ma) * 100;
             document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
 
+            // スコアが50（通常）より低ければ低いほど市場がパニックなので、しきい値を緩く（浅い乖離でも買えるように）調整
             const marketAdjustment = (currentMarketScore - 50) / 10;
             const thresholdWarning = -8 - marketAdjustment;
             const thresholdBuy = -15 - marketAdjustment;
@@ -553,7 +646,8 @@
                 document.getElementById('api-key-setup').style.display = 'none';
                 document.getElementById('api-key-connected').style.display = 'flex';
             }
-            updateMarketComment(currentMarketScore);
+            // 初期状態をシミュレート
+            autoCalculateMarket();
         };
     </script>
 </body>
