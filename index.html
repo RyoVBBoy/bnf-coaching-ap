@@ -63,7 +63,7 @@
         .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; }
 
-        input[type="number"], select, input[type="text"] {
+        input[type="number"], input[type="password"], select, input[type="text"] {
             width: 100%; padding: 12px; background-color: var(--input-bg);
             border: 2px solid #333; border-radius: 8px; color: #fff; font-size: 1.1rem; box-sizing: border-box;
         }
@@ -98,6 +98,21 @@
 
         .log-item { background: #151515; border-left: 4px solid #ff5252; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; }
         #ocr-status { text-align: center; font-size: 0.85rem; margin-top: 6px; font-weight: bold; }
+
+        .key-input-row { display: flex; gap: 6px; }
+        .key-eye-btn {
+            background: #333; color: #fff; border: none; border-radius: 8px;
+            padding: 0 14px; cursor: pointer; font-size: 1rem;
+        }
+        .key-warning { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
+        .key-connected-row {
+            display: none; align-items: center; gap: 8px; margin-bottom: 10px;
+            font-size: 0.85rem; color: var(--text-muted);
+        }
+        .key-change-btn {
+            background: none; border: none; color: #00b0ff; text-decoration: underline;
+            cursor: pointer; font-size: 0.8rem; padding: 0;
+        }
     </style>
     
     <script type="module">
@@ -168,6 +183,7 @@
                 <div class="tool-result-zone" id="tool-result">
                     <div class="result-row"><span>乖離率</span><span class="res-val" id="res-kairi">-- %</span></div>
                     <div class="result-row"><span>判定</span><span class="res-val" id="res-status">未入力</span></div>
+                    <div class="result-row"><span>地合い調整後しきい値</span><span class="res-val" id="res-threshold" style="font-size:0.9rem;">--</span></div>
                 </div>
                 <button class="btn btn-save" onclick="saveTradeLog()"><i class="fa-solid fa-floppy-disk"></i> ログに保存</button>
             </div>
@@ -176,10 +192,26 @@
         <div id="screen-brain" class="screen">
             <div class="card" style="padding:10px;">
                 <h3>BNF AI COACH</h3>
+
                 <div id="api-key-setup" style="margin-bottom:10px;">
-                    <input type="text" id="api-key-input" placeholder="Gemini APIキーを入力" style="font-size:0.8rem;">
-                    <button onclick="saveApiKey()" class="btn" style="background:var(--primary-color); margin-top:5px;">接続</button>
+                    <div class="key-input-row">
+                        <input type="password" id="api-key-input" placeholder="Gemini APIキーを入力">
+                        <button type="button" class="key-eye-btn" onclick="toggleKeyVisibility()">
+                            <i class="fa-solid fa-eye" id="key-eye-icon"></i>
+                        </button>
+                    </div>
+                    <button onclick="saveApiKey()" class="btn" style="background:var(--primary-color);">接続</button>
+                    <div class="key-warning">
+                        ⚠️ このAPIキーはブラウザ内（localStorage）に保存され、Google APIへの通信に直接使われます。共有PCで使う場合や、このページを他人に配布する場合は注意してください。
+                    </div>
                 </div>
+
+                <div id="api-key-connected" class="key-connected-row">
+                    <i class="fa-solid fa-circle-check" style="color:#00e676;"></i>
+                    <span>APIキー接続済み</span>
+                    <button class="key-change-btn" onclick="changeApiKey()">変更する</button>
+                </div>
+
                 <div class="chat-container">
                     <div class="chat-timeline" id="chat-box">
                         <div class="bubble bnf">「……。何かありますか」</div>
@@ -213,12 +245,19 @@
         let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
         let compressedBase64 = "";
 
+        // --- XSS対策: 文字列をエスケープしてからinnerHTMLに渡す ---
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = String(str);
+            return div.innerHTML;
+        }
+
         function updateYahooLink(code) {
             const linkZone = document.getElementById('link-zone');
             if(code && code.length === 4) {
                 linkZone.innerHTML = `
-                    <a href="https://finance.yahoo.co.jp/quote/${code}" target="_blank" class="btn-link">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> ${code} のYahoo!株価詳細を開く
+                    <a href="https://finance.yahoo.co.jp/quote/${encodeURIComponent(code)}" target="_blank" class="btn-link">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> ${escapeHtml(code)} のYahoo!株価詳細を開く
                     </a>
                 `;
             } else {
@@ -234,15 +273,62 @@
             if(id === 'log') renderLogs();
         }
 
+        // --- 地合いスコアに応じてステータス・BNFコメントを切り替える ---
+        function updateMarketComment(score) {
+            const statusEl = document.getElementById('live-status');
+            const commentEl = document.getElementById('bnf-comment-text');
+            let status, comment, color;
+
+            if (score >= 80) {
+                status = "過熱（楽観）";
+                comment = "「みんな儲かってる時って、一番危ないんですよね」";
+                color = "#ff5252";
+            } else if (score >= 60) {
+                status = "やや楽観";
+                comment = "「まあ、悪くはないですね」";
+                color = "#ffb300";
+            } else if (score >= 40) {
+                status = "ニュートラル";
+                comment = "「……。普通ですね」";
+                color = "#888888";
+            } else if (score >= 20) {
+                status = "やや悲観";
+                comment = "「そろそろ面白くなってきましたね」";
+                color = "#00b0ff";
+            } else {
+                status = "極度の悲観（チャンス）";
+                comment = "「みんなが投げてる時が、一番美味しいんですよ」";
+                color = "#00e676";
+            }
+
+            statusEl.innerText = status;
+            statusEl.style.color = color;
+            commentEl.innerText = comment;
+        }
+
         function manualMarketUpdate(val) {
-            currentMarketScore = val;
+            currentMarketScore = parseInt(val, 10);
             document.getElementById('live-score').innerText = val + "点";
+            updateMarketComment(currentMarketScore);
             calculateMetrics();
         }
 
         function handleImageUpload(input) {
             const file = input.files[0];
             if (!file) return;
+
+            // --- ファイル形式・サイズの検証 ---
+            if (!file.type.startsWith('image/')) {
+                alert("画像ファイルを選択してください。");
+                input.value = "";
+                return;
+            }
+            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+            if (file.size > MAX_FILE_SIZE) {
+                alert("ファイルサイズが大きすぎます（10MB以下の画像を選択してください）。");
+                input.value = "";
+                return;
+            }
 
             const preview = document.getElementById('preview-img');
             const status = document.getElementById('ocr-status');
@@ -274,7 +360,15 @@
                     
                     parseImageWithAI();
                 };
+                img.onerror = function() {
+                    status.innerText = "画像を読み込めませんでした。別のファイルをお試しください。";
+                    status.style.color = "#ff5252";
+                };
                 img.src = e.target.result;
+            };
+            reader.onerror = function() {
+                status.innerText = "ファイルの読み込みに失敗しました。";
+                status.style.color = "#ff5252";
             };
             reader.readAsDataURL(file);
         }
@@ -332,6 +426,7 @@
             }
         }
 
+        // --- 乖離率の計算。地合いスコアでしきい値を調整する ---
         function calculateMetrics() {
             const ma = parseFloat(document.getElementById('ma-value').value);
             const price = parseFloat(document.getElementById('current-price').value);
@@ -339,21 +434,36 @@
             if(!ma || !price) {
                 document.getElementById('res-kairi').innerText = "-- %";
                 document.getElementById('res-status').innerText = "未入力";
+                document.getElementById('res-threshold').innerText = "--";
                 return;
             }
 
             const kairi = ((price - ma) / ma) * 100;
             document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
 
+            // 地合いスコアが高い（楽観）ほどしきい値を厳しく（より大きな下落を要求）
+            // 地合いスコアが低い（悲観・パニック）ほどしきい値を緩める
+            const marketAdjustment = (currentMarketScore - 50) / 10; // -5 ～ +5
+            const thresholdWarning = -8 - marketAdjustment;
+            const thresholdBuy = -15 - marketAdjustment;
+
             let status = "静観（バネ未収縮）";
             let color = "#888";
-            
-            if(kairi < -15) { status = "限界突破（BNF買いゾーン）"; color = "#00e676"; }
-            else if(kairi < -8) { status = "チャンス目前（監視）"; color = "#ffb300"; }
-            
+
+            if (kairi < thresholdBuy) {
+                status = "限界突破（BNF買いゾーン）";
+                color = "#00e676";
+            } else if (kairi < thresholdWarning) {
+                status = "チャンス目前（監視）";
+                color = "#ffb300";
+            }
+
             const resZone = document.getElementById('res-status');
             resZone.innerText = status;
             resZone.style.color = color;
+
+            document.getElementById('res-threshold').innerText =
+                `${thresholdWarning.toFixed(1)}% / ${thresholdBuy.toFixed(1)}%`;
         }
 
         function saveTradeLog() {
@@ -382,9 +492,9 @@
             }
             container.innerHTML = logs.map(l => `
                 <div class="log-item">
-                    <div style="color:#aaa; font-size:0.75rem;">${l.time}</div>
-                    <div style="font-weight:bold; color:#00b0ff; margin:3px 0;">銘柄: ${l.code}</div>
-                    <div style="font-weight:bold; font-size:1.1rem;">乖離率: ${l.kairi} (${l.status})</div>
+                    <div style="color:#aaa; font-size:0.75rem;">${escapeHtml(l.time)}</div>
+                    <div style="font-weight:bold; color:#00b0ff; margin:3px 0;">銘柄: ${escapeHtml(l.code)}</div>
+                    <div style="font-weight:bold; font-size:1.1rem;">乖離率: ${escapeHtml(l.kairi)} (${escapeHtml(l.status)})</div>
                 </div>
             `).join('');
         }
@@ -396,11 +506,35 @@
             }
         }
 
+        // --- APIキー入力欄の表示/非表示切替 ---
+        function toggleKeyVisibility() {
+            const input = document.getElementById('api-key-input');
+            const icon = document.getElementById('key-eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye';
+            }
+        }
+
         function saveApiKey() {
-            const key = document.getElementById('api-key-input').value;
+            const key = document.getElementById('api-key-input').value.trim();
+            if (!key) {
+                alert("APIキーを入力してください。");
+                return;
+            }
             localStorage.setItem("gemini_api_key", key);
             geminiApiKey = key;
+            document.getElementById('api-key-input').value = "";
             document.getElementById('api-key-setup').style.display = 'none';
+            document.getElementById('api-key-connected').style.display = 'flex';
+        }
+
+        function changeApiKey() {
+            document.getElementById('api-key-setup').style.display = 'block';
+            document.getElementById('api-key-connected').style.display = 'none';
         }
 
         async function sendChatMessage() {
@@ -409,19 +543,25 @@
             if(!input.value || !geminiApiKey) return;
 
             const userText = input.value;
-            chatBox.innerHTML += `<div class="bubble user">${userText}</div>`;
+            chatBox.innerHTML += `<div class="bubble user">${escapeHtml(userText)}</div>`;
             input.value = "";
 
             try {
                 const genAI = new window.GoogleGenerativeAI(geminiApiKey);
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
                 const result = await model.generateContent(`あなたはBNFです。地合いスコア${currentMarketScore}点。ボソボソと答えて。：${userText}`);
-                chatBox.innerHTML += `<div class="bubble bnf">${result.response.text()}</div>`;
+                chatBox.innerHTML += `<div class="bubble bnf">${escapeHtml(result.response.text())}</div>`;
             } catch (e) { chatBox.innerHTML += `<div class="bubble bnf">……。エラー。</div>`; }
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        window.onload = () => { if(geminiApiKey) document.getElementById('api-key-setup').style.display='none'; };
+        window.onload = () => {
+            if(geminiApiKey) {
+                document.getElementById('api-key-setup').style.display = 'none';
+                document.getElementById('api-key-connected').style.display = 'flex';
+            }
+            updateMarketComment(currentMarketScore);
+        };
     </script>
 </body>
 </html>
