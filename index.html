@@ -116,7 +116,6 @@
         .res-up { color: #ff5252; }
         .res-down { color: #00e676; }
         .log-save-btn { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold; font-size: 0.85rem; }
-        .log-save-btn:hover { background: var(--primary-color); color: #121212; border-color: var(--primary-color); }
 
         /* 🤖 AIチャットボット専用スタイル */
         .chat-container {
@@ -295,7 +294,6 @@
             }
         }
 
-        // 🌍 手動地合いコントロールロジック
         function manualMarketUpdate(score) {
             currentMarketScore = parseInt(score);
             const scoreEl = document.getElementById('live-score');
@@ -311,4 +309,187 @@
                 bnfComment = "「……セクター全体が完全に壊れて叩き売られてますね。絶好の逆張りチャンスです。ここで恐怖に負けて買えないなら、デイトレなんて辞めたほうがいいですよ」";
             } else if (currentMarketScore >= 55) {
                 color = "#ffb300"; glow = "rgba(255, 179, 0, 0.3)"; statusText = "💛 チャンス間近（監視強化）";
-                bnf
+                bnfComment = "「……そこそこ連れ安する銘柄が出てきてます。でもまだ焦って突っ込むところじゃない。25日線からの乖離率が本当にターゲットに届くか、じっくり引きつけてください」";
+            } else {
+                color = "#ff5252"; glow = "rgba(255, 82, 82, 0.3)"; statusText = "⚠️ 罠（期待値なし・ステイ）";
+                bnfComment = "「……地合いが良すぎます。こんな日に逆張りをしても、バネが縮んでないからリバウンドなんてしません。無駄な取引をするくらいなら、僕なら漫画読んで寝てますよ」";
+            }
+
+            document.documentElement.style.setProperty('--status-color', color);
+            document.documentElement.style.setProperty('--status-glow', glow);
+            statusEl.innerText = statusText;
+            commentEl.innerText = bnfComment;
+            
+            calculateMetrics();
+        }
+
+        function calculateMetrics() {
+            const sector = document.getElementById('stock-sector').value;
+            const ma = parseFloat(document.getElementById('ma-value').value);
+            const price = parseFloat(document.getElementById('current-price').value);
+            if (!ma || !price) return;
+
+            const kairi = ((price - ma) / ma) * 100;
+            document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
+
+            let yellowBorder = -5; let redBorder = -8;
+            if (sector === 'tech') { yellowBorder = -8; redBorder = -12; }
+            if (sector === 'growth') { yellowBorder = -15; redBorder = -25; }
+
+            let toolColor = "#ff5252"; let toolGlow = "rgba(255, 82, 82, 0.2)"; let statusText = "⚠️ 危険（底抜け注意）";
+            let bnfToolComment = "「……まだバネの縮みが足りない。今買うのはただのフライング。資金を減らしたい趣味がある人だけが買う位置です」";
+
+            if (kairi <= redBorder) {
+                toolColor = "#00e676"; toolGlow = "rgba(0, 230, 118, 0.3)"; statusText = "🚨 限界突破（BNFゾーン）";
+                bnfToolComment = "「……よし。完全にバネが歪んでます。地合いスコアが55点以上なら、リバウンドの期待値は極めて高い。一泊二日の原則を頭に入れて仕込むタイミングです」";
+            } else if (kairi <= yellowBorder) {
+                toolColor = "#ffb300"; toolGlow = "rgba(255, 179, 0, 0.2)"; statusText = "💛 チャンス目前（監視）";
+                bnfToolComment = "「……バネが縮み始めてます。同じセクターの他の銘柄も一緒に連れ安して底を打つ瞬間を、5分足で狙ってください」";
+            }
+
+            if (currentMarketScore < 55) {
+                toolColor = "#ff5252"; toolGlow = "rgba(255, 82, 82, 0.3)"; statusText = "🛑 逆張りロック（地合い不良）";
+                bnfToolComment = "「……株のバネが縮んでいても、市場全体にパニックの売りが入っていません。全体に支えがない状態の逆張りはただの自殺行為。ロックします」";
+            }
+
+            document.documentElement.style.setProperty('--tool-status-color', toolColor);
+            document.documentElement.style.setProperty('--tool-status-glow', toolGlow);
+            document.getElementById('tool-result').style.borderColor = toolColor;
+            document.getElementById('res-status').innerText = statusText;
+            document.getElementById('res-status').style.color = toolColor;
+            document.getElementById('bnf-tool-comment').innerText = bnfToolComment;
+
+            const breakEvenPrice = price * 1.0044; 
+            document.getElementById('res-target-win').innerText = Math.round(breakEvenPrice * 1.015) + " 円";
+            document.getElementById('res-target-loss').innerText = Math.round(breakEvenPrice * 0.99) + " 円";
+        }
+
+        function saveTradeLog() {
+            const sectorText = document.getElementById('stock-sector').options[document.getElementById('stock-sector').selectedIndex].text;
+            const kairiText = document.getElementById('res-kairi').innerText;
+            const statusText = document.getElementById('res-status').innerText;
+
+            if(kairiText === "-- %") {
+                alert("ツールに数値を入力してから記録してください！");
+                return;
+            }
+
+            const now = new Date();
+            const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const newLog = {
+                time: timeStr,
+                score: currentMarketScore,
+                sector: sectorText,
+                kairi: kairiText,
+                status: statusText
+            };
+
+            let logs = JSON.parse(localStorage.getItem("bnf_trade_logs")) || [];
+            logs.unshift(newLog);
+            localStorage.setItem("bnf_trade_logs", JSON.stringify(logs));
+
+            alert("エラーレーダーにデータを記録しました！");
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('log-container');
+            const emptyMsg = document.getElementById('log-empty-msg');
+            const clearBtn = document.getElementById('clear-log-btn');
+            let logs = JSON.parse(localStorage.getItem("bnf_trade_logs")) || [];
+
+            container.innerHTML = "";
+
+            if(logs.length === 0) {
+                emptyMsg.style.display = "block";
+                clearBtn.style.display = "none";
+                return;
+            }
+
+            emptyMsg.style.display = "none";
+            clearBtn.style.display = "block";
+
+            logs.forEach(log => {
+                let borderStyle = "border-left: 4px solid #ff5252;";
+                if(log.status.includes("限界突破") || log.status.includes("チャンス")) {
+                    borderStyle = "border-left: 4px solid #00e676;";
+                }
+                
+                container.innerHTML += `
+                    <div class="log-item" style="${borderStyle}">
+                        <div class="log-meta">
+                            <span>📅 ${log.time}</span>
+                            <span>🌍 地合い: ${log.score}点</span>
+                        </div>
+                        <div style="font-weight:bold; color:#00b0ff;">${log.sector}</div>
+                        <div style="margin-top:4px;">乖離率: <span style="font-family:monospace; font-weight:bold;">${log.kairi}</span> (${log.status})</div>
+                    </div>
+                `;
+            });
+        }
+
+        function clearLogs() {
+            if(confirm("すべてのログ履歴を削除してもよろしいですか？")) {
+                localStorage.removeItem("bnf_trade_logs");
+                renderLogs();
+            }
+        }
+
+        async function sendChatMessage() {
+            const inputEl = document.getElementById('chat-input');
+            const chatBox = document.getElementById('chat-box');
+            const userText = inputEl.value.trim();
+
+            if (!userText) return;
+            if (!geminiApiKey) { alert("先にGemini APIキーを入力して接続してください！"); return; }
+
+            chatBox.innerHTML += `<div class="bubble user">${userText}</div>`;
+            inputEl.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const typingId = "typing-" + Date.now();
+            chatBox.innerHTML += `
+                <div class="bubble bnf" id="${typingId}">
+                    <div class="chat-system-tag">B.N.F</div>
+                    <div class="typing-dots"><span></span><span></span><span></span></div>
+                </div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+                const systemPrompt = `
+あなたは伝説のデイトレーダー「BNF（小手川隆）」です。以下のルールを完璧に守って回答してください。
+・口調は常に「ボソボソとした喋り方」「丁寧語（〜です、〜ます）」「感情を全く出さない冷徹なリアリスト」。
+・文頭は「……あ、どうも。」「……うーん、」「……」などから静かに始める。
+・投資スタイルは徹底した「25日移動平均線からの乖離率を狙った逆張り」。
+・現在の市場地合いスコア：${currentMarketScore}点（55点未満は逆張りNG、80点以上は大チャンス）
+ユーザーの投資の悩みや愚痴に対して、この地合い点数を踏めて150文字以内でボソボソと回答してください。
+`;
+
+                const result = await model.generateContent([systemPrompt, userText]);
+                const bnfResponseText = result.response.text();
+
+                const typingBubble = document.getElementById(typingId);
+                typingBubble.innerHTML = `<div class="chat-system-tag">B.N.F</div>${bnfResponseText}`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+            } catch (error) {
+                console.error(error);
+                const typingBubble = document.getElementById(typingId);
+                typingBubble.innerHTML = `<div class="chat-system-tag">B.N.F</div>「……あ、なんか通信エラーみたいです」`;
+            }
+        }
+
+        // ⚠️ ここを修正：起動時にエラーが起きないように初期設定を整理しました
+        window.onload = function() {
+            manualMarketUpdate(50); 
+            if(geminiApiKey) { 
+                const setupArea = document.getElementById('api-key-setup');
+                if(setupArea) setupArea.style.display = 'none'; 
+            }
+        };
+    </script>
+</body>
+</html>
