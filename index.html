@@ -82,11 +82,19 @@
         }
         input:focus, select:focus { border-color: var(--primary-color); outline: none; }
 
+        /* スライダー専用スタイル */
+        input[type="range"] {
+            width: 100%; -webkit-appearance: none; background: #333; height: 8px; border-radius: 4px; outline: none; margin: 15px 0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: var(--primary-color); cursor: pointer; box-shadow: 0 0 10px var(--primary-color);
+        }
+
         /* 地合いスコア専用UI */
         .score-display-zone {
             text-align: center; padding: 20px 0; border-radius: 10px;
             background: linear-gradient(180deg, var(--card-bg) 0%, var(--status-glow) 100%);
-            border: 1px solid var(--status-color); transition: all 0.5s ease; box-shadow: 0 0 15px var(--status-glow);
+            border: 1px solid var(--status-color); transition: all 0.3s ease; box-shadow: 0 0 15px var(--status-glow);
         }
         .score-num { font-size: 3.5rem; font-weight: bold; color: var(--status-color); text-shadow: 0 0 10px var(--status-glow); }
         .score-label { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; }
@@ -100,12 +108,6 @@
         .bnf-tool-name { color: var(--tool-status-color); font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; }
         .bnf-comment { font-size: 0.95rem; line-height: 1.5; color: #e0e0e0; }
 
-        .market-stats { display: flex; justify-content: space-around; margin-top: 15px; font-size: 0.9rem; }
-        .stat-box { text-align: center; }
-        .stat-up { color: #ff5252; font-weight: bold; }
-        .stat-down { color: #00e676; font-weight: bold; }
-        .refresh-btn { width: 100%; padding: 12px; background-color: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 8px; cursor: pointer; margin-top: 15px; font-size: 1rem; }
-
         /* ツール出力エリア */
         .tool-result-zone { margin-top: 20px; padding: 15px; border-radius: 10px; background-color: #151515; border: 1px solid var(--tool-status-color); box-shadow: 0 0 10px var(--tool-status-glow); }
         .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; }
@@ -113,6 +115,8 @@
         .res-val { font-weight: bold; font-family: monospace; font-size: 1.1rem; }
         .res-up { color: #ff5252; }
         .res-down { color: #00e676; }
+        .log-save-btn { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: #fff; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold; font-size: 0.85rem; }
+        .log-save-btn:hover { background: var(--primary-color); color: #121212; border-color: var(--primary-color); }
 
         /* 🤖 AIチャットボット専用スタイル */
         .chat-container {
@@ -134,6 +138,11 @@
         .typing-dots span:nth-child(2) { animation-delay: .2s; }
         .typing-dots span:nth-child(3) { animation-delay: .4s; }
         @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
+
+        /* 📊 ログ専用スタイル */
+        .log-item { background: #151515; border-left: 4px solid #ff5252; padding: 12px; border-radius: 0 8px 8px 0; margin-bottom: 10px; font-size: 0.85rem; }
+        .log-meta { display: flex; justify-content: space-between; color: var(--text-muted); margin-bottom: 5px; font-size: 0.75rem; }
+        .log-clear-btn { width: 100%; padding: 12px; background: #cf6679; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; display: none; }
     </style>
     
     <script type="module">
@@ -148,19 +157,23 @@
     <div class="content-area">
         <div id="screen-market" class="screen active">
             <div class="card">
-                <h3>🌍 東証プライム・戦況レーダー</h3>
+                <h3>🌍 東証プライム・地合いコントロール</h3>
                 <div class="score-display-zone" id="score-zone">
-                    <div class="score-num" id="live-score">--</div>
-                    <div class="score-label" id="live-status">市場データ読込中...</div>
+                    <div class="score-num" id="live-score">50点</div>
+                    <div class="score-label" id="live-status">📊 ニュートラル（様子見相場）</div>
                 </div>
-                <div class="market-stats">
-                    <div class="stat-box">値上がり<br><span class="stat-up" id="stat-up-num">--</span></div>
-                    <div class="stat-box">値下がり<br><span class="stat-down" id="stat-down-num">--</span></div>
+
+                <div class="input-group" style="margin-top: 20px;">
+                    <label style="display: flex; justify-content: space-between;">
+                        <span>🟢 全体値上がり優勢</span>
+                        <span>🔴 パニック（全面安・大暴落）</span>
+                    </label>
+                    <input type="range" id="market-slider" min="0" max="100" value="50" oninput="manualMarketUpdate(this.value)">
                 </div>
-                <button class="refresh-btn" onclick="fetchMarketData()"><i class="fa-solid fa-rotate"></i> 情報を更新</button>
+
                 <div class="bnf-coach-box">
                     <div class="bnf-name">B.N.F</div>
-                    <div class="bnf-comment" id="bnf-comment-text">「……。市場のデータを確認しています。少し待ってください」</div>
+                    <div class="bnf-comment" id="bnf-comment-text">「……。地合いは普通ですね。無理して動く必要はないんじゃないですか」</div>
                 </div>
             </div>
         </div>
@@ -190,6 +203,8 @@
                     <div class="result-row"><span>🟢 マシーン利確（+1.5%目安）</span><span class="res-val res-up" id="res-target-win">-- 円</span></div>
                     <div class="result-row"><span>🔴 マシーン損切（-1.0%目安）</span><span class="res-val res-down" id="res-target-loss">-- 円</span></div>
                 </div>
+                <button class="log-save-btn" onclick="saveTradeLog()"><i class="fa-solid fa-floppy-disk"></i> このデータをエラーレーダーに記録</button>
+                
                 <div class="bnf-tool-coach-box">
                     <div class="bnf-tool-name">B.N.F</div>
                     <div class="bnf-comment" id="bnf-tool-comment">「……。セクターと数値を入力してください」</div>
@@ -207,14 +222,13 @@
                         <input type="text" id="api-key-input" placeholder="AIzaSy..." style="font-family:monospace; font-size:0.85rem;">
                         <button onclick="saveApiKey()" style="background:var(--primary-color); border:none; border-radius:6px; font-weight:bold; padding:0 15px; cursor:pointer;">接続</button>
                     </div>
-                    <p style="font-size:0.75rem; color:var(--text-muted); margin:5px 0 0 0;">※キーはあなたのブラウザだけに安全に記憶され、外部に送信されません。</p>
                 </div>
 
                 <div class="chat-container">
                     <div class="chat-timeline" id="chat-box">
                         <div class="bubble bnf">
                             <div class="chat-system-tag">B.N.F</div>
-                            「……。何か迷いでもあるんですか。本物のGeminiの脳ミソを借りて、僕がボソボソとお答えしますけど……」
+                            「……。何か迷いでもあるんですか。僕がボソボソとお答えしますけど……」
                         </div>
                     </div>
                     
@@ -229,7 +243,10 @@
         <div id="screen-log" class="screen">
             <div class="card">
                 <h3>📊 ERROR RADAR（ログ・分析）</h3>
-                <p style="color:var(--text-muted)">データログ解析器準備中...</p>
+                <div id="log-container" style="margin-bottom: 15px;">
+                    <p id="log-empty-msg" style="color:var(--text-muted); text-align:center;">保存されたトレードログはありません。<br>「ツール」画面から記録してください。</p>
+                </div>
+                <button id="clear-log-btn" class="log-clear-btn" onclick="clearLogs()"><i class="fa-solid fa-trash"></i> ログ履歴をすべてリセット</button>
             </div>
         </div>
     </div>
@@ -264,190 +281,34 @@
 
             const headers = { 'market': 'MARKET SCORE', 'tools': 'THE TOOLS', 'brain': 'THE BRAIN', 'log': 'ERROR RADAR' };
             document.getElementById('app-title').innerText = headers[screenId];
+            
+            if(screenId === 'log') { renderLogs(); }
         }
 
-        // APIキー保存用
         function saveApiKey() {
             const key = document.getElementById('api-key-input').value.trim();
             if(key) {
                 localStorage.setItem("gemini_api_key", key);
                 geminiApiKey = key;
                 document.getElementById('api-key-setup').style.display = 'none';
-                alert("Geminiへの接続パスワードを設定しました！");
+                alert("Gemini接続完了！");
             }
         }
 
-        // 🌍 地合いロジック
-        async function fetchMarketData() {
-            document.getElementById('live-status').innerText = "スキャン中...";
-            try {
-                const response = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://stocks.finance.yahoo.co.jp/stocks/marketprofile/'));
-                const data = await response.json();
-                const html = data.contents;
-                const upMatch = html.match(/値上がり銘柄数<\/th><td>([\d,]+)/);
-                const downMatch = html.match(/値下がり銘柄数<\/th><td>([\d,]+)/);
-                
-                let up = 600; let down = 1000;
-                if (upMatch && downMatch) {
-                    up = parseInt(upMatch[1].replace(/,/g, ''));
-                    down = parseInt(downMatch[1].replace(/,/g, ''));
-                } else {
-                    up = Math.floor(Math.random() * 1200) + 200; down = Math.floor(Math.random() * 1200) + 200;
-                }
-                document.getElementById('stat-up-num').innerText = up;
-                document.getElementById('stat-down-num').innerText = down;
-                const total = up + down;
-                const score = Math.round((down / total) * 100);
-                currentMarketScore = score;
-                updateScoreUI(score);
-            } catch (error) {
-                console.error("データ取得失敗:", error);
-                document.getElementById('live-status').innerText = "通信エラー。再試行してください";
-            }
-        }
-
-        function updateScoreUI(score) {
+        // 🌍 手動地合いコントロールロジック
+        function manualMarketUpdate(score) {
+            currentMarketScore = parseInt(score);
             const scoreEl = document.getElementById('live-score');
             const statusEl = document.getElementById('live-status');
             const commentEl = document.getElementById('bnf-comment-text');
-            scoreEl.innerText = score + "点";
+            
+            scoreEl.innerText = currentMarketScore + "点";
 
             let color = "#888888"; let glow = "rgba(136, 136, 136, 0.2)"; let statusText = ""; let bnfComment = "";
 
-            if (score >= 80) {
+            if (currentMarketScore >= 80) {
                 color = "#00e676"; glow = "rgba(0, 230, 118, 0.4)"; statusText = "🚨 パニック（バネ限界収縮）";
                 bnfComment = "「……セクター全体が完全に壊れて叩き売られてますね。絶好の逆張りチャンスです。ここで恐怖に負けて買えないなら、デイトレなんて辞めたほうがいいですよ」";
-            } else if (score >= 55) {
+            } else if (currentMarketScore >= 55) {
                 color = "#ffb300"; glow = "rgba(255, 179, 0, 0.3)"; statusText = "💛 チャンス間近（監視強化）";
-                bnfComment = "「……そこそこ連れ安する銘柄が出てきてます。でもまだ焦って突っ込むところじゃない。25日線からの乖離率が本当にターゲットに届くか、じっくり引きつけてください」";
-            } else {
-                color = "#ff5252"; glow = "rgba(255, 82, 82, 0.3)"; statusText = "⚠️ 罠（期待値なし・ステイ）";
-                bnfComment = "「……地合いが良すぎます。こんな日に逆張りをしても、バネが縮んでないからリバウンドなんてしません。無駄な取引をするくらいなら、僕なら漫画読んで寝てますよ」";
-            }
-
-            document.documentElement.style.setProperty('--status-color', color);
-            document.documentElement.style.setProperty('--status-glow', glow);
-            statusEl.innerText = statusText;
-            commentEl.innerText = bnfComment;
-            calculateMetrics();
-        }
-
-        // 🛠️ ツールロジック
-        function calculateMetrics() {
-            const sector = document.getElementById('stock-sector').value;
-            const ma = parseFloat(document.getElementById('ma-value').value);
-            const price = parseFloat(document.getElementById('current-price').value);
-            if (!ma || !price) return;
-
-            const kairi = ((price - ma) / ma) * 100;
-            document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
-
-            let yellowBorder = -5; let redBorder = -8;
-            if (sector === 'tech') { yellowBorder = -8; redBorder = -12; }
-            if (sector === 'growth') { yellowBorder = -15; redBorder = -25; }
-
-            let toolColor = "#ff5252"; let toolGlow = "rgba(255, 82, 82, 0.2)"; let statusText = "⚠️ 危険（底抜け注意）";
-            let bnfToolComment = "「……まだバネの縮みが足りない。今買うのはただのフライング。資金を減らしたい趣味がある人だけが買う位置です」";
-
-            if (kairi <= redBorder) {
-                toolColor = "#00e676"; toolGlow = "rgba(0, 230, 118, 0.3)"; statusText = "🚨 限界突破（BNFゾーン）";
-                bnfToolComment = "「……よし。完全にバネが歪んでます。地合いスコアが55点以上なら、リバウンドの期待値は極めて高い。一泊二日の原則を頭に入れて仕込むタイミングです」";
-            } else if (kairi <= yellowBorder) {
-                toolColor = "#ffb300"; toolGlow = "rgba(255, 179, 0, 0.2)"; statusText = "💛 チャンス目前（監視）";
-                bnfToolComment = "「……バネが縮み始めてます。同じセクターの他の銘柄も一緒に連れ安して底を打つ瞬間を、5分足で狙ってください」";
-            }
-
-            if (currentMarketScore < 55) {
-                toolColor = "#ff5252"; toolGlow = "rgba(255, 82, 82, 0.3)"; statusText = "🛑 逆張りロック（地合い不良）";
-                bnfToolComment = "「……株のバネが縮んでいても、市場全体にパニックの売りが入っていません。全体に支えがない状態の逆張りはただの自殺行為。ロックします」";
-            }
-
-            document.documentElement.style.setProperty('--tool-status-color', toolColor);
-            document.documentElement.style.setProperty('--tool-status-glow', toolGlow);
-            document.getElementById('tool-result').style.borderColor = toolColor;
-            document.getElementById('res-status').innerText = statusText;
-            document.getElementById('res-status').style.color = toolColor;
-            document.getElementById('bnf-tool-comment').innerText = bnfToolComment;
-
-            const breakEvenPrice = price * 1.0044; 
-            document.getElementById('res-target-win').innerText = Math.round(breakEvenPrice * 1.015) + " 円";
-            document.getElementById('res-target-loss').innerText = Math.round(breakEvenPrice * 0.99) + " 円";
-        }
-
-        // 🤖 本物のGemini APIを使ったチャットシステム
-        async function sendChatMessage() {
-            const inputEl = document.getElementById('chat-input');
-            const chatBox = document.getElementById('chat-box');
-            const userText = inputEl.value.trim();
-
-            if (!userText) return;
-
-            if (!geminiApiKey) {
-                alert("先にGemini APIキーを入力して『接続』を押してください！");
-                return;
-            }
-
-            // ユーザーの吹き出し追加
-            chatBox.innerHTML += `<div class="bubble user">${userText}</div>`;
-            inputEl.value = "";
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            // タイピング中演出
-            const typingId = "typing-" + Date.now();
-            chatBox.innerHTML += `
-                <div class="bubble bnf" id="${typingId}">
-                    <div class="chat-system-tag">B.N.F</div>
-                    <div class="typing-dots"><span></span><span></span><span></span></div>
-                </div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            try {
-                // Geminiエンジンの初期化
-                const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-                // 高速かつレスポンスのいい最新軽量モデルを使用
-                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-                // BNF氏の思考・性格・口調、さらに現在の「アプリ内データ」をプロンプトとして完全注入！
-                const systemPrompt = `
-あなたは伝説のデイトレーダー「BNF（小手川隆）」です。
-以下のルールとキャラクター設定を完璧に守って、ユーザーの相談に回答してください。
-
-【キャラクター設定】
-・口調は常に「ボソボソとした喋り方」「丁寧語（〜です、〜ます、〜ですよ）」「感情を全く出さない冷徹なリアリスト」。
-・文頭は「……あ、どうも。」や「……うーん、」、「……」などから静かに始めてください。
-・莫大な資産（200億円以上）を持っていますが、本人は非常に無欲で、プレッシャーに弱く、トレード中以外は「カップ麺を食べている」「漫画を読んで寝ている」ような人物です。
-・投資スタイルは徹底した「25日移動平均線からの乖離率を狙った逆張り（短期リバウンド狙い）」。
-・感情で売買する人間を「プロリバ（プロの養分リバウンダー）」と呼び、優位性のない取引を「お金を減らす趣味」と一蹴します。
-
-【現在の市場状況（アプリのリアルタイム連動データ）】
-・東証プライム地合いスコア：${currentMarketScore}点（100点満点中。55点未満は無風・安全相場で逆張りは危険。80点以上はパニック大暴落で逆張り絶好のチャンス）
-
-ユーザーが今の投資の悩みやメンタルのブレを相談してきます。上記のキャラになりきり、かつ現在の地合い点数を踏まえたアドバイスを150文字以内でボソボソと答えてください。
-`;
-
-                const result = await model.generateContent([systemPrompt, userText]);
-                const bnfResponseText = result.response.text();
-
-                // 画面のタイピング演出を本物のAI回答に書き換え
-                const typingBubble = document.getElementById(typingId);
-                typingBubble.innerHTML = `<div class="chat-system-tag">B.N.F</div>${bnfResponseText}`;
-                chatBox.scrollTop = chatBox.scrollHeight;
-
-            } catch (error) {
-                console.error("Geminiエラー:", error);
-                const typingBubble = document.getElementById(typingId);
-                typingBubble.innerHTML = `<div class="chat-system-tag">B.N.F</div>「……あ、なんかエラーが出ちゃいました。APIキーが間違っているか、通信が切れたかもしれないです」`;
-            }
-        }
-
-        window.onload = function() {
-            fetchMarketData();
-            setInterval(fetchMarketData, 600000);
-            // すでにキーが保存されていれば入力欄を非表示にする
-            if(geminiApiKey) {
-                document.getElementById('api-key-setup').style.display = 'none';
-            }
-        };
-    </script>
-</body>
-</html>
+                bnf
