@@ -42,7 +42,6 @@
         .screen { display: none; }
         .screen.active { display: block; }
 
-        /* ナビゲーションバーの改良：文字の表示・非表示を制御 */
         .nav-bar {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 65px;
             background-color: var(--card-bg); display: flex; justify-content: space-around;
@@ -54,9 +53,8 @@
             transition: all 0.2s ease;
         }
         .nav-item i { font-size: 1.3rem; transition: transform 0.2s ease; }
-        .nav-item span { font-size: 0.75rem; margin-top: 3px; display: none; } /* 初期状態は非表示 */
+        .nav-item span { font-size: 0.75rem; margin-top: 3px; display: none; }
         
-        /* アクティブなタブだけ文字を表示し、アイコンを少し強調 */
         .nav-item.active { color: var(--primary-color); }
         .nav-item.active i { transform: translateY(-2px); }
         .nav-item.active span { display: inline; } 
@@ -115,7 +113,6 @@
             background: #333; color: #fff; border: none; border-radius: 8px;
             padding: 0 14px; cursor: pointer; font-size: 1rem;
         }
-        .key-warning { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
         .key-connected-row {
             display: none; align-items: center; gap: 8px; margin-bottom: 10px;
             font-size: 0.85rem; color: var(--text-muted);
@@ -150,11 +147,6 @@
             flex-direction: column;
             gap: 12px;
             margin-top: 20px;
-        }
-        .guide-text {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 2px;
         }
     </style>
     
@@ -290,7 +282,7 @@
 
                 <div class="chat-container">
                     <div class="chat-timeline" id="chat-box">
-                        <div class="bubble bnf">「……。何かありますか」</div>
+                        <div class="bubble bnf">こんにちは。何かご相談はありますか？</div>
                     </div>
                     <div class="chat-input-zone">
                         <input type="text" id="chat-input" placeholder="相談を入力..." onkeypress="if(event.key==='Enter') sendChatMessage()">
@@ -348,169 +340,88 @@
             if(id === 'log') renderLogs();
         }
 
-        // --- 【新機能】AIに今日の相場をリアルタイム検索させて3択を自動入力させる ---
         async function fetchLiveMarketWithAI() {
             const statusEl = document.getElementById('market-ai-status');
-            if (!geminiApiKey) {
-                alert("AIタブでGemini APIキーを先に入力・接続してください。");
-                return;
-            }
-
-            statusEl.innerText = "本日の株式相場をリアルタイム検索・分析中...";
+            if (!geminiApiKey) { alert("AIタブでAPIキーを設定してください。"); return; }
+            statusEl.innerText = "本日の相場を検索・分析中...";
             statusEl.style.color = "#00b0ff";
 
             try {
                 const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-                // Google検索（Google Search Grounding）を有効化してリアルタイム情報を取得
-                const model = genAI.getGenerativeModel({ 
-                    model: "gemini-2.5-flash",
-                    tools: [{ googleSearch: {} }] 
-                });
-
-                const prompt = `現在の日本の株式市場（日経平均、TOPIX、東証プライムの騰落銘柄数、半導体などの主力大型株の最新の動き）をWeb検索して状況を確認してください。
-その後、現在の状況に最も合致する選択肢の数値をそれぞれ選んで、以下のJSONフォーマットのみで出力してください。
-
-1. 指数の下落度合い (選択肢のvalue値: "30" or "20" or "10" or "0")
-   - "30": 上昇・ヨコヨコで安定
-   - "20": -1%前後の軽い調整
-   - "10": -2%〜-3%以上の急落
-   - "0": -4%以上のパニック暴落
-2. 値下がり銘柄数の割合 (選択肢のvalue値: "30" or "20" or "10" or "0")
-   - "30": 値上がりの方が多い、またはトントン
-   - "20": 値下がりがやや多い（全体の60%程度）
-   - "10": 全面安に近い（全体の80%以上が下落）
-   - "0": 完全パニック（全体の90%以上が下落）
-3. 主力株の連動性 (選択肢のvalue値: "40" or "20" or "0")
-   - "40": 主力株はしっかり買われている・耐えている
-   - "20": 業種ごとにマチマチ
-   - "0": 主力株（半導体等）も巻き込まれて全滅
-
-返答は以下のJSONのみにしてください。他の挨拶や文章は一切含めないでください。
-{"index": "数値", "stocks": "数値", "leaders": "数値"}`;
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", tools: [{ googleSearch: {} }] });
+                const prompt = `現在の日本の株式市場（日経平均、TOPIX、東証プライムの騰落銘柄数、主力大型株の最新の動き）を検索して状況を確認してください。
+状況に合致する選択肢の数値をそれぞれ選び、以下のJSONフォーマットのみで出力してください。挨拶等は不要です。
+{"index": "30or20or10or0", "stocks": "30or20or10or0", "leaders": "40or20or0"}`;
 
                 const result = await model.generateContent(prompt);
-                const responseText = result.response.text();
-                
-                const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
+                const jsonMatch = result.response.text().match(/\{[\s\S]*?\}/);
                 if (jsonMatch) {
                     const data = JSON.parse(jsonMatch[0]);
-                    
                     if (data.index) document.getElementById('check-index').value = data.index;
                     if (data.stocks) document.getElementById('check-stocks').value = data.stocks;
                     if (data.leaders) document.getElementById('check-leaders').value = data.leaders;
-                    
                     autoCalculateMarket();
-                    statusEl.innerText = "リアルタイム同期が完了しました！";
+                    statusEl.innerText = "同期完了しました。";
                     statusEl.style.color = "#00e676";
-                } else {
-                    statusEl.innerText = "AIの判定データをパースできませんでした。手動での選択も可能です。";
-                    statusEl.style.color = "#ffb300";
                 }
-            } catch (e) {
-                console.error(e);
-                statusEl.innerText = "エラー：リアルタイム情報の取得に失敗しました。時間外かキーの問題の可能性があります。";
-                statusEl.style.color = "#ff5252";
-            }
+            } catch (e) { statusEl.innerText = "同期失敗しました。"; statusEl.style.color = "#ff5252"; }
         }
 
         function autoCalculateMarket() {
             const idxVal = parseInt(document.getElementById('check-index').value, 10);
             const stkVal = parseInt(document.getElementById('check-stocks').value, 10);
             const ledVal = parseInt(document.getElementById('check-leaders').value, 10);
-
             currentMarketScore = idxVal + stkVal + ledVal;
             uiUpdateMarket(currentMarketScore);
         }
 
+        // --- 地合い画面のコメント（※ここはB.N.Fの視点として口調を維持します） ---
         function uiUpdateMarket(score) {
             document.getElementById('live-score').innerText = score + "点";
-            
             const statusEl = document.getElementById('live-status');
             const commentEl = document.getElementById('bnf-comment-text');
             const scoreNumEl = document.getElementById('live-score');
             const marketCard = document.getElementById('market-card');
             
             let status, comment, color, cardBorder;
+            if (score >= 80) { status = "過熱・上昇（逆張り厳禁）"; comment = "「みんな儲かってる時って、一番危ないんですよね」"; color = "#ff5252"; cardBorder = "rgba(255, 82, 82, 0.3)"; }
+            else if (score >= 60) { status = "やや楽観・通常"; comment = "「まあ、悪くはないですが、わざわざここで買う必要もないですね」"; color = "#ffb300"; cardBorder = "rgba(255, 179, 0, 0.3)"; }
+            else if (score >= 40) { status = "ニュートラル"; comment = "「……。普通ですね。しっかり引き付けないとやられます」"; color = "#888888"; cardBorder = "#333"; }
+            else if (score >= 20) { status = "警戒・連れ安発生"; comment = "「いい感じに投げが出てきましたね。そろそろ面白くなってきました」"; color = "#00b0ff"; cardBorder = "rgba(0, 176, 255, 0.3)"; }
+            else { status = "極度のパニック（大チャンス）"; comment = "「みんなが恐怖で投げてる時が、一番美味しいんですよ」"; color = "#00e676"; cardBorder = "rgba(0, 230, 118, 0.4)"; }
 
-            if (score >= 80) {
-                status = "過熱・上昇（逆張り厳禁）";
-                comment = "「みんな儲かってる時って、一番危ないんですよね。今は動く時じゃないです」";
-                color = "#ff5252";
-                cardBorder = "rgba(255, 82, 82, 0.3)";
-            } else if (score >= 60) {
-                status = "やや楽観・通常";
-                comment = "「まあ、悪くはないですが、わざわざここで無理に買う必要もないですね」";
-                color = "#ffb300";
-                cardBorder = "rgba(255, 179, 0, 0.3)";
-            } else if (score >= 40) {
-                status = "ニュートラル";
-                comment = "「……。普通ですね。しっかり引き付けないとやられます」";
-                color = "#888888";
-                cardBorder = "#333";
-            } else if (score >= 20) {
-                status = "警戒・連れ安発生（監視強化）";
-                comment = "「いい感じに投げが出てきましたね。そろそろ面白くなってきました」";
-                color = "#00b0ff";
-                cardBorder = "rgba(0, 176, 255, 0.3)";
-            } else {
-                status = "極度のパニック・セリクラ（大チャンス）";
-                comment = "「みんなが恐怖で投げてる時が、一番美味しいんですよ。これぞ逆張りです」";
-                color = "#00e676";
-                cardBorder = "rgba(0, 230, 118, 0.4)";
-            }
-
-            statusEl.innerText = status;
-            statusEl.style.color = color;
-            scoreNumEl.style.color = color;
-            marketCard.style.borderColor = cardBorder;
-            commentEl.innerText = comment;
-
+            statusEl.innerText = status; statusEl.style.color = color; scoreNumEl.style.color = color;
+            marketCard.style.borderColor = cardBorder; commentEl.innerText = comment;
             calculateMetrics();
         }
 
         function handleImageUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-
-            const preview = document.getElementById('preview-img');
-            const status = document.getElementById('ocr-status');
-            status.innerText = "画像を最適化中...";
-            status.style.color = "#ffb300";
-
+            const file = input.files[0]; if (!file) return;
+            if (!file.type.startsWith('image/')) { alert("画像ファイルを選択してください。"); input.value = ""; return; }
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1024;
+                    const canvas = document.createElement('canvas'); const MAX_WIDTH = 1024;
                     let width = img.width; let height = img.height;
                     if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                     canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    preview.src = canvas.toDataURL('image/jpeg', 0.8);
-                    preview.style.display = "inline-block";
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
                     compressedBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
                     parseImageWithAI();
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+                }; img.src = e.target.result;
+            }; reader.readAsDataURL(file);
         }
 
         async function parseImageWithAI() {
             const status = document.getElementById('ocr-status');
-            if (!geminiApiKey) { alert("AIタブでGemini APIキーを設定してください。"); return; }
-            status.innerText = "AIがスクショ画像を精密スキャン中...";
-            status.style.color = "#00b0ff";
-
+            if (!geminiApiKey) return;
+            status.innerText = "AIが画像をスキャン中..."; status.style.color = "#00b0ff";
             try {
                 const genAI = new window.GoogleGenerativeAI(geminiApiKey);
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
                 const prompt = `チャート画像から、現在の株価の数値と、25日移動平均線の数値を読み取り、以下のJSONフォーマットのみで返答してください。説明文不要。{"price": 株価, "ma": 25日線}`;
                 const imagePart = { inlineData: { data: compressedBase64, mimeType: "image/jpeg" } };
-
                 const result = await model.generateContent([prompt, imagePart]);
                 const jsonMatch = result.response.text().match(/\{[\s\S]*?\}/);
                 if(jsonMatch) {
@@ -518,42 +429,22 @@
                     if(data.price) document.getElementById('current-price').value = Math.round(data.price);
                     if(data.ma) document.getElementById('ma-value').value = Math.round(data.ma);
                     calculateMetrics();
-                    status.innerText = "画像の読み込みに成功しました！";
-                    status.style.color = "#00e676";
-                } else {
-                    status.innerText = "数値を一部読み取れませんでした。手入力補正してください。";
-                    status.style.color = "#ffb300";
+                    status.innerText = "自動入力に成功しました。"; status.style.color = "#00e676";
                 }
-            } catch (e) {
-                status.innerText = "スキャン失敗。手動での入力も可能です。";
-                status.style.color = "#ff5252";
-            }
+            } catch (e) { status.innerText = "スキャン失敗しました。"; status.style.color = "#ff5252"; }
         }
 
         function calculateMetrics() {
             const ma = parseFloat(document.getElementById('ma-value').value);
             const price = parseFloat(document.getElementById('current-price').value);
-            
-            if(!ma || !price) {
-                document.getElementById('res-kairi').innerText = "-- %";
-                document.getElementById('res-status').innerText = "未入力";
-                document.getElementById('res-threshold').innerText = "--";
-                return;
-            }
-
-            const kairi = ((price - ma) / ma) * 100;
-            document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
-
+            if(!ma || !price) { document.getElementById('res-kairi').innerText = "-- %"; document.getElementById('res-status').innerText = "未入力"; return; }
+            const kairi = ((price - ma) / ma) * 100; document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
             const marketAdjustment = (currentMarketScore - 50) / 10;
-            const thresholdWarning = -8 - marketAdjustment;
-            const thresholdBuy = -15 - marketAdjustment;
-
+            const thresholdWarning = -8 - marketAdjustment; const thresholdBuy = -15 - marketAdjustment;
             let status = "静観（バネ未収縮）"; let color = "#888";
-            if (kairi < thresholdBuy) { status = "限界突破（BNF買いゾーン）"; color = "#00e676"; }
+            if (kairi < thresholdBuy) { status = "限界突破（買いゾーン）"; color = "#00e676"; }
             else if (kairi < thresholdWarning) { status = "チャンス目前（監視）"; color = "#ffb300"; }
-
-            document.getElementById('res-status').innerText = status;
-            document.getElementById('res-status').style.color = color;
+            document.getElementById('res-status').innerText = status; document.getElementById('res-status').style.color = color;
             document.getElementById('res-threshold').innerText = `${thresholdWarning.toFixed(1)}% / ${thresholdBuy.toFixed(1)}%`;
         }
 
@@ -582,25 +473,21 @@
 
         function clearLogs() { if(confirm("すべてリセットしますか？")) { localStorage.removeItem("bnf_logs"); renderLogs(); } }
         function toggleKeyVisibility() {
-            const input = document.getElementById('api-key-input');
-            const icon = document.getElementById('key-eye-icon');
+            const input = document.getElementById('api-key-input'); const icon = document.getElementById('key-eye-icon');
             if (input.type === 'password') { input.type = 'text'; icon.className = 'fa-solid fa-eye-slash'; }
             else { input.type = 'password'; icon.className = 'fa-solid fa-eye'; }
         }
 
         function saveApiKey() {
             const key = document.getElementById('api-key-input').value.trim();
-            if (!key) return;
-            localStorage.setItem("gemini_api_key", key); geminiApiKey = key;
+            if (!key) return; localStorage.setItem("gemini_api_key", key); geminiApiKey = key;
             document.getElementById('api-key-setup').style.display = 'none';
             document.getElementById('api-key-connected').style.display = 'flex';
         }
 
-        function changeApiKey() {
-            document.getElementById('api-key-setup').style.display = 'block';
-            document.getElementById('api-key-connected').style.display = 'none';
-        }
+        function changeApiKey() { document.getElementById('api-key-setup').style.display = 'block'; document.getElementById('api-key-connected').style.display = 'none'; }
 
+        // --- ここでAI COACHの口調（命令文）を修正します ---
         async function sendChatMessage() {
             const input = document.getElementById('chat-input');
             const chatBox = document.getElementById('chat-box');
@@ -611,17 +498,21 @@
             try {
                 const genAI = new window.GoogleGenerativeAI(geminiApiKey);
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                const result = await model.generateContent(`あなたはBNFです。地合いスコア${currentMarketScore}点。ボソボソと答えて。：${userText}`);
+                
+                // 命令文（システムプロンプト）を「丁寧なAI」に変更
+                const prompt = `あなたは、株式投資の逆張り手法（25日移動平均線乖離率）に詳しい、親切で丁寧なAIコーチです。
+現在の相場全体の地合いスコアは100点満点中【${currentMarketScore}点】です（点数が低いほどパニック状態＝逆張りのチャンス）。
+ユーザーからの相談に対し、この地合い状況を踏まえて、分かりやすく、丁寧な「です・ます調」で回答してください。ボソボソとした話し方や「……」の多用は避けてください。
+相談内容：${userText}`;
+
+                const result = await model.generateContent(prompt);
                 chatBox.innerHTML += `<div class="bubble bnf">${escapeHtml(result.response.text())}</div>`;
-            } catch (e) { chatBox.innerHTML += `<div class="bubble bnf">……。エラー。</div>`; }
+            } catch (e) { chatBox.innerHTML += `<div class="bubble bnf">申し訳ありません。エラーが発生しました。</div>`; }
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
         window.onload = () => {
-            if(geminiApiKey) {
-                document.getElementById('api-key-setup').style.display = 'none';
-                document.getElementById('api-key-connected').style.display = 'flex';
-            }
+            if(geminiApiKey) { document.getElementById('api-key-setup').style.display = 'none'; document.getElementById('api-key-connected').style.display = 'flex'; }
             autoCalculateMarket();
         };
     </script>
