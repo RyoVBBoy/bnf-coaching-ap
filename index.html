@@ -679,7 +679,11 @@
 
         try {
             const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+            // forecast は Web検索グラウンディングを有効化、timing は不要
+            const model = type === 'forecast'
+                ? genAI.getGenerativeModel({ model: "gemini-2.5-flash", tools: [{ googleSearch: {} }] })
+                : genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
             let prompt = "";
 
@@ -706,27 +710,41 @@
 
             } else {
                 prompt = `あなたは日本株の逆張り投資家B.N.Fの手法に精通したAIコーチです。
-以下のデータをもとに「この株を今の価格で買った場合のシナリオ予想」を分析してください。
 
-【入力データ】
+まず「${code}」（東証銘柄コード）について以下の情報をWeb検索して収集してください。
+- 銘柄名・事業内容
+- 直近の決算内容（売上・営業利益・業績予想）
+- 最近のニュースや材料（好材料・悪材料）
+- アナリスト評価や目標株価（あれば）
+- 同セクターの動向
+
+その情報と以下のテクニカルデータを組み合わせて、「この株を今の価格で買った場合のシナリオ予想」を分析してください。
+
+【テクニカルデータ】
 - 銘柄コード: ${code}
 - セクター: ${sector}
 - 現在株価: ${price}円
 - 25日移動平均線: ${ma}円
 - 乖離率: ${kairi}%
-- 地合いスコア: ${currentMarketScore}点 / 100点
+- 地合いスコア: ${currentMarketScore}点 / 100点（低いほどパニック＝逆張りのチャンス）
 
 【回答フォーマット】
+▼ 検索で判明したファンダメンタル情報（銘柄名・直近決算・主な材料を箇条書きで）
+
 ① 短期シナリオ（1〜2週間）: 株価の方向感と目標価格帯
 ② 中期シナリオ（1〜3ヶ月）: MA回帰した場合の想定リターン（%と円で）
 ③ 下振れリスクシナリオ: さらに下落した場合の想定ラインと対処法
-④ B.N.F的な総合評価: 5段階（★の数）と一言コメント
+④ B.N.F的な総合評価: 5段階（★の数）と検索情報も踏まえた一言コメント
 
 具体的な数値（価格・%・日数）を使って「です・ます調」で回答してください。`;
             }
 
             const result = await model.generateContent(prompt);
-            const text   = result.response.text();
+            // グラウンディング時はcontent blocksが複数になるため全テキストを結合
+            const text = result.response.candidates[0].content.parts
+                .filter(p => p.text)
+                .map(p => p.text)
+                .join("");
 
             // テキストをタイプライター風に表示
             responseEl.innerText = "";
