@@ -291,6 +291,43 @@
             animation: pulse 1.2s ease-in-out infinite;
         }
         @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+        /* ── コンパクトリスト表示 ── */
+        .scan-list-item {
+            display: flex; align-items: center;
+            padding: 11px 16px; border-bottom: 1px solid var(--border);
+            gap: 10px; cursor: default;
+        }
+        .scan-list-rank {
+            font-size: .7rem; font-weight: 800; color: var(--accent);
+            background: var(--accent-dim); padding: 2px 8px;
+            border-radius: var(--pill); flex-shrink: 0; min-width: 30px; text-align: center;
+        }
+        .scan-list-main { flex: 1; min-width: 0; }
+        .scan-list-name { font-size: .88rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .scan-list-meta { font-size: .72rem; color: var(--muted); margin-top: 1px; }
+        .scan-list-right { text-align: right; flex-shrink: 0; }
+        .scan-list-kairi { font-size: 1rem; font-weight: 900; font-family: 'Courier New', monospace; color: var(--green); }
+        .scan-list-kairi.watch { color: var(--orange); }
+        .scan-list-badge {
+            font-size: .65rem; font-weight: 700; padding: 2px 7px;
+            border-radius: var(--pill); margin-top: 2px; display: inline-block;
+        }
+        .scan-list-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .scan-list-btn {
+            border: none; border-radius: var(--pill); padding: 6px 10px;
+            font-size: .75rem; font-weight: 700; cursor: pointer; font-family: inherit;
+        }
+
+        /* ── 個別検索結果 ── */
+        .single-result-card {
+            margin: 0; padding: 16px; border-bottom: 1px solid var(--border);
+            background: var(--surface-1);
+        }
+        .single-result-title {
+            font-size: .75rem; font-weight: 700; color: var(--accent);
+            margin-bottom: 10px; letter-spacing: .04em;
+        }
     </style>
 
     <script type="module">
@@ -502,29 +539,86 @@
         </div>
     </div>
 
-    <!-- ── 候補銘柄スキャン ── -->
+    <!-- ── 銘柄検索 ── -->
     <div id="screen-scan" class="screen">
         <div class="page-header">
-            <h2>BNF候補銘柄スキャン</h2>
-            <p>今日のBNFロジックに最も合致する銘柄をAIが検索します</p>
+            <h2>銘柄検索</h2>
+            <p>BNFロジックで候補をスキャン、または個別銘柄を直接調べる</p>
         </div>
 
-        <div class="ai-sync-row" style="display:flex;flex-direction:column;gap:10px;">
+        <!-- ── 個別銘柄検索 ── -->
+        <div class="cell">
+            <div class="cell-label">銘柄コード・銘柄名で直接検索</div>
+            <div style="display:flex;gap:8px;">
+                <input type="text" id="single-search-input" placeholder="例: 6920 / レーザーテック"
+                    style="flex:1;" onkeypress="if(event.key==='Enter') runSingleSearch()">
+                <button onclick="runSingleSearch()" style="
+                    flex-shrink:0; border:none; border-radius:10px;
+                    background:var(--blue); color:#fff; padding:0 16px;
+                    font-size:1rem; cursor:pointer;">
+                    <i class="fa-solid fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="single-search-result"></div>
+
+        <div class="divider"></div>
+
+        <!-- ── AIスキャン ── -->
+        <div class="cell" style="display:flex;flex-direction:column;gap:10px;">
             <button class="btn-pill btn-accent" onclick="runStockScan()" id="scan-btn">
-                <i class="fa-solid fa-magnifying-glass-chart"></i> 今日の候補銘柄をAIスキャン
+                <i class="fa-solid fa-magnifying-glass-chart"></i> 今日の候補銘柄をAIスキャン（5件）
             </button>
-            <div class="status-line" id="scan-status"></div>
         </div>
 
-        <!-- 条件表示 -->
-        <div class="cell" id="scan-condition-zone" style="display:none;">
-            <div class="cell-label">適用中のBNF条件</div>
-            <div id="scan-condition-text" style="font-size:.8rem;color:var(--muted);line-height:1.7;"></div>
+        <!-- ── 表示オプションバー ── -->
+        <div id="scan-options-bar" style="display:none;
+            padding:10px 16px; border-bottom:1px solid var(--border);
+            display:none; align-items:center; justify-content:space-between; gap:10px;">
+
+            <!-- 買いゾーン切り替え -->
+            <div style="display:flex; background:var(--surface-2); border-radius:var(--pill);
+                border:1px solid var(--border); overflow:hidden;">
+                <button id="zone-all-btn" onclick="setZoneFilter('all')"
+                    style="padding:6px 14px; border:none; font-size:.75rem; font-weight:700;
+                    cursor:pointer; background:var(--accent); color:#fff; transition:all .15s;">
+                    全ゾーン
+                </button>
+                <button id="zone-buy-btn" onclick="setZoneFilter('buy')"
+                    style="padding:6px 14px; border:none; font-size:.75rem; font-weight:700;
+                    cursor:pointer; background:transparent; color:var(--muted); transition:all .15s;">
+                    買いゾーンのみ
+                </button>
+            </div>
+
+            <!-- カード/リスト切り替え -->
+            <div style="display:flex; background:var(--surface-2); border-radius:var(--pill);
+                border:1px solid var(--border); overflow:hidden;">
+                <button id="view-card-btn" onclick="setViewMode('card')"
+                    style="padding:6px 12px; border:none; font-size:.85rem;
+                    cursor:pointer; background:var(--accent); color:#fff; transition:all .15s;"
+                    title="カード表示">
+                    <i class="fa-solid fa-table-cells-large"></i>
+                </button>
+                <button id="view-list-btn" onclick="setViewMode('list')"
+                    style="padding:6px 12px; border:none; font-size:.85rem;
+                    cursor:pointer; background:transparent; color:var(--muted); transition:all .15s;"
+                    title="リスト表示">
+                    <i class="fa-solid fa-list"></i>
+                </button>
+            </div>
         </div>
 
-        <div class="divider" id="scan-divider" style="display:none;"></div>
+        <div class="status-line" id="scan-status"></div>
+        <div id="scan-condition-zone" style="display:none;">
+            <div class="cell" style="padding-top:8px;padding-bottom:8px;">
+                <div class="cell-label">適用中のBNF条件</div>
+                <div id="scan-condition-text" style="font-size:.78rem;color:var(--muted);line-height:1.7;"></div>
+            </div>
+        </div>
 
-        <!-- 候補カード一覧 -->
+        <!-- 候補一覧 -->
         <div id="scan-results"></div>
     </div>
 
@@ -546,7 +640,7 @@
 <div class="nav-bar">
     <div class="nav-item active" onclick="switchScreen('market', this)"><i class="fa-solid fa-earth-asia"></i><span>地合い</span></div>
     <div class="nav-item" onclick="switchScreen('tools', this)"><i class="fa-solid fa-screwdriver-wrench"></i><span>ツール</span></div>
-    <div class="nav-item" onclick="switchScreen('scan', this)"><i class="fa-solid fa-magnifying-glass-chart"></i><span>候補</span></div>
+    <div class="nav-item" onclick="switchScreen('scan', this)"><i class="fa-solid fa-magnifying-glass-chart"></i><span>検索</span></div>
     <div class="nav-item" onclick="switchScreen('brain', this)"><i class="fa-solid fa-brain"></i><span>AI</span></div>
     <div class="nav-item" onclick="switchScreen('log', this)"><i class="fa-solid fa-chart-line"></i><span>ログ</span></div>
 </div>
