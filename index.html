@@ -232,6 +232,65 @@
 
         /* AI sync row */
         .ai-sync-row { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+
+        /* ── 候補銘柄カード ── */
+        .scan-card {
+            padding: 16px 16px 12px;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+        .scan-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .scan-rank {
+            font-size: .72rem; font-weight: 800; color: var(--accent);
+            background: var(--accent-dim); padding: 2px 9px;
+            border-radius: var(--pill); margin-right: 8px; flex-shrink: 0;
+        }
+        .scan-name { font-size: 1rem; font-weight: 800; color: var(--text); flex: 1; }
+        .scan-code { font-size: .78rem; color: var(--muted); font-family: 'Courier New', monospace; margin-top: 1px; }
+        .scan-kairi {
+            font-size: 1.3rem; font-weight: 900; font-family: 'Courier New', monospace;
+            color: var(--green); text-align: right; flex-shrink: 0;
+        }
+        .scan-kairi.watch { color: var(--orange); }
+        .scan-meta {
+            display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0;
+        }
+        .scan-tag {
+            font-size: .72rem; font-weight: 700; padding: 2px 9px;
+            border-radius: var(--pill); border: 1px solid var(--border); color: var(--muted);
+        }
+        .scan-reason {
+            font-size: .82rem; color: var(--text); line-height: 1.6; margin: 6px 0 10px;
+        }
+        .scan-actions { display: flex; gap: 8px; }
+        .scan-btn-yahoo {
+            flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 8px; background: var(--blue); color: #fff; text-decoration: none;
+            font-size: .8rem; font-weight: 700; border-radius: var(--pill);
+        }
+        .scan-btn-tool {
+            flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 8px; background: var(--accent-dim); color: var(--accent);
+            border: 1px solid var(--accent); font-size: .8rem; font-weight: 700;
+            border-radius: var(--pill); cursor: pointer; border-style: solid;
+            font-family: inherit;
+        }
+        .scan-empty {
+            padding: 40px 16px; text-align: center; color: var(--muted); font-size: .9rem; line-height: 1.8;
+        }
+        .scan-loading {
+            padding: 32px 16px; text-align: center;
+        }
+        .scan-loading-icon {
+            font-size: 2rem; color: var(--accent); margin-bottom: 10px;
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
     </style>
 
     <script type="module">
@@ -443,6 +502,32 @@
         </div>
     </div>
 
+    <!-- ── 候補銘柄スキャン ── -->
+    <div id="screen-scan" class="screen">
+        <div class="page-header">
+            <h2>BNF候補銘柄スキャン</h2>
+            <p>今日のBNFロジックに最も合致する銘柄をAIが検索します</p>
+        </div>
+
+        <div class="ai-sync-row" style="display:flex;flex-direction:column;gap:10px;">
+            <button class="btn-pill btn-accent" onclick="runStockScan()" id="scan-btn">
+                <i class="fa-solid fa-magnifying-glass-chart"></i> 今日の候補銘柄をAIスキャン
+            </button>
+            <div class="status-line" id="scan-status"></div>
+        </div>
+
+        <!-- 条件表示 -->
+        <div class="cell" id="scan-condition-zone" style="display:none;">
+            <div class="cell-label">適用中のBNF条件</div>
+            <div id="scan-condition-text" style="font-size:.8rem;color:var(--muted);line-height:1.7;"></div>
+        </div>
+
+        <div class="divider" id="scan-divider" style="display:none;"></div>
+
+        <!-- 候補カード一覧 -->
+        <div id="scan-results"></div>
+    </div>
+
     <!-- ── ログ ── -->
     <div id="screen-log" class="screen">
         <div class="page-header">
@@ -461,6 +546,7 @@
 <div class="nav-bar">
     <div class="nav-item active" onclick="switchScreen('market', this)"><i class="fa-solid fa-earth-asia"></i><span>地合い</span></div>
     <div class="nav-item" onclick="switchScreen('tools', this)"><i class="fa-solid fa-screwdriver-wrench"></i><span>ツール</span></div>
+    <div class="nav-item" onclick="switchScreen('scan', this)"><i class="fa-solid fa-magnifying-glass-chart"></i><span>候補</span></div>
     <div class="nav-item" onclick="switchScreen('brain', this)"><i class="fa-solid fa-brain"></i><span>AI</span></div>
     <div class="nav-item" onclick="switchScreen('log', this)"><i class="fa-solid fa-chart-line"></i><span>ログ</span></div>
 </div>
@@ -537,11 +623,11 @@
         const statusEl  = document.getElementById('live-status');
         const commentEl = document.getElementById('bnf-comment-text');
         let label, comment, color;
-        if      (score >= 80) { label="過熱・上昇（逆張り厳禁）";   comment="「みんな儲かってる時って、一番危ないんですよね」";              color="var(--red)"; }
-        else if (score >= 60) { label="やや楽観・通常相場";           comment="「まあ、悪くはないですが、わざわざここで買う必要もないですね」"; color="var(--orange)"; }
-        else if (score >= 40) { label="ニュートラル";                  comment="「……。普通ですね。しっかり引き付けないとやられます」";          color="var(--muted)"; }
-        else if (score >= 20) { label="警戒・連れ安発生中";            comment="「いい感じに投げが出てきましたね。そろそろ面白くなってきました」"; color="var(--blue)"; }
-        else                  { label="極度のパニック（大チャンス）";  comment="「みんなが恐怖で投げてる時が、一番美味しいんですよ」";           color="var(--green)"; }
+        if      (score >= 80) { label="過熱・上昇（逆張り厳禁）";      comment="「全員が買ってる相場は一番危ないんです。次のパニックのための現金を残しておかないと」";                             color="var(--red)"; }
+        else if (score >= 60) { label="やや楽観・通常相場";              comment="「わざわざここで逆張る必要はないですね。乖離率もしきい値まで来ていないはずです」";                                  color="var(--orange)"; }
+        else if (score >= 40) { label="ニュートラル";                     comment="「……。普通ですね。しっかり引き付けないとやられます。まだバネは収縮していない」";                                    color="var(--muted)"; }
+        else if (score >= 20) { label="警戒・連れ安発生中";               comment="「いい感じに投げが出てきた。東エレやファーストリテイリングが最後に崩れたら、そこが本番です」";                        color="var(--blue)"; }
+        else                  { label="極度のパニック（全面安・大チャンス）"; comment="「1,400銘柄以上が値下がりしてますね。主力株の板から大口の売りが消えた瞬間が買い場です。逃げ足だけ忘れずに」"; color="var(--green)"; }
         scoreEl.style.color = statusEl.style.color = color;
         statusEl.innerText = label; commentEl.innerText = comment;
         calculateMetrics();
@@ -602,10 +688,23 @@
         }
     }
 
-    /* ── 乖離率計算 ── */
+    /* ── BNFセクター別しきい値 ──
+       大型バリュー: 監視-10% / 買い-15%
+       ハイテク・半導体: 監視-15% / 買い-20%
+       内需ディフェンシブ: 監視-10% / 買い-15%
+       新興グロース: 監視-30% / 買い-40%
+    ── */
+    const SECTOR_THRESHOLDS = {
+        heavy:     { watch: -10, buy: -15 },
+        tech:      { watch: -15, buy: -20 },
+        defensive: { watch: -10, buy: -15 },
+        growth:    { watch: -30, buy: -40 },
+    };
+
     function calculateMetrics() {
-        const ma    = parseFloat(document.getElementById('ma-value').value);
-        const price = parseFloat(document.getElementById('current-price').value);
+        const ma     = parseFloat(document.getElementById('ma-value').value);
+        const price  = parseFloat(document.getElementById('current-price').value);
+        const sector = document.getElementById('stock-sector').value;
         if (!ma || !price) {
             document.getElementById('res-kairi').innerText    = "-- %";
             document.getElementById('res-status').innerText   = "未入力";
@@ -614,16 +713,20 @@
         }
         const kairi = ((price - ma) / ma) * 100;
         document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
-        const adj = (currentMarketScore - 50) / 10;
-        const tw  = -8  - adj;
-        const tb  = -15 - adj;
+
+        // 地合いスコアによる微調整（パニック相場ほどしきい値を緩める）
+        const adj  = (currentMarketScore - 50) / 10; // -5 〜 +5
+        const base = SECTOR_THRESHOLDS[sector] || SECTOR_THRESHOLDS.tech;
+        const tw   = base.watch - adj;
+        const tb   = base.buy   - adj;
+
         let label = "静観（バネ未収縮）", color = "var(--muted)";
-        if      (kairi < tb) { label = "限界突破（買いゾーン）"; color = "var(--green)"; }
-        else if (kairi < tw) { label = "チャンス目前（監視）";   color = "var(--orange)"; }
+        if      (kairi < tb) { label = "限界突破（BNF買いゾーン）"; color = "var(--green)"; }
+        else if (kairi < tw) { label = "チャンス目前（監視強化）";  color = "var(--orange)"; }
         document.getElementById('res-status').innerText   = label;
         document.getElementById('res-status').style.color = color;
-        document.getElementById('res-threshold').innerText = `監視 ${tw.toFixed(1)}% / 買い ${tb.toFixed(1)}%`;
-        // AI分析カードをリセット（数値が変わった場合）
+        document.getElementById('res-threshold').innerText =
+            `監視 ${tw.toFixed(1)}% / 買い ${tb.toFixed(1)}%`;
         resetAiCard();
     }
 
@@ -688,23 +791,32 @@
             let prompt = "";
 
             if (type === 'timing') {
-                prompt = `あなたは日本株の逆張り投資家B.N.Fの手法に精通したAIコーチです。
-以下のデータをもとに、ザラ場中の値動きを踏まえて「今この瞬間に買うべきか」「どの価格帯まで引き付けるべきか」を具体的に分析してください。
+                prompt = `あなたはB.N.F（日本最高峰の個人投資家）の逆張りスイング手法を熟知したAIコーチです。
+以下のデータと、B.N.F手法の原則を照らし合わせて「今この瞬間に買うべきか」を判定してください。
 
-【入力データ】
+【B.N.F手法の原則（最重要）】
+・狙いは「パニックの売り尽くし」：25日MAから大きく乖離し、恐怖や追証で投げ売られた銘柄のみを狙う
+・セクター別乖離率目安：大型バリュー-10〜-15%、ハイテク-15〜-20%、新興グロース-30〜-50%
+・地合い優先：個別の形より市場全体がパニック（全面安）かどうかを最重視
+・エントリー条件：東証の8〜9割（1,400〜1,500銘柄以上）が値下がりする大暴落の日を待つ
+・最後の投げを狙う：それまで耐えていた東京エレクトロン・ファーストリテイリング等の主力株が最後に崩れた瞬間が絶好の買い場
+・損切り基準：%ではなく「需給の反発シナリオが外れた瞬間」に即撤退
+・決済：基本1〜2日で手仕舞い（売られすぎの修正リバウンドを取るだけ）
+
+【現在のデータ】
 - 銘柄コード: ${code}
-- セクター: ${sector}
+- セクター: ${sector}（このセクターの乖離率買いしきい値: ${tb}%）
 - 現在株価: ${price}円
 - 25日移動平均線: ${ma}円
 - 乖離率: ${kairi}%
-- 地合いスコア: ${currentMarketScore}点 / 100点（低いほどパニック＝逆張りのチャンス）
+- 地合いスコア: ${currentMarketScore}点 / 100点（低いほど全面パニック＝逆張りの好機）
 - 地合い調整済みしきい値: 監視 ${tw}% / 買い ${tb}%
 
 【回答フォーマット】
-① 現在のポジション判断（1〜2行で結論から）
-② 乖離率と地合いの組み合わせからみた状況解説（3〜4行）
-③ 具体的なアクションプラン（価格帯・タイミングの目安を数字で）
-④ リスク要因（1〜2点）
+① 買いシグナル判定（「エントリー可」「監視継続」「待機」「回避」の4段階で明確に結論）
+② 乖離率×地合い×セクターの組み合わせ解説（B.N.F原則と照らした状況分析）
+③ 具体的アクションプラン（エントリー価格帯・損切りの目安・1〜2日での手仕舞い価格）
+④ この局面でB.N.Fが最も警戒するリスク（1〜2点）
 
 「です・ます調」で、数字を使って具体的に回答してください。`;
 
@@ -850,9 +962,20 @@
             const genAI = new window.GoogleGenerativeAI(geminiApiKey);
             const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
             const result = await model.generateContent(
-                `あなたは株式投資の逆張り手法（25日移動平均線乖離率）に詳しい親切なAIコーチです。
-現在の地合いスコアは${currentMarketScore}点/100点です（低いほどパニック＝逆張りのチャンス）。
-この状況を踏まえて「です・ます調」で回答してください。
+                `あなたはB.N.F（日本最高峰の個人投資家）の逆張りスイング手法を熟知したAIコーチです。
+以下のB.N.F手法の原則を常に念頭に置いて回答してください。
+
+【B.N.F手法の核心原則】
+・狙いは「パニックの売り尽くし」：25日MAから乖離し追証で投げ売られた銘柄のみを狙う
+・セクター別乖離率目安：大型バリュー-10〜-15%、ハイテク-15〜-20%、新興グロース-30〜-50%
+・地合い最優先：東証の8〜9割（1,400〜1,500銘柄）が値下がりする全面パニックの日を待つ
+・最後の投げ：東京エレクトロン・ファーストリテイリング等の主力株が最後に崩れた瞬間がエントリー
+・損切り基準はパーセンテージではなく「反発シナリオが外れた瞬間」に即撤退
+・決済は基本1〜2日（売られすぎの修正リバウンドを取るだけ）
+・お金はスコア：感情を排除し、機会損失を最大のリスクと捉える
+
+現在の地合いスコアは${currentMarketScore}点/100点です（低いほど全面パニック＝逆張りの好機）。
+この原則と地合い状況を踏まえて、「です・ます調」で具体的に回答してください。
 相談：${userText}`
             );
             chatBox.innerHTML += `<div class="bubble bnf">${escapeHtml(result.response.text())}</div>`;
@@ -860,6 +983,166 @@
             chatBox.innerHTML += `<div class="bubble bnf">申し訳ありません。エラーが発生しました。</div>`;
         }
         chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    /* ── BNF候補銘柄スキャン ── */
+    async function runStockScan() {
+        if (!geminiApiKey) { alert("AIタブでAPIキーを設定してください。"); return; }
+
+        const btn      = document.getElementById('scan-btn');
+        const statusEl = document.getElementById('scan-status');
+        const resultsEl = document.getElementById('scan-results');
+        const condEl   = document.getElementById('scan-condition-zone');
+        const condText = document.getElementById('scan-condition-text');
+        const divider  = document.getElementById('scan-divider');
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> スキャン中...';
+        statusEl.innerText = ""; statusEl.style.color = "var(--muted)";
+        resultsEl.innerHTML = `<div class="scan-loading">
+            <div class="scan-loading-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+            <div style="color:var(--muted);font-size:.85rem;">BNFロジックに合致する銘柄を<br>リアルタイム検索中...</div>
+        </div>`;
+        condEl.style.display = 'none';
+        divider.style.display = 'none';
+
+        // 地合いスコアからセクター優先度を決定
+        const mktNote = currentMarketScore <= 20
+            ? "市場は現在極度のパニック状態（全面安）です。全セクターで大きな乖離が発生している可能性が高い。"
+            : currentMarketScore <= 40
+            ? "市場はやや悲観的で連れ安が発生しています。ハイテク・半導体セクターに注目してください。"
+            : "市場は通常状態です。個別に深押しした銘柄のみを厳選してください。";
+
+        const prompt = `あなたはB.N.Fの逆張りスイング手法を熟知したAIアシスタントです。
+今日の日本株市場をWeb検索し、以下のBNF条件に最も合致する銘柄を5つ厳選してください。
+
+【BNF選定条件（重要度順）】
+1. 25日移動平均線から大きく下方乖離している（セクター別目安: 大型バリュー-10〜-15%、ハイテク-15〜-20%、新興グロース-30〜-50%）
+2. 恐怖・追証・狼狽売りによる過剰な売り込みが見られる
+3. 業績や事業継続性に致命的な問題がない（一時的な下落である）
+4. 出来高が急増している（売り尽くしのサイン）
+5. 現在の地合い: ${mktNote}
+
+【検索してほしい情報】
+- 本日・直近の急落銘柄ランキング
+- 東証プライム・スタンダードの値下がり率上位
+- 半導体・ハイテク・バリュー株の直近の動向
+- 各候補銘柄の25日移動平均線と現在値
+
+以下のJSON配列のみで返答してください。説明文・マークダウン・コードブロック一切不要。
+[
+  {
+    "rank": 1,
+    "code": "4桁の銘柄コード",
+    "name": "銘柄名",
+    "sector": "セクター名",
+    "price": 現在株価(数値),
+    "ma25": 25日移動平均線の推定値(数値),
+    "kairi": 乖離率(数値、例:-18.5),
+    "zone": "buy または watch",
+    "reason": "BNFロジックに合致する具体的な理由（直近の株価動向・売られた背景・反発期待の根拠を2〜3文で）",
+    "risk": "最大のリスク要因（1文）"
+  }
+]`;
+
+        try {
+            const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-flash",
+                tools: [{ googleSearch: {} }]
+            });
+            const result = await model.generateContent(prompt);
+
+            // content blocksからテキストを結合
+            const rawText = result.response.candidates[0].content.parts
+                .filter(p => p.text)
+                .map(p => p.text)
+                .join("");
+
+            // JSON配列を抽出
+            const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+            if (!jsonMatch) throw new Error("JSON not found");
+
+            const stocks = JSON.parse(jsonMatch[0]);
+            if (!Array.isArray(stocks) || stocks.length === 0) throw new Error("empty");
+
+            // 条件テキスト表示
+            condText.innerText =
+                `地合いスコア: ${currentMarketScore}点 ／ ` +
+                `ハイテク目安: -15〜-20% ／ バリュー目安: -10〜-15% ／ グロース目安: -30〜-50%`;
+            condEl.style.display  = 'block';
+            divider.style.display = 'block';
+
+            // カード描画
+            resultsEl.innerHTML = stocks.map(s => {
+                const kairiNum  = parseFloat(s.kairi) || 0;
+                const kairiStr  = kairiNum.toFixed(1) + "%";
+                const isBuy     = s.zone === "buy";
+                const kairiCls  = isBuy ? "" : "watch";
+                const zoneBadge = isBuy
+                    ? `<span class="scan-tag" style="border-color:var(--green);color:var(--green);">BNF買いゾーン</span>`
+                    : `<span class="scan-tag" style="border-color:var(--orange);color:var(--orange);">監視ゾーン</span>`;
+                return `
+                <div class="scan-card">
+                    <div class="scan-card-header">
+                        <div style="display:flex;align-items:center;flex:1;">
+                            <span class="scan-rank">#${escapeHtml(String(s.rank))}</span>
+                            <div>
+                                <div class="scan-name">${escapeHtml(s.name || "")}</div>
+                                <div class="scan-code">${escapeHtml(s.code || "")} · ${escapeHtml(s.sector || "")}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="scan-kairi ${kairiCls}">${escapeHtml(kairiStr)}</div>
+                            <div style="font-size:.68rem;color:var(--muted);text-align:right;">乖離率</div>
+                        </div>
+                    </div>
+                    <div class="scan-meta">
+                        ${zoneBadge}
+                        <span class="scan-tag">現在値 ${escapeHtml(String(s.price))}円</span>
+                        <span class="scan-tag">MA25 ${escapeHtml(String(s.ma25))}円</span>
+                    </div>
+                    <div class="scan-reason">${escapeHtml(s.reason || "")}</div>
+                    <div style="font-size:.75rem;color:var(--red);margin-bottom:10px;">
+                        ⚠️ ${escapeHtml(s.risk || "")}
+                    </div>
+                    <div class="scan-actions">
+                        <a href="https://finance.yahoo.co.jp/quote/${encodeURIComponent(s.code)}" target="_blank" class="scan-btn-yahoo">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Yahoo!確認
+                        </a>
+                        <button class="scan-btn-tool" onclick="loadToTools('${escapeHtml(s.code)}', '${escapeHtml(String(s.price))}', '${escapeHtml(String(s.ma25))}')">
+                            <i class="fa-solid fa-wrench"></i> ツールで分析
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            statusEl.innerText = `${stocks.length}件の候補銘柄が見つかりました。`;
+            statusEl.style.color = "var(--green)";
+
+        } catch(e) {
+            console.error(e);
+            resultsEl.innerHTML = `<div class="scan-empty">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size:1.8rem;color:var(--red);margin-bottom:10px;"></i><br>
+                スキャンに失敗しました。<br>APIキーを確認するか、時間をおいて再試行してください。
+            </div>`;
+            statusEl.innerText = "スキャン失敗"; statusEl.style.color = "var(--red)";
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-magnifying-glass-chart"></i> 再スキャン';
+        }
+    }
+
+    /* ── 候補銘柄をツール画面に転送 ── */
+    function loadToTools(code, price, ma) {
+        document.getElementById('stock-code').value    = code;
+        document.getElementById('current-price').value = price;
+        document.getElementById('ma-value').value      = ma;
+        updateYahooLink(code);
+        calculateMetrics();
+        // ツール画面に切り替え
+        const toolNav = document.querySelector('.nav-bar .nav-item:nth-child(2)');
+        switchScreen('tools', toolNav);
     }
 
     /* ── 初期化 ── */
