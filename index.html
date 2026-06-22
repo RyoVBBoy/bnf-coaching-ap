@@ -26,7 +26,7 @@ header{height:53px;display:flex;align-items:center;justify-content:center;
 .content-area{flex:1;overflow-y:auto;padding-bottom:68px;-webkit-overflow-scrolling:touch;}
 .screen{display:none;} .screen.active{display:block;}
 
-.page-hdr{padding:14px 16px 10px;border-bottom:1px solid var(--bdr);}
+.page-hdr{padding:14px 16px 10px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;}
 .page-hdr h2{font-size:1.1rem;font-weight:800;}
 .page-hdr p{font-size:.78rem;color:var(--muted);margin-top:2px;}
 
@@ -50,6 +50,16 @@ input:focus,select:focus{border-color:var(--acc);}
 .btn-danger{background:transparent;border:1px solid var(--red);color:var(--red);}
 .btn-save{background:linear-gradient(90deg,var(--blue),var(--acc));color:#fff;}
 
+/* ── 新設：「LIVE」バッジ ── */
+.live-badge{display:flex;align-items:center;gap:5px;font-size:.75rem;font-weight:700;color:var(--green);background:rgba(0,186,124,.1);padding:4px 10px;border-radius:var(--pill);}
+.live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 1.5s infinite;}
+@keyframes blink { 0% {opacity:1;} 50% {opacity:.3;} 100% {opacity:1;} }
+
+/* ── 新設：ミニ株・通常株トグルスイッチ ── */
+.toggle-switch{display:flex;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--pill);padding:2px;width:160px;cursor:pointer;}
+.toggle-opt{flex:1;padding:6px 0;text-align:center;font-size:.8rem;font-weight:700;color:var(--muted);border-radius:var(--pill);transition:all .2s;}
+.toggle-opt.active{background:var(--acc);color:#fff;}
+
 /* ── 下部ナビゲーション ── */
 .nav-bar{position:fixed;bottom:0;left:0;width:100%;height:65px;background:rgba(0,0,0,.85);
   backdrop-filter:blur(12px);display:flex;justify-content:space-around;align-items:center;border-top:1px solid var(--bdr);z-index:1000;}
@@ -65,6 +75,11 @@ input:focus,select:focus{border-color:var(--acc);}
 .score-big{font-size:3.8rem;font-weight:900;font-family:'Courier New',monospace;line-height:1;transition:color .3s;}
 .score-suffix{font-size:1.4rem;font-weight:700;color:var(--muted);margin-left:3px;}
 .score-label{font-size:.9rem;font-weight:700;margin-top:6px;transition:color .3s;}
+
+/* 新設: 現在地表示バー（パニック臨界点までの距離） */
+.location-card{padding:14px 16px;border-bottom:1px solid var(--bdr);background:var(--s2);}
+.loc-bar{height:12px;background:var(--bdr);border-radius:var(--pill);margin-top:8px;position:relative;background:linear-gradient(90deg, var(--green) 0%, var(--green) 20%, var(--orange) 50%, var(--red) 100%);}
+.loc-dot{width:16px;height:16px;background:#fff;border:3px solid var(--acc);border-radius:50%;position:absolute;top:-2px;transform:translateX(-50%);box-shadow:0 0 10px var(--acc);transition:left .3s ease;}
 
 .mkt-bar{display:flex;border-bottom:1px solid var(--bdr);background:var(--s1);}
 .mkt-cell{flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--bdr);}
@@ -103,7 +118,9 @@ input:focus,select:focus{border-color:var(--acc);}
 .ai-sync-row{padding:12px 16px;border-bottom:1px solid var(--bdr);}
 
 /* ── ② ツール ── */
-.inner-tabs{display:flex;border-bottom:1px solid var(--bdr);background:var(--s1);}
+.tool-header{padding:14px 16px 0;background:var(--s1);display:flex;justify-content:space-between;align-items:center;}
+.tool-title{font-size:1.1rem;font-weight:800;}
+.inner-tabs{display:flex;border-bottom:1px solid var(--bdr);background:var(--s1);margin-top:10px;}
 .inner-tab{flex:1;padding:11px 0;text-align:center;font-size:.78rem;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
 .inner-tab.active{color:var(--acc);border-bottom-color:var(--acc);}
 .inner-pane{display:none;} .inner-pane.active{display:block;}
@@ -133,7 +150,7 @@ input:focus,select:focus{border-color:var(--acc);}
 .search-results{background:var(--black);}
 .scan-item{display:flex;flex-direction:column;padding:12px 16px;border-bottom:1px solid var(--bdr);position:relative;}
 .scan-item.is-new::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--acc);}
-.scan-top{display:flex;justify-content:span-between;align-items:center;}
+.scan-top{display:flex;justify-content:space-between;align-items:center;}
 .scan-meta{display:flex;align-items:center;gap:6px;}
 .scan-code{font-size:.95rem;font-weight:800;color:var(--blue);font-family:'Courier New',monospace;}
 .scan-sec{font-size:.7rem;background:var(--s2);padding:2px 6px;border-radius:4px;color:var(--muted);font-weight:600;}
@@ -182,6 +199,11 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
 
 <div class="content-area">
   <div id="screen-market" class="screen active">
+    <div class="page-hdr">
+      <h2>地合い環境分析</h2>
+      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    </div>
+
     <div class="mkt-bar" id="live-summary-bar">
       <div class="mkt-cell"><div class="mkt-lbl">日経平均</div><div class="mkt-val" id="smr-nikkei">--</div><div class="mkt-chg" id="smr-nikkei-chg">--</div></div>
       <div class="mkt-cell"><div class="mkt-lbl">TOPIX</div><div class="mkt-val" id="smr-topix">--</div><div class="mkt-chg" id="smr-topix-chg">--</div></div>
@@ -193,6 +215,18 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
         <span class="score-big" id="live-score">50</span><span class="score-suffix">/100</span>
       </div>
       <div class="score-label" id="live-status">ニュートラル</div>
+    </div>
+
+    <div class="location-card">
+      <div class="cell-lbl">パニック臨界点までの現在地（左に行くほど大パニックチャンス）</div>
+      <div class="loc-bar">
+        <div class="loc-dot" id="loc-dot" style="left: 50%;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.7rem;margin-top:4px;color:var(--muted);">
+        <span>大パニック（チャンス）</span>
+        <span>通常水準</span>
+        <span>過熱（逆張り厳禁）</span>
+      </div>
     </div>
 
     <div class="countdown-bar">
@@ -249,6 +283,14 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
   </div>
 
   <div id="screen-tools" class="screen">
+    <div class="tool-header">
+      <div class="tool-title">逆張り分析ツール</div>
+      <div class="toggle-switch" onclick="toggleStockMode()">
+        <div class="toggle-opt active" id="opt-unit">通常株 (100株)</div>
+        <div class="toggle-opt" id="opt-mini">ミニ株 (1株)</div>
+      </div>
+    </div>
+
     <div class="inner-tabs">
       <div class="inner-tab active" onclick="switchInnerTab('calc', this)">単発計算・OCR</div>
       <div class="inner-tab" onclick="switchInnerTab('watchlist', this)">ウォッチリスト</div>
@@ -265,14 +307,18 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
             </select>
           </div>
         </div>
-        <div id="link-zone" style="margin-bottom:12px;"></div>
-        <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+        <div class="calc-grid" style="margin-top:4px;">
+          <div><label class="cell-lbl">シミュレーション株数</label><input type="number" id="stock-qty" value="100" oninput="calculateMetrics()"></div>
+          <div id="link-zone" style="display:flex; align-items:flex-end;"></div>
+        </div>
+        <div class="upload-zone" onclick="document.getElementById('file-input').click()" style="margin-top:8px;">
           <i class="fa-solid fa-camera"></i><div>チャートのスクショを選択・撮影</div>
           <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleImageUpload(this)">
           <img id="preview-img" alt="プレビュー">
         </div>
         <div id="ocr-status" style="text-align:center; font-size:.75rem; margin-top:4px;"></div>
       </div>
+      
       <div class="cell">
         <div class="calc-grid">
           <div><label class="cell-lbl">現在リアルタイム株価</label><input type="number" id="current-price" placeholder="株価" oninput="calculateMetrics()"></div>
@@ -283,12 +329,14 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
           <div><label class="cell-lbl">200日移動平均線</label><input type="number" id="ma200-value" placeholder="200日線(任意)" oninput="calculateMetrics()"></div>
         </div>
       </div>
+      
       <div class="cell" style="background:var(--s1);">
         <div class="calc-grid">
           <div><label class="cell-lbl">利確ターゲット価格</label><input type="number" id="rrr-profit" placeholder="利益確定目標" oninput="calculateMetrics()"></div>
           <div><label class="cell-lbl">損切りライン価格</label><input type="number" id="rrr-loss" placeholder="ロスカット条件" oninput="calculateMetrics()"></div>
         </div>
       </div>
+      <div class="result-row"><span>概算必要投資資金</span><span class="res-val" id="res-capital" style="color:var(--blue);">-- 円</span></div>
       <div class="result-row"><span>25日線乖離率 / 判定</span><span class="res-val" id="res-kairi">-- %</span></div>
       <div class="result-row" style="font-size:.85rem; color:var(--muted);"><span>75日線 / 200日線 乖離率</span><span id="res-other-ma" style="font-family:'Courier New',monospace; font-weight:700;">-- / --</span></div>
       <div class="result-row"><span>リスクリワード比 (RRR)</span><span class="res-val" id="res-rrr" style="color:var(--orange);">--</span></div>
@@ -387,7 +435,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
     <div class="summary-grid">
       <div class="smr-cell"><div class="smr-lbl">勝率</div><div class="smr-val" id="log-win-rate">--%</div></div>
       <div class="smr-cell"><div class="smr-lbl">平均取得乖離</div><div class="smr-val" id="log-avg-kairi">--%</div></div>
-      <div class="smr-cell"><div class="smr-lbl">保存ログ件数</div><div class="smr-val" id="log-count">0件</div></div>
+      <div class="summary-grid" style="border:none;"><div class="smr-cell" style="border:none;"><div class="smr-lbl">保存ログ件数</div><div class="smr-val" id="log-count">0件</div></div></div>
     </div>
     <div class="cell" style="display:flex; gap:8px; background:var(--s1);">
       <button class="btn-pill btn-outline" style="font-size:.8rem; padding:6px 12px;" onclick="exportLogsCSV()"><i class="fa-solid fa-file-csv"></i> CSVエクスポート</button>
@@ -409,11 +457,10 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
 <script>
 let currentMarketScore = 50;
 let geminiApiKey = localStorage.getItem("bnf_gemini_key") || "";
-let compressedBase64 = "";
-let previousScanCodes = new Set(); // 新たに加わった銘柄判定用
+let previousScanCodes = new Set(); 
 let currentScanList = [];
+let isMiniStock = false; // ミニ株状態フラグ
 
-// サンプルデータ構造
 const mockScans = [
   {code:"6920", name:"レーザーテック", sector:"tech", price:21050, ma:24500, kairi:-14.08},
   {code:"8035", name:"東京エレクトロン", sector:"tech", price:23100, ma:28000, kairi:-17.50},
@@ -451,7 +498,6 @@ function switchInnerTab(paneId, el) {
 
 // ================= ① 地合いロジック =================
 function initMarketSummary() {
-  // モックの市場リアルタイム値表示
   document.getElementById('smr-nikkei').innerText = "38,420円";
   document.getElementById('smr-nikkei-chg').className = "mkt-chg dn";
   document.getElementById('smr-nikkei-chg').innerText = "-420円 (-1.08%)";
@@ -464,7 +510,10 @@ function initMarketSummary() {
   document.getElementById('smr-usdjpy-chg').className = "mkt-chg up";
   document.getElementById('smr-usdjpy-chg').innerText = "+0.45円";
 
-  // 歴史的比較の描画
+  // 「今ここ」インジケーター（パニック臨界点までの距離）同期
+  const dot = document.getElementById('loc-dot');
+  if(dot) dot.style.left = currentMarketScore + "%";
+
   const compareZone = document.getElementById('history-compare-zone');
   const crashEvents = [
     { name: "2008年 リーマンショック最悪期", score: 8, color: "var(--green)" },
@@ -473,7 +522,7 @@ function initMarketSummary() {
     { name: "現在相場環境のリアルスコア", score: currentMarketScore, color: "var(--acc)", isCurrent: true }
   ];
 
-  compareZone.innerHTML = `<div class="cell-lbl" style="margin-bottom:6px;">歴史的パニック期と現在の比較 (スコアが低いほど大暴落)</div>`;
+  compareZone.innerHTML = `<div class="cell-lbl" style="margin-bottom:6px;">歴史的パニック期と現在の比較</div>`;
   crashEvents.forEach(e => {
     if(e.isCurrent) e.score = currentMarketScore;
     compareZone.innerHTML += `
@@ -484,8 +533,7 @@ function initMarketSummary() {
       </div>`;
   });
 
-  // カウントダウン表示の更新
-  const totalStocks = 1650; // 仮の分母
+  const totalStocks = 1650;
   let simulatedValues = { 100: 120, 90: 250, 80: 340, 70: 450, 60: 510, 50: 620, 40: 780, 30: 980, 20: 1220, 10: 1410, 0: 1580 };
   let currentDown = simulatedValues[Math.round(currentMarketScore / 10) * 10] || 600;
   let remain = 1400 - currentDown;
@@ -496,9 +544,8 @@ function initMarketSummary() {
   document.getElementById('cd-fill-bar').style.width = Math.min((currentDown / 1400) * 100, 100) + "%";
   document.getElementById('cd-fill-bar').style.background = remain === 0 ? "var(--red)" : "var(--green)";
 
-  // 直近7日間の推移グラフ (SVG)
   const svg = document.getElementById('history-graph');
-  let points = [80, 70, 75, 60, 55, 45, currentMarketScore]; // ダミー推移
+  let points = [80, 70, 75, 60, 55, 45, currentMarketScore]; 
   let width = 300, height = 40;
   let step = width / (points.length - 1);
   let pathD = `M 0 ${height - (points[0]/100)*height}`;
@@ -523,7 +570,7 @@ function autoCalculateMarket(userTriggered = false) {
   
   if (currentMarketScore >= 80) {
     statusEl.innerText = "過熱・上昇（逆張り厳禁）"; statusEl.style.color = "var(--red)";
-    commentEl.innerText = "「みんな儲かってる時って、一番危ないんですよね。今は引き付けるべきです」";
+    commentEl.innerText = "慢心は禁物です。移動平均線から大きく上放れた銘柄を追うのはリスクしかありません。";
   } else if (currentMarketScore >= 50) {
     statusEl.innerText = "ニュートラル・静観"; statusEl.style.color = "var(--muted)";
     commentEl.innerText = "「……。普通ですね。下落セクターが明確に出るまで待ちます」";
@@ -579,15 +626,34 @@ async function fetchLiveMarketWithAI() {
 }
 
 // ================= ② ツールロジック =================
+function toggleStockMode() {
+  isMiniStock = !isMiniStock;
+  const optUnit = document.getElementById('opt-unit');
+  const optMini = document.getElementById('opt-mini');
+  const qtyInput = document.getElementById('stock-qty');
+
+  if(isMiniStock) {
+    optUnit.classList.remove('active');
+    optMini.classList.add('active');
+    qtyInput.value = 1; 
+  } else {
+    optMini.classList.remove('active');
+    optUnit.classList.add('active');
+    qtyInput.value = 100; 
+  }
+  calculateMetrics();
+}
+
 function updateYahooLink(code) {
   const linkZone = document.getElementById('link-zone');
   if(code && code.length === 4) {
-    linkZone.innerHTML = `<a href="https://finance.yahoo.co.jp/quote/${encodeURIComponent(code)}" target="_blank" class="yahoo-link"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${escapeHtml(code)} のYahoo!ファイナンスを開く</a>`;
+    linkZone.innerHTML = `<a href="https://finance.yahoo.co.jp/quote/${encodeURIComponent(code)}" target="_blank" class="yahoo-link" style="padding:6px 12px; font-size:.75rem;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Yahoo! finance</a>`;
   } else { linkZone.innerHTML = ""; }
 }
 
 function calculateMetrics() {
   const price = parseFloat(document.getElementById('current-price').value);
+  const qty = parseFloat(document.getElementById('stock-qty').value) || 0;
   const ma25 = parseFloat(document.getElementById('ma-value').value);
   const ma75 = parseFloat(document.getElementById('ma75-value').value);
   const ma200 = parseFloat(document.getElementById('ma200-value').value);
@@ -595,11 +661,17 @@ function calculateMetrics() {
   const profitTgt = parseFloat(document.getElementById('rrr-profit').value);
   const lossCut = parseFloat(document.getElementById('rrr-loss').value);
 
-  // 25日乖離率算出
+  // 必要投資資金計算
+  if(price && qty) {
+    document.getElementById('res-capital').innerText = (price * qty).toLocaleString() + " 円";
+  } else {
+    document.getElementById('res-capital').innerText = "-- 円";
+  }
+
+  // 25日線乖離率
   if(price && ma25) {
     const kairi25 = ((price - ma25) / ma25) * 100;
     
-    // しきい値計算
     const marketAdjustment = (currentMarketScore - 50) / 10; 
     let baseTgt = -15; 
     const sector = document.getElementById('stock-sector').value;
@@ -608,22 +680,25 @@ function calculateMetrics() {
     const adjustedThreshold = baseTgt - marketAdjustment;
 
     let evalStr = "静観（バネ未収縮）";
-    if (kairi25 <= adjustedThreshold) { evalStr = "限界突破（バイイン圏内）"; }
-    else if (kairi25 <= adjustedThreshold + 4) { evalStr = "要監視（まもなくゾーン）"; }
+    let evalColor = "var(--text)";
+    if (kairi25 <= adjustedThreshold) { evalStr = "限界突破（バイイン圏内）"; evalColor="var(--green)"; }
+    else if (kairi25 <= adjustedThreshold + 4) { evalStr = "要監視（まもなくゾーン）"; evalColor="var(--orange)"; }
 
-    document.getElementById('res-kairi').innerText = `${kairi25.toFixed(2)} % [${evalStr}]`;
+    document.getElementById('res-kairi').innerText = `${kairi25.toFixed(2)} %`;
+    document.getElementById('res-status').innerText = evalStr;
+    document.getElementById('res-status').style.color = evalColor;
     document.getElementById('res-threshold').innerText = `購入警戒ライン: ${adjustedThreshold.toFixed(1)} % 以下`;
   } else {
     document.getElementById('res-kairi').innerText = "-- %";
+    document.getElementById('res-status').innerText = "未入力";
+    document.getElementById('res-status').style.color = "var(--text)";
   }
 
-  // Multi-MA算出 (75日、200日)
   let kairi75Str = "--", kairi200Str = "--";
   if(price && ma75) kairi75Str = (((price - ma75) / ma75) * 100).toFixed(1) + "%";
   if(price && ma200) kairi200Str = (((price - ma200) / ma200) * 100).toFixed(1) + "%";
   document.getElementById('res-other-ma').innerText = `${kairi75Str} / ${kairi200Str}`;
 
-  // RRR算出
   if(price && profitTgt && lossCut) {
     const upside = profitTgt - price;
     const downside = price - lossCut;
@@ -631,11 +706,10 @@ function calculateMetrics() {
       const rrr = upside / downside;
       document.getElementById('res-rrr').innerText = rrr.toFixed(2);
       document.getElementById('res-rrr').style.color = rrr >= 2.0 ? "var(--green)" : "var(--orange)";
-    } else { document.getElementById('res-rrr').innerText = "算出不可(価格設定不正)"; }
+    } else { document.getElementById('res-rrr').innerText = "算出不可(価格不正)"; }
   } else { document.getElementById('res-rrr').innerText = "--"; }
 }
 
-// ウォッチリストロジック
 function getWatchlist() { return JSON.parse(localStorage.getItem("bnf_wl") || "[]"); }
 function saveWatchlist(wl) { localStorage.setItem("bnf_wl", JSON.stringify(wl)); updateWatchlistUI(); }
 
@@ -645,7 +719,6 @@ function addWatchlist() {
   if(!code || code.length !== 4) return;
   let wl = getWatchlist();
   if(!wl.some(item => item.code === code)) {
-    // マッチするモック名を探す
     const matched = mockScans.find(m => m.code === code);
     wl.push({ code: code, name: matched ? matched.name : "任意追加銘柄", kairi: matched ? matched.kairi : (Math.random() * -15).toFixed(1) });
     saveWatchlist(wl);
@@ -676,7 +749,6 @@ function updateWatchlistUI() {
   `).join('');
 }
 
-// ポジション＆ナンピン計算
 function calcPositionRealtime() {
   const buy = parseFloat(document.getElementById('pos-buy-price').value);
   const qty = parseFloat(document.getElementById('pos-qty').value);
@@ -712,7 +784,6 @@ function runNanpinCalc() {
   }
 }
 
-// OCR機能（模擬）
 function handleImageUpload(input) {
   const file = input.files[0]; if(!file) return;
   const status = document.getElementById('ocr-status');
@@ -732,7 +803,6 @@ function executeMarketScan() {
   status.innerText = "全主力大型銘柄の25日MA乖離率をスクリーニング中...";
   
   setTimeout(() => {
-    // 前回の結果コードを記憶してハイライト判定に利用
     previousScanCodes = new Set(currentScanList.map(item => item.code));
     currentScanList = [...mockScans];
     renderScanResults();
@@ -752,9 +822,9 @@ function renderScanResults() {
   });
 
   if(sortOrder === 'kairi-desc') {
-    filtered.sort((a,b) => a.kairi - b.kairi); // 乖離マイナスが大きい順
+    filtered.sort((a,b) => a.kairi - b.kairi); 
   } else {
-    filtered.sort((a,b) => b.kairi - a.kairi); // リスク低（乖離が浅い順）
+    filtered.sort((a,b) => b.kairi - a.kairi); 
   }
 
   filtered = filtered.slice(0, maxCount);
@@ -795,12 +865,12 @@ function bulkSaveScanResults() {
   let logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
   let count = 0;
   currentScanList.forEach(item => {
-    if(item.kairi < -10) { // 要監視水準以上のみ一括記録
+    if(item.kairi < -10) { 
       logs.unshift({
         time: new Date().toLocaleString(),
         code: item.code,
         kairi: item.kairi.toFixed(2) + "%",
-        status: "一括一斉スキャン保存分",
+        status: "一括保存抽出分",
         memo: "スクリーニングより自動抽出"
       });
       count++;
@@ -838,7 +908,7 @@ async function aiQuickSummary() {
   try {
     const genAI = new window.GoogleGenerativeAI(geminiApiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const prompt = `現在の株式地合いスコアは100点満点中【${currentMarketScore}点】です。この情報を主軸として、本日の市場環境の重要点、逆張りトレーダーが取るべき戦略的距離感を、スマートで知的な「です・ます調」で、一言（150文字以内）で総括してください。`;
+    const prompt = `現在の株式地合いスコアは100点満点中【${currentMarketScore}点】です。本日の市場環境の重要点、逆張りトレーダーが取るべき戦略的距離感を、スマートで知的な「です・ます調」で、150文字以内で総括してください。`;
     const result = await model.generateContent(prompt);
     chatBox.innerHTML += `<div class="bubble bnf">${escapeHtml(result.response.text())}</div>`;
   } catch(e) { chatBox.innerHTML += `<div class="bubble bnf">総括の自動生成に失敗しました。</div>`; }
@@ -859,8 +929,7 @@ async function sendChatMessage() {
   try {
     const genAI = new window.GoogleGenerativeAI(geminiApiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const prompt = `あなたは株式スイングトレードと、移動平均線乖離率を用いた逆張り戦略の深い知識を持つ、論理的で親切なAI投資アシスタントです。現在の地合いスコアは${currentMarketScore}点です。
-ユーザーからの質問に、丁寧な「です・ます調」で、簡潔に核心を突いたアドバイスを提供してください。
+    const prompt = `ユーザーからの質問に、丁寧な「です・ます調」で、簡潔に核心を突いたアドバイスを提供してください。現在の地合いスコアは${currentMarketScore}点です。
 質問：${userText}`;
     
     const result = await model.generateContent(prompt);
@@ -875,7 +944,7 @@ async function sendChatMessage() {
 function saveTradeLog() {
   const code = document.getElementById('stock-code').value.trim() || "不明";
   const kairi = document.getElementById('res-kairi').innerText;
-  const threshold = document.getElementById('res-threshold').innerText;
+  const status = document.getElementById('res-status').innerText;
 
   if(kairi === "-- %") { alert("計算を実行してから保存してください。"); return; }
 
@@ -883,14 +952,14 @@ function saveTradeLog() {
     time: new Date().toLocaleString(),
     code: code,
     kairi: kairi,
-    status: threshold,
+    status: status,
     memo: ""
   };
 
   let logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
   logs.unshift(logObj);
   localStorage.setItem("bnf_logs", JSON.stringify(logs));
-  alert("分析ログをローカルストレージへ保存しました。");
+  alert("分析ログを保存しました。");
 }
 
 function updateLogMemo(index, text) {
@@ -907,7 +976,6 @@ function jumpToAnalyze(code) {
   updateYahooLink(code);
   switchScreen('tools', document.querySelectorAll('.nav-item')[1]);
   switchInnerTab('calc', document.querySelectorAll('.inner-tab')[0]);
-  // 擬似的に値を埋めて即時再計算
   document.getElementById('current-price').value = 21000;
   document.getElementById('ma-value').value = 24500;
   calculateMetrics();
@@ -917,10 +985,9 @@ function renderLogs() {
   const container = document.getElementById('log-container');
   const logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
   
-  // 成績統計サマリー算出
   document.getElementById('log-count').innerText = logs.length + "件";
   if(logs.length > 0) {
-    document.getElementById('log-win-rate').innerText = "71.4%"; // モック勝率
+    document.getElementById('log-win-rate').innerText = "71.4%"; 
     let totalKairi = 0;
     logs.forEach(l => { totalKairi += parseFloat(l.kairi) || -10; });
     document.getElementById('log-avg-kairi').innerText = (totalKairi / logs.length).toFixed(1) + "%";
@@ -950,7 +1017,7 @@ function renderLogs() {
 
 function exportLogsCSV() {
   const logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
-  if(logs.length === 0) { alert("エクスポートするデータがありません。"); return; }
+  if(logs.length === 0) { alert("データがありません。"); return; }
   let csvContent = "data:text/csv;charset=utf-8,日時,銘柄コード,乖離率状況,判定条件,メモ\n";
   logs.forEach(l => {
     csvContent += `"${l.time}","${l.code}","${l.kairi}","${l.status}","${l.memo || ''}"\n`;
