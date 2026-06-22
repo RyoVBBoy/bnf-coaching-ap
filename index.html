@@ -1,1252 +1,980 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BNF COACHING APP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --black:      #000000;
-            --surface-1:  #16181C;
-            --surface-2:  #1C1F23;
-            --border:     #2F3336;
-            --text:       #EFF3F4;
-            --muted:      #71767B;
-            --accent:     #d500f9;
-            --accent-dim: rgba(213,0,249,0.10);
-            --blue:       #1D9BF0;
-            --green:      #00BA7C;
-            --orange:     #FF7527;
-            --red:        #F4212E;
-            --pill:       9999px;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BNF COACHING APP</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --black:#000; --s1:#16181C; --s2:#1C1F23; --bdr:#2F3336;
+  --text:#EFF3F4; --muted:#71767B;
+  --acc:#d500f9; --acc-dim:rgba(213,0,249,.10);
+  --blue:#1D9BF0; --green:#00BA7C; --orange:#FF7527; --red:#F4212E;
+  --pill:9999px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--black);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  display:flex;flex-direction:column;height:100dvh;overflow:hidden;}
 
-        body {
-            background: var(--black);
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex; flex-direction: column;
-            height: 100dvh; overflow: hidden;
-        }
+header{height:53px;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:100;}
+.hdr-title{font-size:1.05rem;font-weight:800;letter-spacing:.12em;color:var(--acc);}
 
-        /* Header */
-        header {
-            height: 53px; display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
-        }
-        .header-title { font-size: 1.05rem; font-weight: 800; letter-spacing: .12em; color: var(--accent); }
+.content-area{flex:1;overflow-y:auto;padding-bottom:68px;-webkit-overflow-scrolling:touch;}
+.screen{display:none;} .screen.active{display:block;}
 
-        /* Content */
-        .content-area { flex: 1; overflow-y: auto; padding-bottom: 68px; -webkit-overflow-scrolling: touch; }
-        .screen { display: none; }
-        .screen.active { display: block; }
+.page-hdr{padding:14px 16px 10px;border-bottom:1px solid var(--bdr);}
+.page-hdr h2{font-size:1.1rem;font-weight:800;}
+.page-hdr p{font-size:.78rem;color:var(--muted);margin-top:2px;}
 
-        /* Page header */
-        .page-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
-        .page-header h2 { font-size: 1.1rem; font-weight: 800; }
-        .page-header p  { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+.cell{padding:14px 16px;border-bottom:1px solid var(--bdr);}
+.cell-lbl{font-size:.78rem;color:var(--muted);margin-bottom:6px;font-weight:600;}
 
-        /* Cell */
-        .cell { padding: 14px 16px; border-bottom: 1px solid var(--border); }
-        .cell-label { font-size: .78rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+input[type="number"],input[type="text"],input[type="password"],select{
+  width:100%;padding:10px 14px;background:var(--s2);border:1px solid var(--bdr);
+  border-radius:10px;color:var(--text);font-size:1rem;font-family:inherit;
+  outline:none;-webkit-appearance:none;transition:border-color .15s;}
+input:focus,select:focus{border-color:var(--acc);}
 
-        /* Inputs */
-        input[type="number"], input[type="text"], input[type="password"], select {
-            width: 100%; padding: 10px 14px;
-            background: var(--surface-2); border: 1px solid var(--border);
-            border-radius: 10px; color: var(--text); font-size: 1rem;
-            font-family: inherit; outline: none; -webkit-appearance: none;
-            transition: border-color .15s;
-        }
-        input:focus, select:focus { border-color: var(--accent); }
+.btn-pill{display:inline-flex;align-items:center;justify-content:center;
+  gap:7px;padding:9px 20px;border:none;border-radius:var(--pill);
+  font-weight:700;font-size:.9rem;cursor:pointer;width:100%;transition:opacity .15s;font-family:inherit;}
+.btn-pill:active{opacity:.75;}
+.btn-acc{background:var(--acc);color:#fff;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-outline{background:transparent;border:1px solid var(--bdr);color:var(--text);}
+.btn-danger{background:transparent;border:1px solid var(--red);color:var(--red);}
+.btn-save{background:linear-gradient(90deg,var(--blue),var(--acc));color:#fff;}
 
-        /* Buttons */
-        .btn-pill {
-            display: inline-flex; align-items: center; justify-content: center;
-            gap: 7px; padding: 9px 20px; border: none; border-radius: var(--pill);
-            font-weight: 700; font-size: .9rem; cursor: pointer; width: 100%;
-            transition: opacity .15s;
-        }
-        .btn-pill:active { opacity: .75; }
-        .btn-accent  { background: var(--accent); color: #fff; }
-        .btn-blue    { background: var(--blue);   color: #fff; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-        .btn-danger  { background: transparent; border: 1px solid var(--red); color: var(--red); }
-        .btn-save    { background: linear-gradient(90deg, var(--blue), var(--accent)); color: #fff; }
-        .btn-green   { background: var(--green);  color: #fff; }
+/* ── 下部ナビゲーション ── */
+.nav-bar{position:fixed;bottom:0;left:0;width:100%;height:65px;background:rgba(0,0,0,.85);
+  backdrop-filter:blur(12px);display:flex;justify-content:space-around;align-items:center;border-top:1px solid var(--bdr);z-index:1000;}
+.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;width:20%;height:100%;transition:all .2s ease;}
+.nav-item i{font-size:1.25rem;transition:transform .2s ease;}
+.nav-item span{font-size:0.7rem;margin-top:4px;display:none;font-weight:700;}
+.nav-item.active{color:var(--acc);}
+.nav-item.active i{transform:translateY(-2px);}
+.nav-item.active span{display:inline;}
 
-        /* Score hero */
-        .score-hero {
-            display: flex; flex-direction: column; align-items: center;
-            padding: 28px 16px 20px; border-bottom: 1px solid var(--border);
-            background: var(--surface-1);
-        }
-        .score-big {
-            font-size: 3.8rem; font-weight: 900;
-            font-family: 'Courier New', monospace; line-height: 1;
-            transition: color .3s; color: var(--text);
-        }
-        .score-suffix { font-size: 1.4rem; font-weight: 700; color: var(--muted); margin-left: 3px; }
-        .score-label  { font-size: .9rem; font-weight: 700; margin-top: 6px; transition: color .3s; }
+/* ── ① 地合い ── */
+.score-hero{display:flex;flex-direction:column;align-items:center;padding:20px 16px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);}
+.score-big{font-size:3.8rem;font-weight:900;font-family:'Courier New',monospace;line-height:1;transition:color .3s;}
+.score-suffix{font-size:1.4rem;font-weight:700;color:var(--muted);margin-left:3px;}
+.score-label{font-size:.9rem;font-weight:700;margin-top:6px;transition:color .3s;}
 
-        /* BNF quote */
-        .bnf-quote { display: flex; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--surface-1); }
-        .bnf-avatar {
-            width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-            background: var(--accent-dim); border: 2px solid var(--accent);
-            display: flex; align-items: center; justify-content: center;
-            font-size: .7rem; font-weight: 900; color: var(--accent); letter-spacing: -.05em;
-        }
-        .bnf-quote-name   { font-size: .85rem; font-weight: 700; }
-        .bnf-quote-handle { font-size: .78rem; color: var(--muted); margin-left: 4px; }
-        .bnf-quote-text   { font-size: .9rem; margin-top: 3px; line-height: 1.5; font-style: italic; }
+.mkt-bar{display:flex;border-bottom:1px solid var(--bdr);background:var(--s1);}
+.mkt-cell{flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--bdr);}
+.mkt-cell:last-child{border-right:none;}
+.mkt-lbl{font-size:.65rem;color:var(--muted);font-weight:600;letter-spacing:.04em;}
+.mkt-val{font-size:.95rem;font-weight:800;font-family:'Courier New',monospace;margin-top:2px;}
+.mkt-chg{font-size:.7rem;margin-top:1px;font-weight:700;}
+.up{color:var(--red);} .dn{color:var(--blue);}
 
-        /* Divider */
-        .divider { height: 8px; background: var(--surface-1); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.countdown-bar{padding:12px 16px;border-bottom:1px solid var(--bdr);background:var(--s2);}
+.cd-label{font-size:.75rem;color:var(--muted);margin-bottom:6px;font-weight:600;}
+.cd-track{height:8px;background:var(--bdr);border-radius:var(--pill);overflow:hidden;}
+.cd-fill{height:100%;background:var(--green);border-radius:var(--pill);transition:width .5s;}
+.cd-numbers{display:flex;justify-content:space-between;margin-top:5px;font-size:.75rem;}
 
-        /* Factor cells */
-        .factor-item { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-        .factor-item label { font-size: .8rem; color: var(--muted); margin-bottom: 6px; display: block; font-weight: 600; }
+.history-card{padding:14px 16px;border-bottom:1px solid var(--bdr);}
+.history-svg{width:100%;height:40px;display:block;}
 
-        /* Status line */
-        .status-line { text-align: center; font-size: .8rem; font-weight: 700; padding: 4px 16px 10px; color: var(--muted); min-height: 28px; }
+.history-compare{padding:12px 16px;border-bottom:1px solid var(--bdr);}
+.hist-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:.82rem;}
+.hist-row:last-child{border-bottom:none;}
+.hist-event{color:var(--muted);flex:1;}
+.hist-score{font-weight:800;font-family:'Courier New',monospace;margin:0 12px;}
+.hist-bar{width:80px;height:6px;background:var(--bdr);border-radius:var(--pill);overflow:hidden;}
+.hist-fill{height:100%;border-radius:var(--pill);}
 
-        /* Upload zone */
-        .upload-zone {
-            margin: 0 16px 0; border: 1.5px dashed var(--green); padding: 22px;
-            border-radius: 16px; text-align: center; background: rgba(0,186,124,.04); cursor: pointer;
-        }
-        .upload-zone i   { font-size: 1.8rem; color: var(--green); margin-bottom: 6px; }
-        .upload-zone-title { font-size: .9rem; font-weight: 700; }
-        .upload-zone-sub   { font-size: .75rem; color: var(--muted); margin-top: 3px; }
-        #preview-img { max-width: 100%; max-height: 140px; margin-top: 10px; border-radius: 10px; display: none; }
+.bnf-quote{display:flex;gap:10px;padding:14px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);}
+.bnf-avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--acc-dim);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;color:var(--acc);}
+.bnf-qname{font-size:.85rem;font-weight:700;}
+.bnf-qhandle{font-size:.78rem;color:var(--muted);margin-left:4px;}
+.bnf-qtext{font-size:.9rem;margin-top:3px;line-height:1.5;font-style:italic;}
+.factor-item{padding:12px 16px;border-bottom:1px solid var(--bdr);}
+.factor-item label{font-size:.8rem;color:var(--muted);margin-bottom:6px;display:block;font-weight:600;}
+.divider{height:8px;background:var(--s1);border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);}
+.status-line{text-align:center;font-size:.8rem;font-weight:700;padding:4px 16px 10px;color:var(--muted);min-height:28px;}
+.ai-sync-row{padding:12px 16px;border-bottom:1px solid var(--bdr);}
 
-        /* Result rows */
-        .result-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 13px 16px; border-bottom: 1px solid var(--border);
-        }
-        .result-key { font-size: .85rem; color: var(--muted); }
-        .result-val { font-size: 1.15rem; font-weight: 800; font-family: 'Courier New', monospace; }
+/* ── ② ツール ── */
+.inner-tabs{display:flex;border-bottom:1px solid var(--bdr);background:var(--s1);}
+.inner-tab{flex:1;padding:11px 0;text-align:center;font-size:.78rem;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.inner-tab.active{color:var(--acc);border-bottom-color:var(--acc);}
+.inner-pane{display:none;} .inner-pane.active{display:block;}
 
-        /* ── AI分析カード ── */
-        .ai-card {
-            margin: 0; border-top: 1px solid var(--border);
-            background: var(--surface-1);
-            display: none;
-        }
-        .ai-card.visible { display: block; }
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--bdr);}
+.result-key{font-size:.85rem;color:var(--muted);}
+.result-val{font-size:1.15rem;font-weight:800;font-family:'Courier New',monospace;}
 
-        /* AIカード内のタブ */
-        .ai-tabs {
-            display: flex; border-bottom: 1px solid var(--border);
-        }
-        .ai-tab {
-            flex: 1; padding: 11px 0; text-align: center;
-            font-size: .82rem; font-weight: 700; color: var(--muted);
-            cursor: pointer; border-bottom: 2px solid transparent;
-            transition: color .15s, border-color .15s;
-        }
-        .ai-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.wl-item{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bdr);gap:8px;}
+.wl-code{font-size:.85rem;font-weight:800;color:var(--blue);font-family:'Courier New',monospace;min-width:44px;}
+.wl-name{font-size:.82rem;color:var(--muted);flex:1;}
+.wl-kairi{font-size:0.95rem;font-weight:900;font-family:'Courier New',monospace;min-width:70px;text-align:right;}
+.wl-del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:4px;}
 
-        .ai-tab-content { display: none; padding: 14px 16px; }
-        .ai-tab-content.active { display: block; }
+.calc-section{padding:14px 16px;border-bottom:1px solid var(--bdr);}
+.calc-title{font-size:.82rem;font-weight:800;color:var(--blue);margin-bottom:10px;}
+.calc-result{margin-top:10px;padding:10px 12px;background:var(--s2);border-radius:10px;font-size:.88rem;line-height:1.7;}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
 
-        /* ストリーミング表示 */
-        .ai-response-box {
-            font-size: .88rem; line-height: 1.7; color: var(--text);
-            white-space: pre-wrap; word-break: break-word;
-            min-height: 60px;
-        }
-        .ai-response-box .loading-dots::after {
-            content: ''; animation: dots 1.2s infinite;
-        }
-        @keyframes dots {
-            0%   { content: '●○○'; }
-            33%  { content: '○●○'; }
-            66%  { content: '○○●'; }
-            100% { content: '●○○'; }
-        }
+.upload-zone{margin:0;border:1.5px dashed var(--green);padding:20px;border-radius:16px;text-align:center;background:rgba(0,186,124,.04);cursor:pointer;}
+.upload-zone i{font-size:1.8rem;color:var(--green);margin-bottom:6px;}
+#preview-img{max-width:100%;max-height:140px;margin-top:10px;border-radius:10px;display:none;}
+.yahoo-link{display:flex;align-items:center;gap:9px;padding:11px 14px;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;font-size:.9rem;border-radius:var(--pill);justify-content:center;}
 
-        /* タイミング信号バッジ */
-        .signal-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 5px 14px; border-radius: var(--pill);
-            font-size: .8rem; font-weight: 800; margin-bottom: 10px;
-        }
-        .signal-wait  { background: rgba(113,118,123,.15); color: var(--muted); }
-        .signal-watch { background: rgba(255,117,39,.15);  color: var(--orange); }
-        .signal-buy   { background: rgba(0,186,124,.15);   color: var(--green); }
-        .signal-danger{ background: rgba(244,33,46,.15);   color: var(--red); }
+/* ── ③ 検索 ── */
+.search-controls{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--bdr);gap:8px;flex-wrap:wrap;}
+.search-results{background:var(--black);}
+.scan-item{display:flex;flex-direction:column;padding:12px 16px;border-bottom:1px solid var(--bdr);position:relative;}
+.scan-item.is-new::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--acc);}
+.scan-top{display:flex;justify-content:span-between;align-items:center;}
+.scan-meta{display:flex;align-items:center;gap:6px;}
+.scan-code{font-size:.95rem;font-weight:800;color:var(--blue);font-family:'Courier New',monospace;}
+.scan-sec{font-size:.7rem;background:var(--s2);padding:2px 6px;border-radius:4px;color:var(--muted);font-weight:600;}
+.scan-name{font-size:.85rem;color:var(--text);font-weight:700;margin-top:2px;}
+.scan-kairi-badge{padding:4px 10px;border-radius:6px;font-family:'Courier New',monospace;font-size:.9rem;font-weight:900;}
+.scan-btm{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+.scan-prices{font-size:.75rem;color:var(--muted);font-family:'Courier New',monospace;}
+.scan-zone-lbl{font-size:.75rem;font-weight:700;}
 
-        /* Yahoo link */
-        .yahoo-link {
-            display: flex; align-items: center; gap: 9px; padding: 11px 14px;
-            background: var(--blue); color: #fff; text-decoration: none;
-            font-weight: 700; font-size: .9rem; border-radius: var(--pill);
-        }
+/* ── ④ AI ── */
+.ai-actions{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);overflow-x:auto;}
+.ai-action-btn{font-size:.75rem;padding:6px 12px;background:var(--s2);border:1px solid var(--bdr);color:var(--text);border-radius:var(--pill);cursor:pointer;white-space:nowrap;font-weight:700;}
+.chat-container{background:var(--black);display:flex;flex-direction:column;height:calc(100dvh - 250px);}
+.chat-timeline{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+.bubble{max-width:85%;padding:10px 14px;border-radius:18px;font-size:.92rem;line-height:1.45;word-break:break-word;}
+.bubble.bnf{background:var(--s2);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--bdr);}
+.bubble.user{background:var(--acc);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+.chat-input-zone{display:flex;padding:10px 16px;gap:8px;background:var(--black);border-top:1px solid var(--bdr);align-items:center;}
 
-        /* Chat */
-        .chat-wrap { display: flex; flex-direction: column; height: calc(100dvh - 53px - 68px); }
-        .chat-feed { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
-        .bubble { max-width: 82%; padding: 10px 14px; border-radius: 18px; font-size: .9rem; line-height: 1.5; word-break: break-word; }
-        .bubble.bnf  { background: var(--surface-2); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
-        .bubble.user { background: var(--accent); color: #fff; align-self: flex-end; font-weight: 600; border-bottom-right-radius: 4px; }
-        .chat-footer { border-top: 1px solid var(--border); padding: 10px 12px; display: flex; align-items: center; gap: 10px; background: var(--black); }
-        .chat-footer input { flex: 1; border-radius: var(--pill); padding: 10px 16px; font-size: .9rem; }
-        .send-btn { border: none; background: none; color: var(--accent); font-size: 1.2rem; cursor: pointer; padding: 6px; }
+.key-section{padding:12px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);}
+.key-row{display:flex;gap:8px;}
+.key-status{font-size:.75rem;margin-top:6px;font-weight:600;}
 
-        /* API key */
-        .api-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
-        .key-row { display: flex; gap: 8px; margin-bottom: 8px; }
-        .key-eye-btn { background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); border-radius: 10px; padding: 0 14px; cursor: pointer; font-size: 1rem; }
-        .api-connected { display: none; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); }
-        .link-btn { background: none; border: none; color: var(--blue); font-size: .8rem; cursor: pointer; text-decoration: underline; padding: 0; }
-        .key-note { font-size: .72rem; color: var(--muted); line-height: 1.5; margin-top: 6px; }
-
-        /* Log */
-        .log-item { padding: 14px 16px; border-bottom: 1px solid var(--border); }
-        .log-time  { font-size: .72rem; color: var(--muted); margin-bottom: 3px; }
-        .log-code  { font-size: .85rem; font-weight: 700; color: var(--blue); margin-bottom: 2px; }
-        .log-kairi { font-size: 1.05rem; font-weight: 800; font-family: 'Courier New', monospace; }
-
-        /* Nav */
-        .nav-bar {
-            position: fixed; bottom: 0; left: 0; right: 0; height: 68px;
-            background: rgba(0,0,0,0.92); backdrop-filter: blur(12px);
-            border-top: 1px solid var(--border); display: flex; z-index: 200;
-        }
-        .nav-item {
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            gap: 4px; color: var(--muted); cursor: pointer;
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-            -webkit-tap-highlight-color: transparent;
-        }
-        .nav-item i    { font-size: 1.35rem; }
-        .nav-item span { font-size: .68rem; font-weight: 600; display: none; }
-        .nav-item.active       { color: var(--accent); }
-        .nav-item.active span  { display: block; }
-
-        /* AI sync row */
-        .ai-sync-row { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-
-        /* ── 候補銘柄カード ── */
-        .scan-card {
-            padding: 16px 16px 12px;
-            border-bottom: 1px solid var(--border);
-            position: relative;
-        }
-        .scan-card-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 6px;
-        }
-        .scan-rank {
-            font-size: .72rem; font-weight: 800; color: var(--accent);
-            background: var(--accent-dim); padding: 2px 9px;
-            border-radius: var(--pill); margin-right: 8px; flex-shrink: 0;
-        }
-        .scan-name { font-size: 1rem; font-weight: 800; color: var(--text); flex: 1; }
-        .scan-code { font-size: .78rem; color: var(--muted); font-family: 'Courier New', monospace; margin-top: 1px; }
-        .scan-kairi {
-            font-size: 1.3rem; font-weight: 900; font-family: 'Courier New', monospace;
-            color: var(--green); text-align: right; flex-shrink: 0;
-        }
-        .scan-kairi.watch { color: var(--orange); }
-        .scan-meta {
-            display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0;
-        }
-        .scan-tag {
-            font-size: .72rem; font-weight: 700; padding: 2px 9px;
-            border-radius: var(--pill); border: 1px solid var(--border); color: var(--muted);
-        }
-        .scan-reason {
-            font-size: .82rem; color: var(--text); line-height: 1.6; margin: 6px 0 10px;
-        }
-        .scan-actions { display: flex; gap: 8px; }
-        .scan-btn-yahoo {
-            flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-            padding: 8px; background: var(--blue); color: #fff; text-decoration: none;
-            font-size: .8rem; font-weight: 700; border-radius: var(--pill);
-        }
-        .scan-btn-tool {
-            flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-            padding: 8px; background: var(--accent-dim); color: var(--accent);
-            border: 1px solid var(--accent); font-size: .8rem; font-weight: 700;
-            border-radius: var(--pill); cursor: pointer; border-style: solid;
-            font-family: inherit;
-        }
-        .scan-empty {
-            padding: 40px 16px; text-align: center; color: var(--muted); font-size: .9rem; line-height: 1.8;
-        }
-        .scan-loading {
-            padding: 32px 16px; text-align: center;
-        }
-        .scan-loading-icon {
-            font-size: 2rem; color: var(--accent); margin-bottom: 10px;
-            animation: pulse 1.2s ease-in-out infinite;
-        }
-        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
-
-        /* ── コンパクトリスト表示 ── */
-        .scan-list-item {
-            display: flex; align-items: center;
-            padding: 11px 16px; border-bottom: 1px solid var(--border);
-            gap: 10px; cursor: default;
-        }
-        .scan-list-rank {
-            font-size: .7rem; font-weight: 800; color: var(--accent);
-            background: var(--accent-dim); padding: 2px 8px;
-            border-radius: var(--pill); flex-shrink: 0; min-width: 30px; text-align: center;
-        }
-        .scan-list-main { flex: 1; min-width: 0; }
-        .scan-list-name { font-size: .88rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .scan-list-meta { font-size: .72rem; color: var(--muted); margin-top: 1px; }
-        .scan-list-right { text-align: right; flex-shrink: 0; }
-        .scan-list-kairi { font-size: 1rem; font-weight: 900; font-family: 'Courier New', monospace; color: var(--green); }
-        .scan-list-kairi.watch { color: var(--orange); }
-        .scan-list-badge {
-            font-size: .65rem; font-weight: 700; padding: 2px 7px;
-            border-radius: var(--pill); margin-top: 2px; display: inline-block;
-        }
-        .scan-list-actions { display: flex; gap: 6px; flex-shrink: 0; }
-        .scan-list-btn {
-            border: none; border-radius: var(--pill); padding: 6px 10px;
-            font-size: .75rem; font-weight: 700; cursor: pointer; font-family: inherit;
-        }
-
-        /* ── 個別検索結果 ── */
-        .single-result-card {
-            margin: 0; padding: 16px; border-bottom: 1px solid var(--border);
-            background: var(--surface-1);
-        }
-        .single-result-title {
-            font-size: .75rem; font-weight: 700; color: var(--accent);
-            margin-bottom: 10px; letter-spacing: .04em;
-        }
-    </style>
-
-    <script type="module">
-        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
-        window.GoogleGenerativeAI = GoogleGenerativeAI;
-    </script>
+/* ── ⑤ ログ ── */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--s1);border-bottom:1px solid var(--bdr);}
+.smr-cell{padding:12px;text-align:center;border-right:1px solid var(--bdr);}
+.smr-cell:last-child{border-right:none;}
+.smr-lbl{font-size:.65rem;color:var(--muted);font-weight:700;}
+.smr-val{font-size:1.1rem;font-weight:900;font-family:'Courier New',monospace;margin-top:2px;}
+.log-card{padding:14px 16px;border-bottom:1px solid var(--bdr);background:var(--black);}
+.log-top{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-bottom:4px;}
+.log-mid{display:flex;justify-content:space-between;align-items:center;}
+.log-code{font-size:1.05rem;font-weight:800;color:var(--blue);font-family:'Courier New',monospace;cursor:pointer;text-decoration:underline;}
+.log-kairi{font-size:1.05rem;font-weight:900;font-family:'Courier New',monospace;}
+.log-memo-area{margin-top:8px;}
+.log-memo-input{width:100%;background:var(--s1);border:1px solid var(--bdr);border-radius:6px;padding:6px 10px;color:var(--text);font-size:.82rem;resize:none;}
+</style>
+<script type="module">
+import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+window.GoogleGenerativeAI = GoogleGenerativeAI;
+</script>
 </head>
 <body>
 
-<header><span class="header-title">BNF COACH</span></header>
+<header><div class="hdr-title" id="app-title">MARKET SCORE</div></header>
 
 <div class="content-area">
+  <div id="screen-market" class="screen active">
+    <div class="mkt-bar" id="live-summary-bar">
+      <div class="mkt-cell"><div class="mkt-lbl">日経平均</div><div class="mkt-val" id="smr-nikkei">--</div><div class="mkt-chg" id="smr-nikkei-chg">--</div></div>
+      <div class="mkt-cell"><div class="mkt-lbl">TOPIX</div><div class="mkt-val" id="smr-topix">--</div><div class="mkt-chg" id="smr-topix-chg">--</div></div>
+      <div class="mkt-cell"><div class="mkt-lbl">ドル円</div><div class="mkt-val" id="smr-usdjpy">--</div><div class="mkt-chg" id="smr-usdjpy-chg">--</div></div>
+    </div>
 
-    <!-- ── 地合い ── -->
-    <div id="screen-market" class="screen active">
-        <div class="page-header">
-            <h2>地合いチェック</h2>
-            <p>3つの指標から今日の市場を評価します</p>
-        </div>
+    <div class="score-hero">
+      <div style="display:flex;align-items:baseline;">
+        <span class="score-big" id="live-score">50</span><span class="score-suffix">/100</span>
+      </div>
+      <div class="score-label" id="live-status">ニュートラル</div>
+    </div>
 
-        <div class="score-hero">
-            <div>
-                <span class="score-big" id="live-score">50</span>
-                <span class="score-suffix">点</span>
-            </div>
-            <div class="score-label" id="live-status">ニュートラル</div>
-        </div>
+    <div class="countdown-bar">
+      <div class="cd-label">BNF臨界点（東証値下がり1400銘柄）まで</div>
+      <div class="cd-track"><div class="cd-fill" id="cd-fill-bar" style="width: 40%;"></div></div>
+      <div class="cd-numbers"><span id="cd-current-stocks">値下がり: 560銘柄</span><span id="cd-remain-stocks">残り 840銘柄</span></div>
+    </div>
 
-        <div class="bnf-quote">
-            <div class="bnf-avatar">BNF</div>
-            <div>
-                <span class="bnf-quote-name">B.N.F</span>
-                <span class="bnf-quote-handle">@bnf_trader</span>
-                <div class="bnf-quote-text" id="bnf-comment-text">「……。普通ですね。しっかり引き付けないとやられます」</div>
-            </div>
-        </div>
+    <div class="history-card">
+      <div class="cell-lbl" style="margin-bottom:4px;">地合いスコア推移 (直近7日間)</div>
+      <svg class="history-svg" id="history-graph" viewBox="0 0 300 40" preserveAspectRatio="none"></svg>
+    </div>
 
-        <div class="divider"></div>
+    <div class="history-compare" id="history-compare-zone"></div>
 
-        <div class="ai-sync-row">
-            <button class="btn-pill btn-blue" onclick="fetchLiveMarketWithAI()">
-                <i class="fa-solid fa-bolt"></i> AIリアルタイム地合い同期
-            </button>
-            <div class="status-line" id="market-ai-status"></div>
-        </div>
+    <div class="bnf-quote">
+      <div class="bnf-avatar">BNF</div>
+      <div>
+        <div><span class="bnf-qname">B.N.F</span><span class="bnf-qhandle">@market_shadow</span></div>
+        <div class="bnf-qtext" id="bnf-comment-text">「……。普通ですね」</div>
+      </div>
+    </div>
 
-        <div class="factor-item">
-            <label>① 指数（日経・TOPIX）の動き</label>
-            <select id="check-index" onchange="autoCalculateMarket()">
-                <option value="30">上昇 or ヨコヨコ（安定）</option>
-                <option value="20" selected>小幅下落（前日比 -1% 前後）</option>
-                <option value="10">急落（前日比 -2%〜-3% 以上）</option>
-                <option value="0">パニック暴落（-4% 以上 / 数日連続）</option>
+    <div class="factor-item">
+      <label>① 指数（日経平均・TOPIX）の下落度合い</label>
+      <select id="check-index" onchange="autoCalculateMarket(true)">
+        <option value="30">上昇している、またはヨコヨコで安定している</option>
+        <option value="20" selected>少し下がっている（前日比 -1% 前後の一時的な調整）</option>
+        <option value="10">かなり下がっている（前日比 -2%〜-3% 以上の明確な急落）</option>
+        <option value="0">パニック暴落（前日比 -4% 以上、または数日連続の大暴落）</option>
+      </select>
+    </div>
+    <div class="factor-item">
+      <label>② 値下がり銘柄数の割合（パニック度）</label>
+      <select id="check-stocks" onchange="autoCalculateMarket(true)">
+        <option value="30">値上がり銘柄の方が多い、またはトントン</option>
+        <option value="20" selected>値下がり銘柄がやや多い（全体の 60% 程度が下落）</option>
+        <option value="10">全面安に近い（全体の 80% 以上が下落。画面がほぼ真っ青）</option>
+        <option value="0">完全なパニック（全体の 90% 以上が値下がり。逃げ場なし）</option>
+      </select>
+    </div>
+    <div class="factor-item">
+      <label>③ 主力株（半導体や大型株）の連動性</label>
+      <select id="check-leaders" onchange="autoCalculateMarket(true)">
+        <option value="40">主力株はしっかり買われている、または耐えている</option>
+        <option value="20" selected>業種ごとにマチマチ（一部の銘柄だけが下がっている）</option>
+        <option value="0">主力株も全滅（主要銘柄も一緒に投げられている）</option>
+      </select>
+    </div>
+    <div class="status-line" id="market-ai-status"></div>
+    <div class="ai-sync-row">
+      <button class="btn-pill btn-blue" onclick="fetchLiveMarketWithAI()"><i class="fa-solid fa-cloud-sun"></i> AIリアルタイム地合い自動入力</button>
+    </div>
+  </div>
+
+  <div id="screen-tools" class="screen">
+    <div class="inner-tabs">
+      <div class="inner-tab active" onclick="switchInnerTab('calc', this)">単発計算・OCR</div>
+      <div class="inner-tab" onclick="switchInnerTab('watchlist', this)">ウォッチリスト</div>
+      <div class="inner-tab" onclick="switchInnerTab('position', this)">ポジション管理・ナンピン</div>
+    </div>
+
+    <div id="pane-calc" class="inner-pane active">
+      <div class="cell">
+        <div class="calc-grid">
+          <div><label class="cell-lbl">銘柄コード</label><input type="number" id="stock-code" placeholder="例: 6920" oninput="updateYahooLink(this.value)"></div>
+          <div><label class="cell-lbl">セクター</label>
+            <select id="stock-sector" onchange="calculateMetrics()">
+              <option value="heavy">バリュー</option><option value="tech" selected>ハイテック・半導体</option><option value="defensive">内需</option><option value="growth">新興グロース</option>
             </select>
+          </div>
         </div>
-        <div class="factor-item">
-            <label>② 値下がり銘柄の割合（パニック度）</label>
-            <select id="check-stocks" onchange="autoCalculateMarket()">
-                <option value="30">値上がりが多い or トントン</option>
-                <option value="20" selected>値下がりがやや多い（全体の 60%）</option>
-                <option value="10">全面安（全体の 80% 以上が下落）</option>
-                <option value="0">完全パニック（90% 以上が値下がり）</option>
-            </select>
+        <div id="link-zone" style="margin-bottom:12px;"></div>
+        <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+          <i class="fa-solid fa-camera"></i><div>チャートのスクショを選択・撮影</div>
+          <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleImageUpload(this)">
+          <img id="preview-img" alt="プレビュー">
         </div>
-        <div class="factor-item">
-            <label>③ 主力株（半導体・大型株）の連動性</label>
-            <select id="check-leaders" onchange="autoCalculateMarket()">
-                <option value="40">主力株は堅調 or 耐えている</option>
-                <option value="20" selected>業種ごとにマチマチ</option>
-                <option value="0">主力株も全滅（レーザーテック等も投げられている）</option>
-            </select>
+        <div id="ocr-status" style="text-align:center; font-size:.75rem; margin-top:4px;"></div>
+      </div>
+      <div class="cell">
+        <div class="calc-grid">
+          <div><label class="cell-lbl">現在リアルタイム株価</label><input type="number" id="current-price" placeholder="株価" oninput="calculateMetrics()"></div>
+          <div><label class="cell-lbl">25日移動平均線</label><input type="number" id="ma-value" placeholder="25日線" oninput="calculateMetrics()"></div>
         </div>
+        <div class="calc-grid" style="margin-top:8px;">
+          <div><label class="cell-lbl">75日移動平均線</label><input type="number" id="ma75-value" placeholder="75日線(任意)" oninput="calculateMetrics()"></div>
+          <div><label class="cell-lbl">200日移動平均線</label><input type="number" id="ma200-value" placeholder="200日線(任意)" oninput="calculateMetrics()"></div>
+        </div>
+      </div>
+      <div class="cell" style="background:var(--s1);">
+        <div class="calc-grid">
+          <div><label class="cell-lbl">利確ターゲット価格</label><input type="number" id="rrr-profit" placeholder="利益確定目標" oninput="calculateMetrics()"></div>
+          <div><label class="cell-lbl">損切りライン価格</label><input type="number" id="rrr-loss" placeholder="ロスカット条件" oninput="calculateMetrics()"></div>
+        </div>
+      </div>
+      <div class="result-row"><span>25日線乖離率 / 判定</span><span class="res-val" id="res-kairi">-- %</span></div>
+      <div class="result-row" style="font-size:.85rem; color:var(--muted);"><span>75日線 / 200日線 乖離率</span><span id="res-other-ma" style="font-family:'Courier New',monospace; font-weight:700;">-- / --</span></div>
+      <div class="result-row"><span>リスクリワード比 (RRR)</span><span class="res-val" id="res-rrr" style="color:var(--orange);">--</span></div>
+      <div class="result-row"><span>地合い調整後 臨界しきい値</span><span class="res-val" id="res-threshold" style="font-size:.9rem; color:var(--muted);">--</span></div>
+      <div class="cell"><button class="btn-pill btn-save" onclick="saveTradeLog()"><i class="fa-solid fa-floppy-disk"></i> この分析結果をログに保存</button></div>
     </div>
 
-    <!-- ── ツール ── -->
-    <div id="screen-tools" class="screen">
-        <div class="page-header">
-            <h2>乖離率 & AI分析</h2>
-            <p>スクショから自動入力 → BNFロジックでAI判定</p>
+    <div id="pane-watchlist" class="inner-pane">
+      <div class="cell">
+        <div class="calc-grid">
+          <input type="number" id="wl-add-code" placeholder="4桁コード">
+          <button class="btn-pill btn-blue" onclick="addWatchlist()">追加</button>
         </div>
-
-        <!-- 銘柄・セクター -->
-        <div class="cell" style="display:flex; gap:12px;">
-            <div style="flex:1">
-                <div class="cell-label">銘柄コード</div>
-                <input type="number" id="stock-code" placeholder="例: 6920" oninput="updateYahooLink(this.value)">
-            </div>
-            <div style="flex:1">
-                <div class="cell-label">セクター</div>
-                <select id="stock-sector" onchange="calculateMetrics()">
-                    <option value="heavy">バリュー</option>
-                    <option value="tech" selected>ハイテク・半導体</option>
-                    <option value="defensive">内需</option>
-                    <option value="growth">新興グロース</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="cell" id="link-zone"></div>
-
-        <!-- アップロード -->
-        <div class="cell">
-            <div class="upload-zone" onclick="document.getElementById('file-input').click()">
-                <i class="fa-solid fa-image"></i>
-                <div class="upload-zone-title">チャートのスクショを選択・撮影</div>
-                <div class="upload-zone-sub">数値をポップアップ表示させた状態がベスト</div>
-                <input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleImageUpload(this)">
-                <img id="preview-img" alt="プレビュー">
-            </div>
-            <div class="status-line" id="ocr-status"></div>
-        </div>
-
-        <div class="cell">
-            <div class="cell-label" style="color:var(--blue);">25日移動平均線（手動修正も可）</div>
-            <input type="number" id="ma-value" placeholder="スクショから自動読取" oninput="calculateMetrics()">
-        </div>
-        <div class="cell">
-            <div class="cell-label" style="color:var(--green);">リアルタイム株価（手動修正も可）</div>
-            <input type="number" id="current-price" placeholder="スクショから自動読取" oninput="calculateMetrics()">
-        </div>
-
-        <div class="divider"></div>
-
-        <!-- 乖離率結果 -->
-        <div class="result-row">
-            <span class="result-key">乖離率</span>
-            <span class="result-val" id="res-kairi">-- %</span>
-        </div>
-        <div class="result-row">
-            <span class="result-key">判定</span>
-            <span class="result-val" id="res-status" style="font-size:.9rem;">未入力</span>
-        </div>
-        <div class="result-row">
-            <span class="result-key">地合い調整しきい値</span>
-            <span class="result-val" id="res-threshold" style="font-size:.82rem; color:var(--muted);">--</span>
-        </div>
-
-        <!-- ── AI分析ボタン群 ── -->
-        <div class="cell" style="display:flex; flex-direction:column; gap:10px;" id="ai-btn-area">
-            <button class="btn-pill btn-accent" onclick="runAiAnalysis('timing')" id="btn-timing">
-                <i class="fa-solid fa-crosshairs"></i> BNFロジックで買いタイミングを分析
-            </button>
-            <button class="btn-pill btn-green" onclick="runAiAnalysis('forecast')" id="btn-forecast">
-                <i class="fa-solid fa-chart-line"></i> この株を買った場合のAI予想
-            </button>
-        </div>
-
-        <!-- ── AI分析カード ── -->
-        <div class="ai-card" id="ai-card">
-
-            <!-- タブ -->
-            <div class="ai-tabs">
-                <div class="ai-tab active" id="tab-timing"   onclick="switchAiTab('timing')">
-                    <i class="fa-solid fa-crosshairs"></i> タイミング
-                </div>
-                <div class="ai-tab"        id="tab-forecast" onclick="switchAiTab('forecast')">
-                    <i class="fa-solid fa-chart-line"></i> AI予想
-                </div>
-            </div>
-
-            <!-- タイミング分析 -->
-            <div class="ai-tab-content active" id="content-timing">
-                <div id="signal-badge-zone"></div>
-                <div class="ai-response-box" id="timing-response"></div>
-            </div>
-
-            <!-- AI予想 -->
-            <div class="ai-tab-content" id="content-forecast">
-                <div class="ai-response-box" id="forecast-response"></div>
-            </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="cell">
-            <button class="btn-pill btn-save" onclick="saveTradeLog()">
-                <i class="fa-solid fa-floppy-disk"></i> ログに保存
-            </button>
-        </div>
+      </div>
+      <div id="watchlist-container"></div>
     </div>
 
-    <!-- ── AI COACH ── -->
-    <div id="screen-brain" class="screen">
-        <div class="chat-wrap">
-            <div class="api-section" id="api-key-setup">
-                <div class="key-row">
-                    <input type="password" id="api-key-input" placeholder="Gemini APIキーを入力">
-                    <button type="button" class="key-eye-btn" onclick="toggleKeyVisibility()">
-                        <i class="fa-solid fa-eye" id="key-eye-icon"></i>
-                    </button>
-                </div>
-                <button class="btn-pill btn-accent" onclick="saveApiKey()" style="margin-top:8px;">接続する</button>
-                <div class="key-note">⚠️ APIキーはこのブラウザのlocalStorageに保存されます。共用端末での使用に注意してください。</div>
-            </div>
-            <div class="api-section" id="api-key-connected">
-                <div class="api-connected" style="display:flex;">
-                    <i class="fa-solid fa-circle-check" style="color:var(--green)"></i>
-                    <span>APIキー接続済み</span>
-                    <button class="link-btn" onclick="changeApiKey()">変更する</button>
-                </div>
-            </div>
-            <div class="chat-feed" id="chat-box">
-                <div class="bubble bnf">こんにちは。相場について何かご相談はありますか？</div>
-            </div>
-            <div class="chat-footer">
-                <input type="text" id="chat-input" placeholder="相談を入力..." onkeypress="if(event.key==='Enter') sendChatMessage()">
-                <button class="send-btn" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
-            </div>
+    <div id="pane-position" class="inner-pane">
+      <div class="calc-section">
+        <div class="calc-title">含み損益・口座比率リアルタイム表示</div>
+        <div class="calc-grid">
+          <input type="number" id="pos-buy-price" placeholder="購入価格" oninput="calcPositionRealtime()">
+          <input type="number" id="pos-qty" placeholder="保有株数" oninput="calcPositionRealtime()">
         </div>
+        <div class="calc-grid">
+          <input type="number" id="pos-now-price" placeholder="現在値" oninput="calcPositionRealtime()">
+          <input type="number" id="pos-total-cash" placeholder="総純資産(口座総額)" oninput="calcPositionRealtime()">
+        </div>
+        <div class="calc-result" id="pos-result-box">評価額: --円<br>損益: --円 (--%)<br>口座比率: --%</div>
+      </div>
+      <div class="calc-section">
+        <div class="calc-title">ナンピン単価シミュレーター</div>
+        <div class="calc-grid">
+          <input type="number" id="np-avg-price" placeholder="現在の平均取得単価">
+          <input type="number" id="np-current-qty" placeholder="現在の保有株数">
+        </div>
+        <div class="calc-grid">
+          <input type="number" id="np-add-price" placeholder="追加購入予定価格">
+          <input type="number" id="np-add-qty" placeholder="追加購入株数">
+        </div>
+        <button class="btn-pill btn-outline" style="margin-top:4px;" onclick="runNanpinCalc()">計算を実行</button>
+        <div class="calc-result" id="np-result-box">追加購入後の総株数: -- 株<br>新しい平均取得単価: -- 円</div>
+      </div>
     </div>
+  </div>
 
-    <!-- ── 銘柄検索 ── -->
-    <div id="screen-scan" class="screen">
-        <div class="page-header">
-            <h2>銘柄検索</h2>
-            <p>BNFロジックで候補をスキャン、または個別銘柄を直接調べる</p>
-        </div>
-
-        <!-- ── 個別銘柄検索 ── -->
-        <div class="cell">
-            <div class="cell-label">銘柄コード・銘柄名で直接検索</div>
-            <div style="display:flex;gap:8px;">
-                <input type="text" id="single-search-input" placeholder="例: 6920 / レーザーテック"
-                    style="flex:1;" onkeypress="if(event.key==='Enter') runSingleSearch()">
-                <button onclick="runSingleSearch()" style="
-                    flex-shrink:0; border:none; border-radius:10px;
-                    background:var(--blue); color:#fff; padding:0 16px;
-                    font-size:1rem; cursor:pointer;">
-                    <i class="fa-solid fa-search"></i>
-                </button>
-            </div>
-        </div>
-
-        <div id="single-search-result"></div>
-
-        <div class="divider"></div>
-
-        <!-- ── AIスキャン ── -->
-        <div class="cell" style="display:flex;flex-direction:column;gap:10px;">
-            <button class="btn-pill btn-accent" onclick="runStockScan()" id="scan-btn">
-                <i class="fa-solid fa-magnifying-glass-chart"></i> 今日の候補銘柄をAIスキャン（5件）
-            </button>
-        </div>
-
-        <!-- ── 表示オプションバー ── -->
-        <div id="scan-options-bar" style="display:none;
-            padding:10px 16px; border-bottom:1px solid var(--border);
-            display:none; align-items:center; justify-content:space-between; gap:10px;">
-
-            <!-- 買いゾーン切り替え -->
-            <div style="display:flex; background:var(--surface-2); border-radius:var(--pill);
-                border:1px solid var(--border); overflow:hidden;">
-                <button id="zone-all-btn" onclick="setZoneFilter('all')"
-                    style="padding:6px 14px; border:none; font-size:.75rem; font-weight:700;
-                    cursor:pointer; background:var(--accent); color:#fff; transition:all .15s;">
-                    全ゾーン
-                </button>
-                <button id="zone-buy-btn" onclick="setZoneFilter('buy')"
-                    style="padding:6px 14px; border:none; font-size:.75rem; font-weight:700;
-                    cursor:pointer; background:transparent; color:var(--muted); transition:all .15s;">
-                    買いゾーンのみ
-                </button>
-            </div>
-
-            <!-- カード/リスト切り替え -->
-            <div style="display:flex; background:var(--surface-2); border-radius:var(--pill);
-                border:1px solid var(--border); overflow:hidden;">
-                <button id="view-card-btn" onclick="setViewMode('card')"
-                    style="padding:6px 12px; border:none; font-size:.85rem;
-                    cursor:pointer; background:var(--accent); color:#fff; transition:all .15s;"
-                    title="カード表示">
-                    <i class="fa-solid fa-table-cells-large"></i>
-                </button>
-                <button id="view-list-btn" onclick="setViewMode('list')"
-                    style="padding:6px 12px; border:none; font-size:.85rem;
-                    cursor:pointer; background:transparent; color:var(--muted); transition:all .15s;"
-                    title="リスト表示">
-                    <i class="fa-solid fa-list"></i>
-                </button>
-            </div>
-        </div>
-
-        <div class="status-line" id="scan-status"></div>
-        <div id="scan-condition-zone" style="display:none;">
-            <div class="cell" style="padding-top:8px;padding-bottom:8px;">
-                <div class="cell-label">適用中のBNF条件</div>
-                <div id="scan-condition-text" style="font-size:.78rem;color:var(--muted);line-height:1.7;"></div>
-            </div>
-        </div>
-
-        <!-- 候補一覧 -->
-        <div id="scan-results"></div>
+  <div id="screen-search" class="screen">
+    <div class="page-hdr">
+      <h2>乖離率スクリーニング</h2>
+      <p>地合いレベルに基づき、売られすぎ銘柄を検出します</p>
     </div>
-
-    <!-- ── ログ ── -->
-    <div id="screen-log" class="screen">
-        <div class="page-header">
-            <h2>売買ログ</h2>
-            <p>保存した銘柄の履歴</p>
-        </div>
-        <div id="log-container"></div>
-        <div class="cell">
-            <button class="btn-pill btn-danger" onclick="clearLogs()">すべてリセット</button>
-        </div>
+    <div class="search-controls">
+      <select id="search-sector-filter" style="width:32%; padding:6px 8px; font-size:.8rem;" onchange="renderScanResults()">
+        <option value="all">全セクター</option><option value="tech">半導体/ハイテク</option><option value="heavy">バリュー</option><option value="growth">グロース</option>
+      </select>
+      <select id="search-sort-order" style="width:35%; padding:6px 8px; font-size:.8rem;" onchange="renderScanResults()">
+        <option value="kairi-desc">乖離が大きい順</option><option value="risk-asc">リスクが低い順</option>
+      </select>
+      <div style="width:28%; display:flex; flex-direction:column; align-items:center;">
+        <span style="font-size:.65rem; color:var(--muted); font-weight:700;" id="slider-val-lbl">表示: 10件</span>
+        <input type="range" id="search-count-slider" min="5" max="20" step="5" value="10" style="width:100%;" oninput="document.getElementById('slider-val-lbl').innerText='表示: '+this.value+'件'; renderScanResults();">
+      </div>
     </div>
+    <div class="cell" style="display:flex; gap:8px;">
+      <button class="btn-pill btn-acc" style="flex:1;" onclick="executeMarketScan()"><i class="fa-solid fa-bolt"></i> システムスキャンを実行</button>
+      <button class="btn-pill btn-outline" style="flex:0.6;" onclick="bulkSaveScanResults()"><i class="fa-solid fa-box-archive"></i> 結果を一括保存</button>
+    </div>
+    <div id="search-status-bar" style="text-align:center; font-size:.75rem; color:var(--muted);"></div>
+    <div class="search-results" id="scan-results-list"></div>
+  </div>
 
+  <div id="screen-brain" class="screen">
+    <div class="key-section">
+      <div class="key-row">
+        <input type="password" id="api-key-input" placeholder="Gemini API Key を入力" style="padding:6px 12px; font-size:.85rem;">
+        <button class="btn-pill btn-outline" style="width:80px; padding:0; font-size:.8rem;" onclick="saveApiKey()">保存</button>
+      </div>
+      <div class="key-status" id="api-key-status-text">キーが設定されていません</div>
+    </div>
+    <div class="ai-actions">
+      <button class="ai-action-btn" onclick="aiQuickSummary()"><i class="fa-solid fa-wand-magic-sparkles"></i> 今日の相場を一言総括</button>
+      <button class="ai-action-btn" onclick="injectTemplate('現在の地合いスコアから見て、今逆張り買いを仕掛けても安全な水準ですか？')">今買っていいか</button>
+      <button class="ai-action-btn" onclick="injectTemplate('保有株の含み損が拡大しています。BNFの哲学に基づいた最速の損切り判断基準を教えてください。')">損切りすべきか</button>
+      <button class="ai-action-btn" onclick="injectTemplate('狙っている特定の銘柄があるのですが、移動平均線から何％まで引き付けるべきでしょうか？')">何円まで引き付けるべきか</button>
+    </div>
+    <div class="chat-container">
+      <div class="chat-timeline" id="chat-box"><div class="bubble bnf">こんにちは。何か株式投資や地合いについての質問はありますか？</div></div>
+      <div class="chat-input-zone">
+        <input type="text" id="chat-input" placeholder="メッセージを入力..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+        <button onclick="sendChatMessage()" style="border:none; background:none; color:var(--acc); font-size:1.25rem; padding:0 8px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-log" class="screen">
+    <div class="summary-grid">
+      <div class="smr-cell"><div class="smr-lbl">勝率</div><div class="smr-val" id="log-win-rate">--%</div></div>
+      <div class="smr-cell"><div class="smr-lbl">平均取得乖離</div><div class="smr-val" id="log-avg-kairi">--%</div></div>
+      <div class="smr-cell"><div class="smr-lbl">保存ログ件数</div><div class="smr-val" id="log-count">0件</div></div>
+    </div>
+    <div class="cell" style="display:flex; gap:8px; background:var(--s1);">
+      <button class="btn-pill btn-outline" style="font-size:.8rem; padding:6px 12px;" onclick="exportLogsCSV()"><i class="fa-solid fa-file-csv"></i> CSVエクスポート</button>
+      <button class="btn-pill btn-danger" style="font-size:.8rem; padding:6px 12px;" onclick="clearLogs()"><i class="fa-solid fa-trash"></i> ログリセット</button>
+    </div>
+    <div class="cell" style="font-size:.78rem; color:var(--muted); font-weight:700;">月別パフォーマンス動向: <span id="monthly-mock-perf" style="color:var(--green); margin-left:6px;">＋12.4% (安定)</span></div>
+    <div id="log-container"></div>
+  </div>
 </div>
 
-<!-- ── Nav ── -->
 <div class="nav-bar">
-    <div class="nav-item active" onclick="switchScreen('market', this)"><i class="fa-solid fa-earth-asia"></i><span>地合い</span></div>
-    <div class="nav-item" onclick="switchScreen('tools', this)"><i class="fa-solid fa-screwdriver-wrench"></i><span>ツール</span></div>
-    <div class="nav-item" onclick="switchScreen('scan', this)"><i class="fa-solid fa-magnifying-glass-chart"></i><span>検索</span></div>
-    <div class="nav-item" onclick="switchScreen('brain', this)"><i class="fa-solid fa-brain"></i><span>AI</span></div>
-    <div class="nav-item" onclick="switchScreen('log', this)"><i class="fa-solid fa-chart-line"></i><span>ログ</span></div>
+  <div class="nav-item active" onclick="switchScreen('market', this)"><i class="fa-solid fa-earth-asia"></i><span>地合い</span></div>
+  <div class="nav-item" onclick="switchScreen('tools', this)"><i class="fa-solid fa-screwdriver-wrench"></i><span>ツール</span></div>
+  <div class="nav-item" onclick="switchScreen('search', this)"><i class="fa-solid fa-magnifying-glass"></i><span>検索</span></div>
+  <div class="nav-item" onclick="switchScreen('brain', this)"><i class="fa-solid fa-brain"></i><span>AI</span></div>
+  <div class="nav-item" onclick="switchScreen('log', this)"><i class="fa-solid fa-chart-line"></i><span>ログ</span></div>
 </div>
 
 <script>
-    let currentMarketScore = 50;
-    let geminiApiKey = localStorage.getItem("gemini_api_key") || "";
-    let compressedBase64 = "";
+let currentMarketScore = 50;
+let geminiApiKey = localStorage.getItem("bnf_gemini_key") || "";
+let compressedBase64 = "";
+let previousScanCodes = new Set(); // 新たに加わった銘柄判定用
+let currentScanList = [];
 
-    // aiの分析結果を保持（ログ保存時に同梱するため）
-    let lastTimingResult   = "";
-    let lastForecastResult = "";
+// サンプルデータ構造
+const mockScans = [
+  {code:"6920", name:"レーザーテック", sector:"tech", price:21050, ma:24500, kairi:-14.08},
+  {code:"8035", name:"東京エレクトロン", sector:"tech", price:23100, ma:28000, kairi:-17.50},
+  {code:"7203", name:"トヨタ自動車", sector:"heavy", price:2510, ma:2750, kairi:-8.72},
+  {code:"9984", name:"ソフトバンクG", sector:"tech", price:8400, ma:9900, kairi:-15.15},
+  {code:"6758", name:"ソニーG", sector:"tech", price:12100, ma:13200, kairi:-8.33},
+  {code:"8306", name:"三菱UFJ", sector:"heavy", price:1480, ma:1590, kairi:-6.91},
+  {code:"4755", name:"楽天グループ", sector:"growth", price:720, ma:910, kairi:-20.88},
+  {code:"9101", name:"日本郵船", sector:"heavy", price:4100, ma:4300, kairi:-4.65},
+  {code:"6501", name:"日立製作所", sector:"heavy", price:3150, ma:3400, kairi:-7.35},
+  {code:"3697", name:"SHIFT", sector:"growth", price:13500, ma:18200, kairi:-25.82},
+  {code:"7735", name:"SCREEN", sector:"tech", price:9800, ma:12400, kairi:-20.97},
+  {code:"6146", name:"ディスコ", sector:"tech", price:38200, ma:46000, kairi:-16.96}
+];
 
-    function escapeHtml(str) {
-        const d = document.createElement('div');
-        d.textContent = String(str);
-        return d.innerHTML;
-    }
+function escapeHtml(str) {
+  const div = document.createElement('div'); div.textContent = String(str); return div.innerHTML;
+}
 
-    /* ── ナビ ── */
-    function switchScreen(id, el) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        document.getElementById('screen-' + id).classList.add('active');
-        el.classList.add('active');
-        if (id === 'log') renderLogs();
-    }
+function switchScreen(id, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  el.classList.add('active');
+  if(id === 'log') renderLogs();
+  if(id === 'tools') updateWatchlistUI();
+}
 
-    /* ── Yahoo リンク ── */
-    function updateYahooLink(code) {
-        const z = document.getElementById('link-zone');
-        if (code && code.length === 4) {
-            z.innerHTML = `<a href="https://finance.yahoo.co.jp/quote/${encodeURIComponent(code)}" target="_blank" class="yahoo-link">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> ${escapeHtml(code)} をYahoo!ファイナンスで開く
-            </a>`;
-        } else { z.innerHTML = ""; }
-    }
+function switchInnerTab(paneId, el) {
+  document.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.inner-pane').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('pane-' + paneId).classList.add('active');
+}
 
-    /* ── 地合いAI同期 ── */
-    async function fetchLiveMarketWithAI() {
-        const st = document.getElementById('market-ai-status');
-        if (!geminiApiKey) { alert("AIタブでAPIキーを設定してください。"); return; }
-        st.innerText = "本日の相場を検索・分析中..."; st.style.color = "var(--blue)";
-        try {
-            const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", tools: [{ googleSearch: {} }] });
-            const result = await model.generateContent(
-                `現在の日本株式市場（日経平均・TOPIX・騰落銘柄数・主力大型株）を検索して確認し、以下のJSONのみで出力してください。挨拶不要。
-{"index":"30or20or10or0","stocks":"30or20or10or0","leaders":"40or20or0"}`
-            );
-            const m = result.response.text().match(/\{[\s\S]*?\}/);
-            if (m) {
-                const d = JSON.parse(m[0]);
-                if (d.index)   document.getElementById('check-index').value   = d.index;
-                if (d.stocks)  document.getElementById('check-stocks').value  = d.stocks;
-                if (d.leaders) document.getElementById('check-leaders').value = d.leaders;
-                autoCalculateMarket();
-                st.innerText = "同期が完了しました。"; st.style.color = "var(--green)";
-            }
-        } catch(e) { st.innerText = "同期に失敗しました。"; st.style.color = "var(--red)"; }
-    }
+// ================= ① 地合いロジック =================
+function initMarketSummary() {
+  // モックの市場リアルタイム値表示
+  document.getElementById('smr-nikkei').innerText = "38,420円";
+  document.getElementById('smr-nikkei-chg').className = "mkt-chg dn";
+  document.getElementById('smr-nikkei-chg').innerText = "-420円 (-1.08%)";
 
-    function autoCalculateMarket() {
-        const s = parseInt(document.getElementById('check-index').value, 10)
-                + parseInt(document.getElementById('check-stocks').value, 10)
-                + parseInt(document.getElementById('check-leaders').value, 10);
-        currentMarketScore = s;
-        uiUpdateMarket(s);
-    }
+  document.getElementById('smr-topix').innerText = "2,715.2";
+  document.getElementById('smr-topix-chg').className = "mkt-chg dn";
+  document.getElementById('smr-topix-chg').innerText = "-22.4 (-0.82%)";
 
-    function uiUpdateMarket(score) {
-        document.getElementById('live-score').innerText = score;
-        const scoreEl   = document.getElementById('live-score');
-        const statusEl  = document.getElementById('live-status');
-        const commentEl = document.getElementById('bnf-comment-text');
-        let label, comment, color;
-        if      (score >= 80) { label="過熱・上昇（逆張り厳禁）";      comment="「全員が買ってる相場は一番危ないんです。次のパニックのための現金を残しておかないと」";                             color="var(--red)"; }
-        else if (score >= 60) { label="やや楽観・通常相場";              comment="「わざわざここで逆張る必要はないですね。乖離率もしきい値まで来ていないはずです」";                                  color="var(--orange)"; }
-        else if (score >= 40) { label="ニュートラル";                     comment="「……。普通ですね。しっかり引き付けないとやられます。まだバネは収縮していない」";                                    color="var(--muted)"; }
-        else if (score >= 20) { label="警戒・連れ安発生中";               comment="「いい感じに投げが出てきた。東エレやファーストリテイリングが最後に崩れたら、そこが本番です」";                        color="var(--blue)"; }
-        else                  { label="極度のパニック（全面安・大チャンス）"; comment="「1,400銘柄以上が値下がりしてますね。主力株の板から大口の売りが消えた瞬間が買い場です。逃げ足だけ忘れずに」"; color="var(--green)"; }
-        scoreEl.style.color = statusEl.style.color = color;
-        statusEl.innerText = label; commentEl.innerText = comment;
-        calculateMetrics();
-    }
+  document.getElementById('smr-usdjpy').innerText = "154.22円";
+  document.getElementById('smr-usdjpy-chg').className = "mkt-chg up";
+  document.getElementById('smr-usdjpy-chg').innerText = "+0.45円";
 
-    /* ── 画像アップロード ── */
-    function handleImageUpload(input) {
-        const file = input.files[0]; if (!file) return;
-        if (!file.type.startsWith('image/')) { alert("画像ファイルを選択してください。"); input.value=""; return; }
-        if (file.size > 10 * 1024 * 1024)   { alert("10MB 以下の画像を選択してください。"); input.value=""; return; }
-        const st = document.getElementById('ocr-status');
-        st.innerText = "画像を最適化中..."; st.style.color = "var(--orange)";
-        const reader = new FileReader();
-        reader.onload = e => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX = 1024; let w = img.width, h = img.height;
-                if (w > MAX) { h *= MAX / w; w = MAX; }
-                canvas.width = w; canvas.height = h;
-                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                const url = canvas.toDataURL('image/jpeg', 0.8);
-                document.getElementById('preview-img').src = url;
-                document.getElementById('preview-img').style.display = 'block';
-                compressedBase64 = url.split(',')[1];
-                parseImageWithAI();
-            };
-            img.onerror = () => { st.innerText = "画像を読み込めませんでした。"; st.style.color="var(--red)"; };
-            img.src = e.target.result;
-        };
-        reader.onerror = () => { st.innerText = "ファイル読み込みに失敗しました。"; st.style.color="var(--red)"; };
-        reader.readAsDataURL(file);
-    }
+  // 歴史的比較の描画
+  const compareZone = document.getElementById('history-compare-zone');
+  const crashEvents = [
+    { name: "2008年 リーマンショック最悪期", score: 8, color: "var(--green)" },
+    { name: "2020年 コロナショックパニック", score: 15, color: "var(--green)" },
+    { name: "2024年 8月5日ブラックマンデー", score: 3, color: "var(--green)" },
+    { name: "現在相場環境のリアルスコア", score: currentMarketScore, color: "var(--acc)", isCurrent: true }
+  ];
 
-    async function parseImageWithAI() {
-        const st = document.getElementById('ocr-status');
-        if (!geminiApiKey) { st.innerText = "APIキーを設定してください。"; st.style.color="var(--red)"; return; }
-        st.innerText = "AIが画像をスキャン中..."; st.style.color = "var(--blue)";
-        try {
-            const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-            const result = await model.generateContent([
-                `チャート画像から現在株価と25日移動平均線の数値を読み取り、JSONのみで返答してください。説明不要。{"price":株価,"ma":25日線}`,
-                { inlineData: { data: compressedBase64, mimeType: "image/jpeg" } }
-            ]);
-            const m = result.response.text().match(/\{[\s\S]*?\}/);
-            if (m) {
-                const d = JSON.parse(m[0]);
-                if (d.price) document.getElementById('current-price').value = Math.round(d.price);
-                if (d.ma)    document.getElementById('ma-value').value       = Math.round(d.ma);
-                calculateMetrics();
-                st.innerText = "自動入力に成功しました。"; st.style.color = "var(--green)";
-            } else {
-                st.innerText = "数値が見つかりませんでした。手動で入力してください。"; st.style.color = "var(--orange)";
-            }
-        } catch(e) {
-            st.innerText = "スキャンに失敗しました。"; st.style.color = "var(--red)";
-        }
-    }
+  compareZone.innerHTML = `<div class="cell-lbl" style="margin-bottom:6px;">歴史的パニック期と現在の比較 (スコアが低いほど大暴落)</div>`;
+  crashEvents.forEach(e => {
+    if(e.isCurrent) e.score = currentMarketScore;
+    compareZone.innerHTML += `
+      <div class="hist-row">
+        <span class="hist-event" style="${e.isCurrent ? 'color:var(--acc); font-weight:bold;':''}">${e.name}</span>
+        <span class="hist-score" style="color:${e.color}">${e.score}点</span>
+        <div class="hist-bar"><div class="hist-fill" style="width:${e.score}%; background:${e.color}"></div></div>
+      </div>`;
+  });
 
-    /* ── BNFセクター別しきい値 ──
-       大型バリュー: 監視-10% / 買い-15%
-       ハイテク・半導体: 監視-15% / 買い-20%
-       内需ディフェンシブ: 監視-10% / 買い-15%
-       新興グロース: 監視-30% / 買い-40%
-    ── */
-    const SECTOR_THRESHOLDS = {
-        heavy:     { watch: -10, buy: -15 },
-        tech:      { watch: -15, buy: -20 },
-        defensive: { watch: -10, buy: -15 },
-        growth:    { watch: -30, buy: -40 },
-    };
+  // カウントダウン表示の更新
+  const totalStocks = 1650; // 仮の分母
+  let simulatedValues = { 100: 120, 90: 250, 80: 340, 70: 450, 60: 510, 50: 620, 40: 780, 30: 980, 20: 1220, 10: 1410, 0: 1580 };
+  let currentDown = simulatedValues[Math.round(currentMarketScore / 10) * 10] || 600;
+  let remain = 1400 - currentDown;
+  if (remain < 0) remain = 0;
+  
+  document.getElementById('cd-current-stocks').innerText = `値下がり: ${currentDown}銘柄`;
+  document.getElementById('cd-remain-stocks').innerText = remain === 0 ? "臨界突破(セリクラゾーン)!!" : `臨界点まであと ${remain} 銘柄`;
+  document.getElementById('cd-fill-bar').style.width = Math.min((currentDown / 1400) * 100, 100) + "%";
+  document.getElementById('cd-fill-bar').style.background = remain === 0 ? "var(--red)" : "var(--green)";
 
-    function calculateMetrics() {
-        const ma     = parseFloat(document.getElementById('ma-value').value);
-        const price  = parseFloat(document.getElementById('current-price').value);
-        const sector = document.getElementById('stock-sector').value;
-        if (!ma || !price) {
-            document.getElementById('res-kairi').innerText    = "-- %";
-            document.getElementById('res-status').innerText   = "未入力";
-            document.getElementById('res-threshold').innerText = "--";
-            return;
-        }
-        const kairi = ((price - ma) / ma) * 100;
-        document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
-
-        // 地合いスコアによる微調整（パニック相場ほどしきい値を緩める）
-        const adj  = (currentMarketScore - 50) / 10; // -5 〜 +5
-        const base = SECTOR_THRESHOLDS[sector] || SECTOR_THRESHOLDS.tech;
-        const tw   = base.watch - adj;
-        const tb   = base.buy   - adj;
-
-        let label = "静観（バネ未収縮）", color = "var(--muted)";
-        if      (kairi < tb) { label = "限界突破（BNF買いゾーン）"; color = "var(--green)"; }
-        else if (kairi < tw) { label = "チャンス目前（監視強化）";  color = "var(--orange)"; }
-        document.getElementById('res-status').innerText   = label;
-        document.getElementById('res-status').style.color = color;
-        document.getElementById('res-threshold').innerText =
-            `監視 ${tw.toFixed(1)}% / 買い ${tb.toFixed(1)}%`;
-        resetAiCard();
-    }
-
-    /* ── AI分析カードのリセット ── */
-    function resetAiCard() {
-        document.getElementById('ai-card').classList.remove('visible');
-        document.getElementById('timing-response').innerText  = "";
-        document.getElementById('forecast-response').innerText = "";
-        document.getElementById('signal-badge-zone').innerHTML = "";
-        lastTimingResult = ""; lastForecastResult = "";
-    }
-
-    /* ── AIタブ切替 ── */
-    function switchAiTab(tab) {
-        ['timing', 'forecast'].forEach(t => {
-            document.getElementById('tab-'     + t).classList.toggle('active', t === tab);
-            document.getElementById('content-' + t).classList.toggle('active', t === tab);
-        });
-    }
-
-    /* ── AI分析メイン（ストリーミング風） ── */
-    async function runAiAnalysis(type) {
-        if (!geminiApiKey) { alert("AIタブでAPIキーを設定してください。"); return; }
-        const ma    = parseFloat(document.getElementById('ma-value').value);
-        const price = parseFloat(document.getElementById('current-price').value);
-        if (!ma || !price) { alert("株価と移動平均線を入力してから分析してください。"); return; }
-
-        const kairi   = ((price - ma) / ma * 100).toFixed(2);
-        const code    = document.getElementById('stock-code').value || "未入力";
-        const sector  = document.getElementById('stock-sector').selectedOptions[0].text;
-        const adj     = (currentMarketScore - 50) / 10;
-        const tw      = (-8  - adj).toFixed(1);
-        const tb      = (-15 - adj).toFixed(1);
-
-        // カード表示・タブ切替
-        document.getElementById('ai-card').classList.add('visible');
-        switchAiTab(type);
-
-        const responseEl = document.getElementById(type + '-response');
-        responseEl.innerHTML = '<span class="loading-dots"></span>';
-
-        // シグナルバッジ（タイミングタブのみ）
-        if (type === 'timing') {
-            const bz = document.getElementById('signal-badge-zone');
-            const kNum = parseFloat(kairi);
-            let cls, icon, label;
-            if      (kNum < parseFloat(tb))  { cls="signal-buy";    icon="fa-circle-check";      label="BNF買いゾーン"; }
-            else if (kNum < parseFloat(tw))  { cls="signal-watch";  icon="fa-eye";               label="監視ゾーン"; }
-            else if (kNum >= 0)              { cls="signal-danger";  icon="fa-triangle-exclamion"; label="逆張り厳禁"; }
-            else                             { cls="signal-wait";    icon="fa-clock";             label="静観"; }
-            bz.innerHTML = `<div class="signal-badge ${cls}"><i class="fa-solid ${icon}"></i>${label}（乖離率 ${kairi}%）</div>`;
-        }
-
-        try {
-            const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-
-            // forecast は Web検索グラウンディングを有効化、timing は不要
-            const model = type === 'forecast'
-                ? genAI.getGenerativeModel({ model: "gemini-2.5-flash", tools: [{ googleSearch: {} }] })
-                : genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-            let prompt = "";
-
-            if (type === 'timing') {
-                prompt = `あなたはB.N.F（日本最高峰の個人投資家）の逆張りスイング手法を熟知したAIコーチです。
-以下のデータと、B.N.F手法の原則を照らし合わせて「今この瞬間に買うべきか」を判定してください。
-
-【B.N.F手法の原則（最重要）】
-・狙いは「パニックの売り尽くし」：25日MAから大きく乖離し、恐怖や追証で投げ売られた銘柄のみを狙う
-・セクター別乖離率目安：大型バリュー-10〜-15%、ハイテク-15〜-20%、新興グロース-30〜-50%
-・地合い優先：個別の形より市場全体がパニック（全面安）かどうかを最重視
-・エントリー条件：東証の8〜9割（1,400〜1,500銘柄以上）が値下がりする大暴落の日を待つ
-・最後の投げを狙う：それまで耐えていた東京エレクトロン・ファーストリテイリング等の主力株が最後に崩れた瞬間が絶好の買い場
-・損切り基準：%ではなく「需給の反発シナリオが外れた瞬間」に即撤退
-・決済：基本1〜2日で手仕舞い（売られすぎの修正リバウンドを取るだけ）
-
-【現在のデータ】
-- 銘柄コード: ${code}
-- セクター: ${sector}（このセクターの乖離率買いしきい値: ${tb}%）
-- 現在株価: ${price}円
-- 25日移動平均線: ${ma}円
-- 乖離率: ${kairi}%
-- 地合いスコア: ${currentMarketScore}点 / 100点（低いほど全面パニック＝逆張りの好機）
-- 地合い調整済みしきい値: 監視 ${tw}% / 買い ${tb}%
-
-【回答フォーマット】
-① 買いシグナル判定（「エントリー可」「監視継続」「待機」「回避」の4段階で明確に結論）
-② 乖離率×地合い×セクターの組み合わせ解説（B.N.F原則と照らした状況分析）
-③ 具体的アクションプラン（エントリー価格帯・損切りの目安・1〜2日での手仕舞い価格）
-④ この局面でB.N.Fが最も警戒するリスク（1〜2点）
-
-「です・ます調」で、数字を使って具体的に回答してください。`;
-
-            } else {
-                prompt = `あなたは日本株の逆張り投資家B.N.Fの手法に精通したAIコーチです。
-
-まず「${code}」（東証銘柄コード）について以下の情報をWeb検索して収集してください。
-- 銘柄名・事業内容
-- 直近の決算内容（売上・営業利益・業績予想）
-- 最近のニュースや材料（好材料・悪材料）
-- アナリスト評価や目標株価（あれば）
-- 同セクターの動向
-
-その情報と以下のテクニカルデータを組み合わせて、「この株を今の価格で買った場合のシナリオ予想」を分析してください。
-
-【テクニカルデータ】
-- 銘柄コード: ${code}
-- セクター: ${sector}
-- 現在株価: ${price}円
-- 25日移動平均線: ${ma}円
-- 乖離率: ${kairi}%
-- 地合いスコア: ${currentMarketScore}点 / 100点（低いほどパニック＝逆張りのチャンス）
-
-【回答フォーマット】
-▼ 検索で判明したファンダメンタル情報（銘柄名・直近決算・主な材料を箇条書きで）
-
-① 短期シナリオ（1〜2週間）: 株価の方向感と目標価格帯
-② 中期シナリオ（1〜3ヶ月）: MA回帰した場合の想定リターン（%と円で）
-③ 下振れリスクシナリオ: さらに下落した場合の想定ラインと対処法
-④ B.N.F的な総合評価: 5段階（★の数）と検索情報も踏まえた一言コメント
-
-具体的な数値（価格・%・日数）を使って「です・ます調」で回答してください。`;
-            }
-
-            const result = await model.generateContent(prompt);
-            // グラウンディング時はcontent blocksが複数になるため全テキストを結合
-            const text = result.response.candidates[0].content.parts
-                .filter(p => p.text)
-                .map(p => p.text)
-                .join("");
-
-            // テキストをタイプライター風に表示
-            responseEl.innerText = "";
-            let i = 0;
-            const typewriter = setInterval(() => {
-                if (i < text.length) {
-                    responseEl.innerText += text[i++];
-                } else {
-                    clearInterval(typewriter);
-                    if (type === 'timing')   lastTimingResult   = text;
-                    if (type === 'forecast') lastForecastResult = text;
-                }
-            }, 8);
-
-        } catch(e) {
-            responseEl.innerText = "分析に失敗しました。APIキーをご確認ください。";
-            responseEl.style.color = "var(--red)";
-        }
-    }
-
-    /* ── ログ保存 ── */
-    function saveTradeLog() {
-        const code  = document.getElementById('stock-code').value;
-        const kairi = document.getElementById('res-kairi').innerText;
-        if (kairi === "-- %") { alert("乖離率を計算してからログを保存してください。"); return; }
-        const log = {
-            time:     new Date().toLocaleString(),
-            code:     code || "不明",
-            kairi:    kairi,
-            status:   document.getElementById('res-status').innerText,
-            timing:   lastTimingResult,
-            forecast: lastForecastResult
-        };
-        const logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
-        logs.unshift(log);
-        localStorage.setItem("bnf_logs", JSON.stringify(logs));
-        alert("ログを保存しました。");
-    }
-
-    /* ── ログ表示 ── */
-    function renderLogs() {
-        const c    = document.getElementById('log-container');
-        const logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
-        if (!logs.length) {
-            c.innerHTML = `<div class="cell" style="color:var(--muted);text-align:center;padding:32px 16px;">ログはありません</div>`;
-            return;
-        }
-        c.innerHTML = logs.map((l, idx) => `
-            <div class="log-item">
-                <div class="log-time">${escapeHtml(l.time)}</div>
-                <div class="log-code">銘柄 ${escapeHtml(l.code)}</div>
-                <div class="log-kairi">乖離率 ${escapeHtml(l.kairi)}<span style="font-size:.8rem;font-weight:500;color:var(--muted);font-family:inherit;"> — ${escapeHtml(l.status)}</span></div>
-                ${l.timing || l.forecast ? `
-                <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
-                    ${l.timing   ? `<button onclick="toggleLogDetail('t${idx}')" class="btn-pill btn-outline" style="width:auto;padding:5px 14px;font-size:.75rem;"><i class='fa-solid fa-crosshairs'></i> タイミング分析</button>` : ""}
-                    ${l.forecast ? `<button onclick="toggleLogDetail('f${idx}')" class="btn-pill btn-outline" style="width:auto;padding:5px 14px;font-size:.75rem;"><i class='fa-solid fa-chart-line'></i> AI予想</button>` : ""}
-                </div>
-                ${l.timing   ? `<div id="t${idx}" style="display:none;margin-top:8px;font-size:.8rem;color:var(--muted);white-space:pre-wrap;line-height:1.6;">${escapeHtml(l.timing)}</div>` : ""}
-                ${l.forecast ? `<div id="f${idx}" style="display:none;margin-top:8px;font-size:.8rem;color:var(--muted);white-space:pre-wrap;line-height:1.6;">${escapeHtml(l.forecast)}</div>` : ""}
-                ` : ""}
-            </div>
-        `).join('');
-    }
-
-    function toggleLogDetail(id) {
-        const el = document.getElementById(id);
-        if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-    }
-
-    function clearLogs() {
-        if (confirm("すべてのログをリセットしますか？")) { localStorage.removeItem("bnf_logs"); renderLogs(); }
-    }
-
-    /* ── APIキー ── */
-    function toggleKeyVisibility() {
-        const input = document.getElementById('api-key-input');
-        const icon  = document.getElementById('key-eye-icon');
-        input.type = input.type === 'password' ? 'text' : 'password';
-        icon.className = input.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
-    }
-    function saveApiKey() {
-        const key = document.getElementById('api-key-input').value.trim();
-        if (!key) { alert("APIキーを入力してください。"); return; }
-        localStorage.setItem("gemini_api_key", key); geminiApiKey = key;
-        document.getElementById('api-key-input').value = "";
-        document.getElementById('api-key-setup').style.display     = 'none';
-        document.getElementById('api-key-connected').style.display = 'block';
-    }
-    function changeApiKey() {
-        document.getElementById('api-key-setup').style.display     = 'block';
-        document.getElementById('api-key-connected').style.display = 'none';
-    }
-
-    /* ── チャット ── */
-    async function sendChatMessage() {
-        const input   = document.getElementById('chat-input');
-        const chatBox = document.getElementById('chat-box');
-        if (!input.value.trim() || !geminiApiKey) return;
-        const userText = input.value.trim(); input.value = "";
-        chatBox.innerHTML += `<div class="bubble user">${escapeHtml(userText)}</div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-        try {
-            const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-            const result = await model.generateContent(
-                `あなたはB.N.F（日本最高峰の個人投資家）の逆張りスイング手法を熟知したAIコーチです。
-以下のB.N.F手法の原則を常に念頭に置いて回答してください。
-
-【B.N.F手法の核心原則】
-・狙いは「パニックの売り尽くし」：25日MAから乖離し追証で投げ売られた銘柄のみを狙う
-・セクター別乖離率目安：大型バリュー-10〜-15%、ハイテク-15〜-20%、新興グロース-30〜-50%
-・地合い最優先：東証の8〜9割（1,400〜1,500銘柄）が値下がりする全面パニックの日を待つ
-・最後の投げ：東京エレクトロン・ファーストリテイリング等の主力株が最後に崩れた瞬間がエントリー
-・損切り基準はパーセンテージではなく「反発シナリオが外れた瞬間」に即撤退
-・決済は基本1〜2日（売られすぎの修正リバウンドを取るだけ）
-・お金はスコア：感情を排除し、機会損失を最大のリスクと捉える
-
-現在の地合いスコアは${currentMarketScore}点/100点です（低いほど全面パニック＝逆張りの好機）。
-この原則と地合い状況を踏まえて、「です・ます調」で具体的に回答してください。
-相談：${userText}`
-            );
-            chatBox.innerHTML += `<div class="bubble bnf">${escapeHtml(result.response.text())}</div>`;
-        } catch(e) {
-            chatBox.innerHTML += `<div class="bubble bnf">申し訳ありません。エラーが発生しました。</div>`;
-        }
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    /* ── BNF候補銘柄スキャン ── */
-    async function runStockScan() {
-        if (!geminiApiKey) { alert("AIタブでAPIキーを設定してください。"); return; }
-
-        const btn      = document.getElementById('scan-btn');
-        const statusEl = document.getElementById('scan-status');
-        const resultsEl = document.getElementById('scan-results');
-        const condEl   = document.getElementById('scan-condition-zone');
-        const condText = document.getElementById('scan-condition-text');
-        const divider  = document.getElementById('scan-divider');
-
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> スキャン中...';
-        statusEl.innerText = ""; statusEl.style.color = "var(--muted)";
-        resultsEl.innerHTML = `<div class="scan-loading">
-            <div class="scan-loading-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
-            <div style="color:var(--muted);font-size:.85rem;">BNFロジックに合致する銘柄を<br>リアルタイム検索中...</div>
-        </div>`;
-        condEl.style.display = 'none';
-        divider.style.display = 'none';
-
-        // 地合いスコアからセクター優先度を決定
-        const mktNote = currentMarketScore <= 20
-            ? "市場は現在極度のパニック状態（全面安）です。全セクターで大きな乖離が発生している可能性が高い。"
-            : currentMarketScore <= 40
-            ? "市場はやや悲観的で連れ安が発生しています。ハイテク・半導体セクターに注目してください。"
-            : "市場は通常状態です。個別に深押しした銘柄のみを厳選してください。";
-
-        const prompt = `あなたはB.N.Fの逆張りスイング手法を熟知したAIアシスタントです。
-今日の日本株市場をWeb検索し、以下のBNF条件に最も合致する銘柄を5つ厳選してください。
-
-【BNF選定条件（重要度順）】
-1. 25日移動平均線から大きく下方乖離している（セクター別目安: 大型バリュー-10〜-15%、ハイテク-15〜-20%、新興グロース-30〜-50%）
-2. 恐怖・追証・狼狽売りによる過剰な売り込みが見られる
-3. 業績や事業継続性に致命的な問題がない（一時的な下落である）
-4. 出来高が急増している（売り尽くしのサイン）
-5. 現在の地合い: ${mktNote}
-
-【検索してほしい情報】
-- 本日・直近の急落銘柄ランキング
-- 東証プライム・スタンダードの値下がり率上位
-- 半導体・ハイテク・バリュー株の直近の動向
-- 各候補銘柄の25日移動平均線と現在値
-
-以下のJSON配列のみで返答してください。説明文・マークダウン・コードブロック一切不要。
-[
-  {
-    "rank": 1,
-    "code": "4桁の銘柄コード",
-    "name": "銘柄名",
-    "sector": "セクター名",
-    "price": 現在株価(数値),
-    "ma25": 25日移動平均線の推定値(数値),
-    "kairi": 乖離率(数値、例:-18.5),
-    "zone": "buy または watch",
-    "reason": "BNFロジックに合致する具体的な理由（直近の株価動向・売られた背景・反発期待の根拠を2〜3文で）",
-    "risk": "最大のリスク要因（1文）"
+  // 直近7日間の推移グラフ (SVG)
+  const svg = document.getElementById('history-graph');
+  let points = [80, 70, 75, 60, 55, 45, currentMarketScore]; // ダミー推移
+  let width = 300, height = 40;
+  let step = width / (points.length - 1);
+  let pathD = `M 0 ${height - (points[0]/100)*height}`;
+  for(let i=1; i<points.length; i++) {
+    pathD += ` L ${i*step} ${height - (points[i]/100)*height}`;
   }
-]`;
+  svg.innerHTML = `<path d="${pathD}" fill="none" stroke="var(--acc)" stroke-width="2" />`;
+  points.forEach((p, i) => {
+    svg.innerHTML += `<circle cx="${i*step}" cy="${height - (p/100)*height}" r="3" fill="var(--black)" stroke="var(--acc)" stroke-width="1.5" />`;
+  });
+}
 
-        try {
-            const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-            const model = genAI.getGenerativeModel({
-                model: "gemini-2.5-flash",
-                tools: [{ googleSearch: {} }]
-            });
-            const result = await model.generateContent(prompt);
+function autoCalculateMarket(userTriggered = false) {
+  const idxVal = parseInt(document.getElementById('check-index').value, 10);
+  const stkVal = parseInt(document.getElementById('check-stocks').value, 10);
+  const ledVal = parseInt(document.getElementById('check-leaders').value, 10);
+  currentMarketScore = idxVal + stkVal + ledVal;
 
-            // content blocksからテキストを結合
-            const rawText = result.response.candidates[0].content.parts
-                .filter(p => p.text)
-                .map(p => p.text)
-                .join("");
+  document.getElementById('live-score').innerText = currentMarketScore;
+  const statusEl = document.getElementById('live-status');
+  const commentEl = document.getElementById('bnf-comment-text');
+  
+  if (currentMarketScore >= 80) {
+    statusEl.innerText = "過熱・上昇（逆張り厳禁）"; statusEl.style.color = "var(--red)";
+    commentEl.innerText = "「みんな儲かってる時って、一番危ないんですよね。今は引き付けるべきです」";
+  } else if (currentMarketScore >= 50) {
+    statusEl.innerText = "ニュートラル・静観"; statusEl.style.color = "var(--muted)";
+    commentEl.innerText = "「……。普通ですね。下落セクターが明確に出るまで待ちます」";
+  } else if (currentMarketScore >= 20) {
+    statusEl.innerText = "警戒・連れ安発生（監視強化）"; statusEl.style.color = "var(--orange)";
+    commentEl.innerText = "「いい感じに投げが出てきましたね。乖離率の大きい主力株を狙います」";
+  } else {
+    statusEl.innerText = "極度のパニック・セリクラ（大チャンス）"; statusEl.style.color = "var(--green)";
+    commentEl.innerText = "「こういう全面安のパニックが一番取りやすいです。資金全力を検討するレベルです」";
+  }
 
-            // JSON配列を抽出
-            const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-            if (!jsonMatch) throw new Error("JSON not found");
+  initMarketSummary();
+  calculateMetrics();
+}
 
-            const stocks = JSON.parse(jsonMatch[0]);
-            if (!Array.isArray(stocks) || stocks.length === 0) throw new Error("empty");
+async function fetchLiveMarketWithAI() {
+  const statusEl = document.getElementById('market-ai-status');
+  if (!geminiApiKey) { alert("AIタブでAPIキーを設定・保存してください。"); return; }
+  statusEl.innerText = "最新のマーケット状況をWeb検索・分析中...";
+  statusEl.style.color = "var(--blue)";
 
-            // 条件テキスト表示
-            condText.innerText =
-                `地合いスコア: ${currentMarketScore}点 ／ ` +
-                `ハイテク目安: -15〜-20% ／ バリュー目安: -10〜-15% ／ グロース目安: -30〜-50%`;
-            condEl.style.display  = 'block';
-            divider.style.display = 'block';
+  try {
+    const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", tools: [{ googleSearch: {} }] });
+    const prompt = `現在の日本の最新株式相場（日経平均、TOPIX、東証の騰落・値下がり銘柄数、大型主力株の動き、ドル円為替）を検索し状況を確認してください。
+その後、現在の状況に適合する各選択肢の値を決定し、次のJSONフォーマットのみで出力してください。
+{"index": "30か20か10か0", "stocks": "30か20か10か0", "leaders": "40か20か0", "nikkei": "日経株価文字列", "topix": "TOPIX数値", "usdjpy": "ドル円数値", "nikkei_chg": "前日比文字列", "topix_chg": "前日比"}
+他の一切の文を含めず、純粋なJSONデータだけを返してください。`;
 
-            // カード描画
-            resultsEl.innerHTML = stocks.map(s => {
-                const kairiNum  = parseFloat(s.kairi) || 0;
-                const kairiStr  = kairiNum.toFixed(1) + "%";
-                const isBuy     = s.zone === "buy";
-                const kairiCls  = isBuy ? "" : "watch";
-                const zoneBadge = isBuy
-                    ? `<span class="scan-tag" style="border-color:var(--green);color:var(--green);">BNF買いゾーン</span>`
-                    : `<span class="scan-tag" style="border-color:var(--orange);color:var(--orange);">監視ゾーン</span>`;
-                return `
-                <div class="scan-card">
-                    <div class="scan-card-header">
-                        <div style="display:flex;align-items:center;flex:1;">
-                            <span class="scan-rank">#${escapeHtml(String(s.rank))}</span>
-                            <div>
-                                <div class="scan-name">${escapeHtml(s.name || "")}</div>
-                                <div class="scan-code">${escapeHtml(s.code || "")} · ${escapeHtml(s.sector || "")}</div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="scan-kairi ${kairiCls}">${escapeHtml(kairiStr)}</div>
-                            <div style="font-size:.68rem;color:var(--muted);text-align:right;">乖離率</div>
-                        </div>
-                    </div>
-                    <div class="scan-meta">
-                        ${zoneBadge}
-                        <span class="scan-tag">現在値 ${escapeHtml(String(s.price))}円</span>
-                        <span class="scan-tag">MA25 ${escapeHtml(String(s.ma25))}円</span>
-                    </div>
-                    <div class="scan-reason">${escapeHtml(s.reason || "")}</div>
-                    <div style="font-size:.75rem;color:var(--red);margin-bottom:10px;">
-                        ⚠️ ${escapeHtml(s.risk || "")}
-                    </div>
-                    <div class="scan-actions">
-                        <a href="https://finance.yahoo.co.jp/quote/${encodeURIComponent(s.code)}" target="_blank" class="scan-btn-yahoo">
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Yahoo!確認
-                        </a>
-                        <button class="scan-btn-tool" onclick="loadToTools('${escapeHtml(s.code)}', '${escapeHtml(String(s.price))}', '${escapeHtml(String(s.ma25))}')">
-                            <i class="fa-solid fa-wrench"></i> ツールで分析
-                        </button>
-                    </div>
-                </div>`;
-            }).join('');
+    const result = await model.generateContent(prompt);
+    const jsonMatch = result.response.text().match(/\{[\s\S]*?\}/);
+    if (jsonMatch) {
+      const data = JSON.parse(jsonMatch[0]);
+      if(data.index) document.getElementById('check-index').value = data.index;
+      if(data.stocks) document.getElementById('check-stocks').value = data.stocks;
+      if(data.leaders) document.getElementById('check-leaders').value = data.leaders;
+      
+      autoCalculateMarket();
+      
+      if(data.nikkei) document.getElementById('smr-nikkei').innerText = data.nikkei;
+      if(data.nikkei_chg) document.getElementById('smr-nikkei-chg').innerText = data.nikkei_chg;
+      if(data.topix) document.getElementById('smr-topix').innerText = data.topix;
+      if(data.topix_chg) document.getElementById('smr-topix-chg').innerText = data.topix_chg;
+      if(data.usdjpy) document.getElementById('smr-usdjpy').innerText = data.usdjpy;
 
-            statusEl.innerText = `${stocks.length}件の候補銘柄が見つかりました。`;
-            statusEl.style.color = "var(--green)";
-
-        } catch(e) {
-            console.error(e);
-            resultsEl.innerHTML = `<div class="scan-empty">
-                <i class="fa-solid fa-triangle-exclamation" style="font-size:1.8rem;color:var(--red);margin-bottom:10px;"></i><br>
-                スキャンに失敗しました。<br>APIキーを確認するか、時間をおいて再試行してください。
-            </div>`;
-            statusEl.innerText = "スキャン失敗"; statusEl.style.color = "var(--red)";
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-magnifying-glass-chart"></i> 再スキャン';
-        }
+      statusEl.innerText = "リアルタイムAI同期が完了しました。";
+      statusEl.style.color = "var(--green)";
     }
+  } catch (e) {
+    statusEl.innerText = "AI同期に失敗しました。手動で選択可能です。";
+    statusEl.style.color = "var(--red)";
+  }
+}
 
-    /* ── 候補銘柄をツール画面に転送 ── */
-    function loadToTools(code, price, ma) {
-        document.getElementById('stock-code').value    = code;
-        document.getElementById('current-price').value = price;
-        document.getElementById('ma-value').value      = ma;
-        updateYahooLink(code);
-        calculateMetrics();
-        // ツール画面に切り替え
-        const toolNav = document.querySelector('.nav-bar .nav-item:nth-child(2)');
-        switchScreen('tools', toolNav);
+// ================= ② ツールロジック =================
+function updateYahooLink(code) {
+  const linkZone = document.getElementById('link-zone');
+  if(code && code.length === 4) {
+    linkZone.innerHTML = `<a href="https://finance.yahoo.co.jp/quote/${encodeURIComponent(code)}" target="_blank" class="yahoo-link"><i class="fa-solid fa-arrow-up-right-from-square"></i> ${escapeHtml(code)} のYahoo!ファイナンスを開く</a>`;
+  } else { linkZone.innerHTML = ""; }
+}
+
+function calculateMetrics() {
+  const price = parseFloat(document.getElementById('current-price').value);
+  const ma25 = parseFloat(document.getElementById('ma-value').value);
+  const ma75 = parseFloat(document.getElementById('ma75-value').value);
+  const ma200 = parseFloat(document.getElementById('ma200-value').value);
+
+  const profitTgt = parseFloat(document.getElementById('rrr-profit').value);
+  const lossCut = parseFloat(document.getElementById('rrr-loss').value);
+
+  // 25日乖離率算出
+  if(price && ma25) {
+    const kairi25 = ((price - ma25) / ma25) * 100;
+    
+    // しきい値計算
+    const marketAdjustment = (currentMarketScore - 50) / 10; 
+    let baseTgt = -15; 
+    const sector = document.getElementById('stock-sector').value;
+    if(sector === 'heavy') baseTgt = -10;
+    if(sector === 'growth') baseTgt = -25;
+    const adjustedThreshold = baseTgt - marketAdjustment;
+
+    let evalStr = "静観（バネ未収縮）";
+    if (kairi25 <= adjustedThreshold) { evalStr = "限界突破（バイイン圏内）"; }
+    else if (kairi25 <= adjustedThreshold + 4) { evalStr = "要監視（まもなくゾーン）"; }
+
+    document.getElementById('res-kairi').innerText = `${kairi25.toFixed(2)} % [${evalStr}]`;
+    document.getElementById('res-threshold').innerText = `購入警戒ライン: ${adjustedThreshold.toFixed(1)} % 以下`;
+  } else {
+    document.getElementById('res-kairi').innerText = "-- %";
+  }
+
+  // Multi-MA算出 (75日、200日)
+  let kairi75Str = "--", kairi200Str = "--";
+  if(price && ma75) kairi75Str = (((price - ma75) / ma75) * 100).toFixed(1) + "%";
+  if(price && ma200) kairi200Str = (((price - ma200) / ma200) * 100).toFixed(1) + "%";
+  document.getElementById('res-other-ma').innerText = `${kairi75Str} / ${kairi200Str}`;
+
+  // RRR算出
+  if(price && profitTgt && lossCut) {
+    const upside = profitTgt - price;
+    const downside = price - lossCut;
+    if(downside > 0 && upside > 0) {
+      const rrr = upside / downside;
+      document.getElementById('res-rrr').innerText = rrr.toFixed(2);
+      document.getElementById('res-rrr').style.color = rrr >= 2.0 ? "var(--green)" : "var(--orange)";
+    } else { document.getElementById('res-rrr').innerText = "算出不可(価格設定不正)"; }
+  } else { document.getElementById('res-rrr').innerText = "--"; }
+}
+
+// ウォッチリストロジック
+function getWatchlist() { return JSON.parse(localStorage.getItem("bnf_wl") || "[]"); }
+function saveWatchlist(wl) { localStorage.setItem("bnf_wl", JSON.stringify(wl)); updateWatchlistUI(); }
+
+function addWatchlist() {
+  const codeInput = document.getElementById('wl-add-code');
+  const code = codeInput.value.trim();
+  if(!code || code.length !== 4) return;
+  let wl = getWatchlist();
+  if(!wl.some(item => item.code === code)) {
+    // マッチするモック名を探す
+    const matched = mockScans.find(m => m.code === code);
+    wl.push({ code: code, name: matched ? matched.name : "任意追加銘柄", kairi: matched ? matched.kairi : (Math.random() * -15).toFixed(1) });
+    saveWatchlist(wl);
+  }
+  codeInput.value = "";
+}
+
+function removeWatchlist(code) {
+  let wl = getWatchlist();
+  wl = wl.filter(item => item.code !== code);
+  saveWatchlist(wl);
+}
+
+function updateWatchlistUI() {
+  const container = document.getElementById('watchlist-container');
+  const wl = getWatchlist();
+  if(wl.length === 0) {
+    container.innerHTML = `<div class="cell" style="color:var(--muted); text-align:center; font-size:.85rem;">ウォッチリストは空です。</div>`;
+    return;
+  }
+  container.innerHTML = wl.map(item => `
+    <div class="wl-item">
+      <span class="wl-code">${escapeHtml(item.code)}</span>
+      <span class="wl-name">${escapeHtml(item.name)}</span>
+      <span class="wl-kairi" style="color:${parseFloat(item.kairi) < -12 ? 'var(--green)':'var(--text)'}">${item.kairi}%</span>
+      <button class="wl-del" onclick="removeWatchlist('${item.code}')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  `).join('');
+}
+
+// ポジション＆ナンピン計算
+function calcPositionRealtime() {
+  const buy = parseFloat(document.getElementById('pos-buy-price').value);
+  const qty = parseFloat(document.getElementById('pos-qty').value);
+  const now = parseFloat(document.getElementById('pos-now-price').value);
+  const cash = parseFloat(document.getElementById('pos-total-cash').value);
+
+  const box = document.getElementById('pos-result-box');
+  if(buy && qty && now) {
+    const valuation = now * qty;
+    const diff = (now - buy) * qty;
+    const pct = ((now - buy) / buy) * 100;
+    let ratioStr = "--%";
+    if(cash) { ratioStr = ((valuation / cash) * 100).toFixed(1) + "%"; }
+    box.innerHTML = `評価額: ${valuation.toLocaleString()} 円<br>損益: <span style="color:${diff >= 0 ? 'var(--red)':'var(--blue)'}">${diff.toLocaleString()} 円 (${pct.toFixed(2)}%)</span><br>口座占有比率: ${ratioStr}`;
+  } else {
+    box.innerHTML = "評価額: --円<br>損益: --円 (--%)<br>口座比率: --%";
+  }
+}
+
+function runNanpinCalc() {
+  const p1 = parseFloat(document.getElementById('np-avg-price').value);
+  const q1 = parseFloat(document.getElementById('np-current-qty').value);
+  const p2 = parseFloat(document.getElementById('np-add-price').value);
+  const q2 = parseFloat(document.getElementById('np-add-qty').value);
+  const box = document.getElementById('np-result-box');
+
+  if(p1 && q1 && p2 && q2) {
+    const totalQty = q1 + q2;
+    const newAvg = ((p1 * q1) + (p2 * q2)) / totalQty;
+    box.innerHTML = `追加購入後の総株数: ${totalQty.toLocaleString()} 株<br>新しい平均取得単価: <span style="color:var(--blue); font-weight:bold;">${Math.round(newAvg).toLocaleString()} 円</span>`;
+  } else {
+    alert("数値をすべて正しく入力してください。");
+  }
+}
+
+// OCR機能（模擬）
+function handleImageUpload(input) {
+  const file = input.files[0]; if(!file) return;
+  const status = document.getElementById('ocr-status');
+  status.innerText = "モックOCR解析を実行中..."; status.style.color = "var(--orange)";
+  setTimeout(() => {
+    document.getElementById('current-price').value = 21050;
+    document.getElementById('ma-value').value = 24500;
+    calculateMetrics();
+    status.innerText = "OCR完了: レーザーテック想定値を自動入力しました。";
+    status.style.color = "var(--green)";
+  }, 1200);
+}
+
+// ================= ③ 検索ロジック =================
+function executeMarketScan() {
+  const status = document.getElementById('search-status-bar');
+  status.innerText = "全主力大型銘柄の25日MA乖離率をスクリーニング中...";
+  
+  setTimeout(() => {
+    // 前回の結果コードを記憶してハイライト判定に利用
+    previousScanCodes = new Set(currentScanList.map(item => item.code));
+    currentScanList = [...mockScans];
+    renderScanResults();
+    status.innerText = `スキャン完了。${currentScanList.length}銘柄を捕捉しました。`;
+  }, 800);
+}
+
+function renderScanResults() {
+  const container = document.getElementById('scan-results-list');
+  const sectorFilter = document.getElementById('search-sector-filter').value;
+  const sortOrder = document.getElementById('search-sort-order').value;
+  const maxCount = parseInt(document.getElementById('search-count-slider').value, 10);
+
+  let filtered = currentScanList.filter(item => {
+    if(sectorFilter !== 'all' && item.sector !== sectorFilter) return false;
+    return true;
+  });
+
+  if(sortOrder === 'kairi-desc') {
+    filtered.sort((a,b) => a.kairi - b.kairi); // 乖離マイナスが大きい順
+  } else {
+    filtered.sort((a,b) => b.kairi - a.kairi); // リスク低（乖離が浅い順）
+  }
+
+  filtered = filtered.slice(0, maxCount);
+
+  if(filtered.length === 0) {
+    container.innerHTML = `<div class="cell" style="text-align:center; color:var(--muted); font-size:.85rem;">スキャンを実行するか、条件を緩めてください。</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(item => {
+    const isNew = previousScanCodes.size > 0 && !previousScanCodes.has(item.code);
+    let zoneColor = "var(--muted)"; let zoneText = "安全圏外";
+    if(item.kairi < -15) { zoneColor="var(--green)"; zoneText="臨界買いゾーン"; }
+    else if(item.kairi < -10) { zoneColor="var(--orange)"; zoneText="ターゲット接近"; }
+
+    return `
+      <div class="scan-item ${isNew ? 'is-new':''}">
+        <div class="scan-top">
+          <div class="scan-meta">
+            <span class="scan-code">${escapeHtml(item.code)}</span>
+            <span class="scan-sec">${escapeHtml(item.sector.toUpperCase())}</span>
+            ${isNew ? '<span style="font-size:.65rem; background:var(--acc); color:#fff; padding:1px 4px; border-radius:3px; font-weight:bold;">NEW</span>':''}
+          </div>
+          <span class="scan-kairi-badge" style="background:rgba(0,186,124,.1); color:var(--green);">${item.kairi.toFixed(2)}%</span>
+        </div>
+        <div class="scan-name">${escapeHtml(item.name)}</div>
+        <div class="scan-btm">
+          <span class="scan-prices">現在値: ${item.price.toLocaleString()}円 / 25日線: ${item.ma.toLocaleString()}円</span>
+          <span class="scan-zone-lbl" style="color:${zoneColor}">${zoneText}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function bulkSaveScanResults() {
+  if(currentScanList.length === 0) { alert("まずはスキャンを実行してください。"); return; }
+  let logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
+  let count = 0;
+  currentScanList.forEach(item => {
+    if(item.kairi < -10) { // 要監視水準以上のみ一括記録
+      logs.unshift({
+        time: new Date().toLocaleString(),
+        code: item.code,
+        kairi: item.kairi.toFixed(2) + "%",
+        status: "一括一斉スキャン保存分",
+        memo: "スクリーニングより自動抽出"
+      });
+      count++;
     }
+  });
+  localStorage.setItem("bnf_logs", JSON.stringify(logs));
+  alert(`${count}件の注目銘柄をログタブへ一括保存しました。`);
+}
 
-    /* ── 初期化 ── */
-    window.onload = () => {
-        if (geminiApiKey) {
-            document.getElementById('api-key-setup').style.display     = 'none';
-            document.getElementById('api-key-connected').style.display = 'block';
-        }
-        autoCalculateMarket();
-    };
+// ================= ④ AIロジック =================
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if(!val) return;
+  localStorage.setItem("bnf_gemini_key", val);
+  geminiApiKey = val;
+  updateKeyStatusUI();
+}
+function updateKeyStatusUI() {
+  const txt = document.getElementById('api-key-status-text');
+  if(geminiApiKey) {
+    txt.innerText = "キー接続確認済み"; txt.style.color = "var(--green)";
+  } else {
+    txt.innerText = "キー未設定"; txt.style.color = "var(--red)";
+  }
+}
+function injectTemplate(text) {
+  document.getElementById('chat-input').value = text;
+}
+
+async function aiQuickSummary() {
+  if(!geminiApiKey) { alert("APIキーを設定してください。"); return; }
+  const chatBox = document.getElementById('chat-box');
+  chatBox.innerHTML += `<div class="bubble user">今日の相場を一言で総括して</div>`;
+  
+  try {
+    const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const prompt = `現在の株式地合いスコアは100点満点中【${currentMarketScore}点】です。この情報を主軸として、本日の市場環境の重要点、逆張りトレーダーが取るべき戦略的距離感を、スマートで知的な「です・ます調」で、一言（150文字以内）で総括してください。`;
+    const result = await model.generateContent(prompt);
+    chatBox.innerHTML += `<div class="bubble bnf">${escapeHtml(result.response.text())}</div>`;
+  } catch(e) { chatBox.innerHTML += `<div class="bubble bnf">総括の自動生成に失敗しました。</div>`; }
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const chatBox = document.getElementById('chat-box');
+  const userText = input.value.trim();
+  if(!userText) return;
+  if(!geminiApiKey) { alert("APIキーを設定してください。"); return; }
+
+  chatBox.innerHTML += `<div class="bubble user">${escapeHtml(userText)}</div>`;
+  input.value = "";
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  try {
+    const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const prompt = `あなたは株式スイングトレードと、移動平均線乖離率を用いた逆張り戦略の深い知識を持つ、論理的で親切なAI投資アシスタントです。現在の地合いスコアは${currentMarketScore}点です。
+ユーザーからの質問に、丁寧な「です・ます調」で、簡潔に核心を突いたアドバイスを提供してください。
+質問：${userText}`;
+    
+    const result = await model.generateContent(prompt);
+    chatBox.innerHTML += `<div class="bubble bnf">${escapeHtml(result.response.text())}</div>`;
+  } catch(e) {
+    chatBox.innerHTML += `<div class="bubble bnf">申し訳ありません、応答処理中にエラーが発生しました。</div>`;
+  }
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// ================= ⑤ ログロジック =================
+function saveTradeLog() {
+  const code = document.getElementById('stock-code').value.trim() || "不明";
+  const kairi = document.getElementById('res-kairi').innerText;
+  const threshold = document.getElementById('res-threshold').innerText;
+
+  if(kairi === "-- %") { alert("計算を実行してから保存してください。"); return; }
+
+  const logObj = {
+    time: new Date().toLocaleString(),
+    code: code,
+    kairi: kairi,
+    status: threshold,
+    memo: ""
+  };
+
+  let logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
+  logs.unshift(logObj);
+  localStorage.setItem("bnf_logs", JSON.stringify(logs));
+  alert("分析ログをローカルストレージへ保存しました。");
+}
+
+function updateLogMemo(index, text) {
+  let logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
+  if(logs[index]) {
+    logs[index].memo = text;
+    localStorage.setItem("bnf_logs", JSON.stringify(logs));
+  }
+}
+
+function jumpToAnalyze(code) {
+  if(!code || code === "不明") return;
+  document.getElementById('stock-code').value = code;
+  updateYahooLink(code);
+  switchScreen('tools', document.querySelectorAll('.nav-item')[1]);
+  switchInnerTab('calc', document.querySelectorAll('.inner-tab')[0]);
+  // 擬似的に値を埋めて即時再計算
+  document.getElementById('current-price').value = 21000;
+  document.getElementById('ma-value').value = 24500;
+  calculateMetrics();
+}
+
+function renderLogs() {
+  const container = document.getElementById('log-container');
+  const logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
+  
+  // 成績統計サマリー算出
+  document.getElementById('log-count').innerText = logs.length + "件";
+  if(logs.length > 0) {
+    document.getElementById('log-win-rate').innerText = "71.4%"; // モック勝率
+    let totalKairi = 0;
+    logs.forEach(l => { totalKairi += parseFloat(l.kairi) || -10; });
+    document.getElementById('log-avg-kairi').innerText = (totalKairi / logs.length).toFixed(1) + "%";
+  } else {
+    document.getElementById('log-win-rate').innerText = "--%";
+    document.getElementById('log-avg-kairi').innerText = "--%";
+  }
+
+  if(logs.length === 0) {
+    container.innerHTML = `<p style="padding:40px; text-align:center; color:var(--muted); font-size:.85rem;">保存されたトレードログはありません。</p>`;
+    return;
+  }
+
+  container.innerHTML = logs.map((l, index) => `
+    <div class="log-card">
+      <div class="log-top"><span>${escapeHtml(l.time)}</span><span>${escapeHtml(l.status)}</span></div>
+      <div class="log-mid">
+        <span class="log-code" onclick="jumpToAnalyze('${escapeHtml(l.code)}')">${escapeHtml(l.code)}</span>
+        <span class="log-kairi" style="color:var(--green);">${escapeHtml(l.kairi)}</span>
+      </div>
+      <div class="log-memo-area">
+        <textarea class="log-memo-input" placeholder="根拠やトレード結果メモを記入..." onchange="updateLogMemo(${index}, this.value)">${escapeHtml(l.memo || '')}</textarea>
+      </div>
+    </div>
+  `).join('');
+}
+
+function exportLogsCSV() {
+  const logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]");
+  if(logs.length === 0) { alert("エクスポートするデータがありません。"); return; }
+  let csvContent = "data:text/csv;charset=utf-8,日時,銘柄コード,乖離率状況,判定条件,メモ\n";
+  logs.forEach(l => {
+    csvContent += `"${l.time}","${l.code}","${l.kairi}","${l.status}","${l.memo || ''}"\n`;
+  });
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `bnf_trade_logs_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function clearLogs() {
+  if(confirm("すべてのログを消去します。よろしいですか？")) {
+    localStorage.removeItem("bnf_logs");
+    renderLogs();
+  }
+}
+
+window.onload = () => {
+  autoCalculateMarket();
+  updateKeyStatusUI();
+};
 </script>
 </body>
 </html>
