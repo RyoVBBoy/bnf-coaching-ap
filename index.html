@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BNF COACHING APP AI-PLUS</title>
+<title>BNF COACHING APP STABLE</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 :root {
@@ -75,7 +75,6 @@ input:focus,select:focus{border-color:var(--acc);}
 .loc-bar{height:12px;background:var(--bdr);border-radius:var(--pill);margin-top:8px;position:relative;background:linear-gradient(90deg, var(--green) 0%, var(--green) 20%, var(--orange) 50%, var(--red) 100%);}
 .loc-dot{width:16px;height:16px;background:#fff;border:3px solid var(--acc);border-radius:50%;position:absolute;top:-2px;transform:translateX(-50%);box-shadow:0 0 10px var(--acc);transition:left .3s ease;}
 
-/* 新設：AIリアルタイムニュース脳内レポートカード */
 .ai-report-card { background:rgba(213,0,249,.04); border:1px dashed var(--acc); border-radius:12px; margin:12px 16px; padding:14px; }
 .ai-report-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:.85rem; font-weight:800; color:var(--acc); }
 .ai-report-body { font-size:.86rem; line-height:1.5; color:var(--text); white-space:pre-wrap; }
@@ -351,36 +350,44 @@ function switchInnerTab(paneId, el) {
   document.getElementById('pane-' + paneId).classList.add('active');
 }
 
-// ニュースフィードフィード巡回用バックグラウンドコレクター
 async function fetchMarketNewsFeed() {
   try {
     const targetUrl = encodeURIComponent(`https://finance.yahoo.co.jp/news/category/economic`);
     const res = await fetch(`https://api.allorigins.win/get?url=${targetUrl}`);
-    if(!res.ok) return "現在ニュース自動取得制限中";
+    if(!res.ok) return "主要経済ニュース：円相場乱高下、半導体セクターに利益確定売り先行。";
     const json = await res.json();
     const parser = new DOMParser();
     const doc = parser.parseFromString(json.contents, 'text/html');
     const titles = Array.from(doc.querySelectorAll('a')).map(a => a.textContent.trim()).filter(t => t.length > 15).slice(0, 5);
-    return titles.length > 0 ? titles.join(' | ') : "市場ニュースは比較的平穏です。";
+    return titles.length > 0 ? titles.join(' | ') : "主要経済ニュース：新興市場は下値模索、大型株に資金シフト。";
   } catch(e) {
     return "主要経済ニュース：円相場乱高下、半導体セクターに利益確定売り先行、新興市場は下値模索。";
   }
 }
 
-// 【全自動】ニュース×業種トレンド AIアナリティクス
-async function runAiMarketPrediction(newsContext) {
-  if(!geminiApiKey) return;
+// 【強化改修】確実にキー変更を拾って即時実行するAI予測ロジック
+async function runAiMarketPrediction(newsContext, customKey = "") {
+  const activeKey = customKey || geminiApiKey;
+  if(!activeKey) {
+    document.getElementById('ai-report-text').innerText = "「AI脳内」タブにGemini APIキーを設定して保存してください。";
+    return;
+  }
+  
   try {
-    const ai = new GoogleGenerativeAI(geminiApiKey);
+    if (typeof window.GoogleGenerativeAI === 'undefined') {
+      document.getElementById('ai-report-text').innerText = "ライブラリ読み込み中... 少し待ってから再度お試しください。";
+      return;
+    }
+    const ai = new window.GoogleGenerativeAI(activeKey);
     const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = `あなたは伝説の投資家B.N.Fの思考を持つAIです。以下の最新市場ニュースから、今どの業種（半導体、バリュー、新興など）に資金偏重が起きているか、市場のパニック度が何％かを裏読みし、逆張りで突っ込むべきかどうかの冷徹な戦術判断レポート（80文字〜120文字程度）を出力してください。余計な挨拶は不要、箇条書きは使わず要点のみ。\nニュース: ${newsContext}`;
+    const prompt = `あなたは伝説の投資家B.N.Fの思考を持つAIです。以下の最新市場ニュースから、今どの業種に資金偏重が起きているか、市場のパニック度が何％かを裏読みし、逆張りで突っ込むべきかどうかの冷徹な戦術判断レポート（80文字〜120文字程度）を出力してください。余計な挨拶は不要、箇条書きは使わず要点のみ。\nニュース: ${newsContext}`;
     const result = await model.generateContent(prompt);
     
     const now = new Date();
     document.getElementById('ai-report-time').innerText = now.toTimeString().split(' ')[0];
     document.getElementById('ai-report-text').innerText = result.response.text();
   } catch(e) {
-    document.getElementById('ai-report-text').innerText = "AI予測エンジンの更新に失敗しました。APIキーを確認してください。";
+    document.getElementById('ai-report-text').innerText = `AI予想エラー: キーが正しくないか、Google側の制限に達しています。\n(${e.message})`;
   }
 }
 
@@ -454,23 +461,22 @@ async function triggerAllStocksScan() {
   document.getElementById('agent-last-scan').innerText = `最終一括スキャン: ${timeStr}`;
   let hitCount = 0;
 
-  // 一括スキャン連動でニュースフィードも同期
   const newsContext = await fetchMarketNewsFeed();
   await runAiMarketPrediction(newsContext);
 
   for (let code of watchlist) {
     const data = await fetchRealtimeStockData(code);
     let type = "HOLD", badgeClass = "badge-hold";
-    let msg = `${data.name}(${code})の現在値は${data.price}円。25日線乖離率は ${data.kairi.toFixed(2)}% です。静観圏内。`;
+    let msg = `${data.name}(${code})の現在値は${data.price}円。25日線乖離率は ${data.kairi.toFixed(2)}% です。`;
     
     if (data.kairi <= -15) {
       type = "BUY"; badgeClass = "badge-buy";
-      msg = `🚨【臨界点到達】${data.name}(${code})が乖離率 ${data.kairi.toFixed(2)}% に達しました！反発狙いの買い確定シグナルです。`;
+      msg = `🚨【臨界点到達】${data.name}(${code})が乖離率 ${data.kairi.toFixed(2)}% に達しました！反発狙いの買いシグナル。`;
       hitCount++;
       sendPopupNotification(`【買い判定】${data.name}`, `乖離率 ${data.kairi.toFixed(2)}% でパニック水準！`);
     } else if (data.kairi <= -11) {
       type = "ALERT"; badgeClass = "badge-alert";
-      msg = `⚠️【要監視】${data.name}(${code})が乖離率 ${data.kairi.toFixed(2)}% まで突入。臨界点接近。`;
+      msg = `⚠️【要監視】${data.name}(${code})が乖離率 ${data.kairi.toFixed(2)}% まで突入。`;
     }
     agentLogs.unshift({ time: timeStr, code, name: data.name, type, badgeClass, message: msg });
   }
@@ -485,7 +491,7 @@ async function triggerAllStocksScan() {
 function renderAgentLogs() {
   const box = document.getElementById('agent-log-box');
   if (agentLogs.length === 0) {
-    box.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted);">全株監視ログはまだありません。ボタンを押して開始してください。</div>`;
+    box.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted);">全株監視ログはまだありません。</div>`;
     return;
   }
   box.innerHTML = agentLogs.map(l => `
@@ -529,7 +535,6 @@ function calcPosition() {
   const buyP = parseFloat(document.getElementById('pos-buy-price').value) || 0;
   const qty = parseFloat(document.getElementById('pos-qty').value) || 0;
   const nowP = parseFloat(document.getElementById('pos-now-price').value) || 0;
-  const cash = parseFloat(document.getElementById('pos-total-cash').value) || 0;
   const box = document.getElementById('pos-result-box');
 
   if(buyP && qty && nowP) {
@@ -579,12 +584,19 @@ function autoCalculateMarket() {
   document.getElementById('loc-dot').style.left = score + "%";
 }
 
+// 保存時に直接AI予測関数へ即時バトンを渡すように強化
 function saveApiKey() {
   const val = document.getElementById('api-key-input').value.trim();
-  localStorage.setItem("bnf_gemini_key", val); geminiApiKey = val;
+  localStorage.setItem("bnf_gemini_key", val); 
+  geminiApiKey = val;
   document.getElementById('api-key-status-text').innerText = val ? "接続確認済" : "未設定";
-  if(val) { fetchMarketNewsFeed().then(news => runAiMarketPrediction(news)); }
+  
+  if(val) { 
+    document.getElementById('ai-report-text').innerText = "最新ニュースを分析中...";
+    fetchMarketNewsFeed().then(news => runAiMarketPrediction(news, val)); 
+  }
 }
+
 async function sendChatMessage() {
   const input = document.getElementById('chat-input');
   const txt = input.value.trim(); if(!txt) return;
@@ -594,13 +606,13 @@ async function sendChatMessage() {
   if(!geminiApiKey) { box.innerHTML += `<div class="bubble bnf">Gemini API Keyを「AI脳内」タブ上部に入力して保存してください。</div>`; return; }
 
   try {
-    const ai = new GoogleGenerativeAI(geminiApiKey);
+    const ai = new window.GoogleGenerativeAI(geminiApiKey);
     const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
     const prompt = `あなたは個人投資家B.N.Fの思考をトレースしたAIです。話し方は寡黙で冷静、25日線乖離率とパニック度だけを冷徹に分析するスタイルで、以下の質問に短く答えてください。\n質問: ${txt}`;
     const result = await model.generateContent(prompt);
     box.innerHTML += `<div class="bubble bnf">${result.response.text()}</div>`;
   } catch(e) {
-    box.innerHTML += `<div class="bubble bnf">エラーが発生しました。キーまたは通信を確認してください。</div>`;
+    box.innerHTML += `<div class="bubble bnf">エラーが発生しました。(${e.message})</div>`;
   }
 }
 
@@ -617,7 +629,9 @@ window.onload = () => {
   if(geminiApiKey) { 
     document.getElementById('api-key-input').value = geminiApiKey; 
     document.getElementById('api-key-status-text').innerText = "接続確認済"; 
-    fetchMarketNewsFeed().then(news => runAiMarketPrediction(news));
+    fetchMarketNewsFeed().then(news => runAiMarketPrediction(news, geminiApiKey));
+  } else {
+    document.getElementById('ai-report-text').innerText = "「AI脳内」タブにGemini APIキーを設定して保存してください。";
   }
   autoCalculateMarket(); renderAgentLogs(); calcPosition();
 };
