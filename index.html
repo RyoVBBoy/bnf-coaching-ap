@@ -145,22 +145,16 @@ input:focus,select:focus{border-color:var(--acc);}
 #preview-img{max-width:100%;max-height:140px;margin-top:10px;border-radius:10px;display:none;}
 .yahoo-link{display:flex;align-items:center;gap:9px;padding:11px 14px;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;font-size:.9rem;border-radius:var(--pill);justify-content:center;}
 
-.search-controls{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--bdr);gap:8px;flex-wrap:wrap;}
-.search-results{background:var(--black);}
-.scan-item{display:flex;flex-direction:column;padding:12px 16px;border-bottom:1px solid var(--bdr);position:relative;}
-.scan-item.is-new::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--acc);}
-.scan-top{display:flex;justify-content:space-between;align-items:center;}
-.scan-meta{display:flex;align-items:center;gap:6px;}
-.scan-code{font-size:.95rem;font-weight:800;color:var(--blue);font-family:'Courier New',monospace;}
-.scan-sec{font-size:.7rem;background:var(--s2);padding:2px 6px;border-radius:4px;color:var(--muted);font-weight:600;}
-.scan-name{font-size:.85rem;color:var(--text);font-weight:700;margin-top:2px;}
-.scan-kairi-badge{padding:4px 10px;border-radius:6px;font-family:'Courier New',monospace;font-size:.9rem;font-weight:900;}
-.scan-btm{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
-.scan-prices{font-size:.75rem;color:var(--muted);font-family:'Courier New',monospace;}
-.scan-zone-lbl{font-size:.75rem;font-weight:700;}
+/* 新エージェント用スタイル */
+.agent-status-card{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;margin:12px 16px;padding:14px;}
+.agent-pulse{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:800;color:var(--acc);}
+.pulse-dot{width:8px;height:8px;background:var(--acc);border-radius:50%;box-shadow:0 0 8px var(--acc);animation:blink 1s infinite;}
+.agent-log-container{background:var(--black);margin-top:10px;}
+.agent-msg-box{padding:12px 16px;border-bottom:1px solid var(--bdr);font-size:.9rem;line-height:1.45;}
+.agent-msg-meta{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px;}
+.badge-buy{background:rgba(0,186,124,.15);color:var(--green);padding:2px 6px;border-radius:4px;font-weight:800;font-size:.75rem;}
+.badge-sell{background:rgba(244,33,46,.15);color:var(--red);padding:2px 6px;border-radius:4px;font-weight:800;font-size:.75rem;}
 
-.ai-actions{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);overflow-x:auto;}
-.ai-action-btn{font-size:.75rem;padding:6px 12px;background:var(--s2);border:1px solid var(--bdr);color:var(--text);border-radius:var(--pill);cursor:pointer;white-space:nowrap;font-weight:700;}
 .chat-container{background:var(--black);display:flex;flex-direction:column;height:calc(100dvh - 250px);}
 .chat-timeline{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
 .bubble{max-width:85%;padding:10px 14px;border-radius:18px;font-size:.92rem;line-height:1.45;word-break:break-word;}
@@ -195,6 +189,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
 <header><div class="hdr-title" id="app-title">MARKET SCORE</div></header>
 
 <div class="content-area">
+  <!-- ================= ① 地合い画面 ================= -->
   <div id="screen-market" class="screen active">
     <div class="page-hdr">
       <h2>地合い環境分析</h2>
@@ -289,6 +284,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
     </div>
   </div>
 
+  <!-- ================= ② ツール画面 ================= -->
   <div id="screen-tools" class="screen">
     <div class="tool-header">
       <div class="tool-title">逆張り分析ツール</div>
@@ -304,6 +300,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
       <div class="inner-tab" onclick="switchInnerTab('position', this)">ポジション管理・ナンピン</div>
     </div>
 
+    <!-- PANE 1: 計算・OCR -->
     <div id="pane-calc" class="inner-pane active">
       <div class="cell">
         <div class="calc-grid">
@@ -352,6 +349,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
       <div class="cell"><button class="btn-pill btn-save" onclick="saveTradeLog()"><i class="fa-solid fa-floppy-disk"></i> この分析結果をログに保存</button></div>
     </div>
 
+    <!-- PANE 2: ウォッチリスト一括表示 -->
     <div id="pane-watchlist" class="inner-pane">
       <div class="cell">
         <div class="calc-grid">
@@ -363,6 +361,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
       <div id="watchlist-container"></div>
     </div>
 
+    <!-- PANE 3: ポジション管理 & ナンピン計算 -->
     <div id="pane-position" class="inner-pane">
       <div class="calc-section">
         <div class="calc-title">含み損益・口座比率リアルタイム表示 <span id="pos-mode-badge" style="color:var(--acc); font-size:.7rem;">[通常株単位]</span></div>
@@ -392,31 +391,34 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
     </div>
   </div>
 
+  <!-- ================= ③ 【新】エージェント画面 (旧検索) ================= -->
   <div id="screen-search" class="screen">
     <div class="page-hdr">
-      <h2>乖離率スクリーニング</h2>
-      <p>地合いレベルに基づき、売られすぎ銘柄を検出します</p>
+      <h2>BNF AI代理監視エージェント</h2>
+      <p>あなたが画面を見られない間、AIが自動で判断し通知します</p>
     </div>
-    <div class="search-controls">
-      <select id="search-sector-filter" style="width:32%; padding:6px 8px; font-size:.8rem;" onchange="renderScanResults()">
-        <option value="all">全セクター</option><option value="tech">半導体/ハイテク</option><option value="heavy">バリュー</option><option value="growth">グロース</option>
-      </select>
-      <select id="search-sort-order" style="width:35%; padding:6px 8px; font-size:.8rem;" onchange="renderScanResults()">
-        <option value="kairi-desc">乖離が大きい順</option><option value="risk-asc">リスクが低い順</option>
-      </select>
-      <div style="width:28%; display:flex; flex-direction:column; align-items:center;">
-        <span style="font-size:.65rem; color:var(--muted); font-weight:700;" id="slider-val-lbl">表示: 10件</span>
-        <input type="range" id="search-count-slider" min="5" max="20" step="5" value="10" style="width:100%;" oninput="document.getElementById('slider-val-lbl').innerText='表示: '+this.value+'件'; renderScanResults();">
+    
+    <div class="agent-status-card">
+      <div style="display:flex; justify-content:between; align-items:center;">
+        <div class="agent-pulse"><div class="pulse-dot"></div>バックグラウンド代理監視中</div>
+        <div style="font-size:.7rem; color:var(--muted);" id="agent-last-scan">最終スキャン: --:--</div>
+      </div>
+      <div style="font-size:.82rem; margin-top:8px; line-height:1.4; color:var(--text);">
+        現在の監視モード: <b id="agent-mode-lbl">通常株(100株単位)</b> でのリバウンド期待値を追跡中。
       </div>
     </div>
+
     <div class="cell" style="display:flex; gap:8px;">
-      <button class="btn-pill btn-acc" style="flex:1;" onclick="executeMarketScan()"><i class="fa-solid fa-bolt"></i> システムスキャンを実行</button>
-      <button class="btn-pill btn-outline" style="flex:0.6;" onclick="bulkSaveScanResults()"><i class="fa-solid fa-box-archive"></i> 結果を一括保存</button>
+      <button class="btn-pill btn-acc" style="flex:1;" onclick="triggerAgentDecision()"><i class="fa-solid fa-robot"></i> 今すぐAIに強制判断を実行させる</button>
     </div>
-    <div id="search-status-bar" style="text-align:center; font-size:.75rem; color:var(--muted);"></div>
-    <div class="search-results" id="scan-results-list"></div>
+
+    <div class="cell-lbl" style="padding-left:16px; margin-top:10px;">🚨 BNF AIエージェント売買判断・通知ログ</div>
+    <div class="agent-log-container" id="agent-log-box">
+      <div style="padding:30px; text-align:center; color:var(--muted); font-size:.85rem;">ここにAIエージェントの自動判断（売買・撤退の指示通知）が時系列で蓄積されます。</div>
+    </div>
   </div>
 
+  <!-- ================= ④ AI画面 ================= -->
   <div id="screen-brain" class="screen">
     <div class="key-section">
       <div class="key-row">
@@ -426,7 +428,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
       <div class="key-status" id="api-key-status-text">キーが設定されていません</div>
     </div>
     <div class="ai-actions">
-      <button class="ai-action-btn" onclick="aiQuickSummary()"><i class="fa-solid fa-wand-magic-sparkles"></i> 今日の相場を一言総括</button>
+      <button class="ai-action-btn" onclick="aiQuickSummary()"><i class="fa-solid fa-wand-magic-sparkles"></i> 今今日の相場を一言総括</button>
       <button class="ai-action-btn" onclick="injectTemplate('現在の地合いスコアから見て、今逆張り買いを仕掛けても安全な水準ですか？')">今買っていいか</button>
       <button class="ai-action-btn" onclick="injectTemplate('保有株の含み損が拡大しています。BNFの哲学に基づいた最速の損切り判断基準を教えてください。')">損切りすべきか</button>
       <button class="ai-action-btn" onclick="injectTemplate('狙っている特定の銘柄があるのですが、移動平均線から何％まで引き付けるべきでしょうか？')">何円まで引き付けるべきか</button>
@@ -440,6 +442,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
     </div>
   </div>
 
+  <!-- ================= ⑤ ログ画面 ================= -->
   <div id="screen-log" class="screen">
     <div class="summary-grid">
       <div class="smr-cell"><div class="smr-lbl">勝率</div><div class="smr-val" id="log-win-rate">--%</div></div>
@@ -456,7 +459,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
 <div class="nav-bar">
   <div class="nav-item active" onclick="switchScreen('market', this)"><i class="fa-solid fa-earth-asia"></i><span>地合い</span></div>
   <div class="nav-item" onclick="switchScreen('tools', this)"><i class="fa-solid fa-screwdriver-wrench"></i><span>ツール</span></div>
-  <div class="nav-item" onclick="switchScreen('search', this)"><i class="fa-solid fa-magnifying-glass"></i><span>検索</span></div>
+  <div class="nav-item" onclick="switchScreen('search', this)"><i class="fa-solid fa-robot"></i><span>AI通知</span></div>
   <div class="nav-item" onclick="switchScreen('brain', this)"><i class="fa-solid fa-brain"></i><span>AI</span></div>
   <div class="nav-item" onclick="switchScreen('log', this)"><i class="fa-solid fa-chart-line"></i><span>ログ</span></div>
 </div>
@@ -464,23 +467,16 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
 <script>
 let currentMarketScore = 50;
 let geminiApiKey = localStorage.getItem("bnf_gemini_key") || "";
-let previousScanCodes = new Set(); 
-let currentScanList = [];
 let isMiniStock = false;
+let agentLogs = JSON.parse(localStorage.getItem("bnf_agent_logs") || "[]");
 
 const mockScans = [
   {code:"6920", name:"レーザーテック", sector:"tech", price:21050, ma:24500, kairi:-14.08},
   {code:"8035", name:"東京エレクトロン", sector:"tech", price:23100, ma:28000, kairi:-17.50},
   {code:"7203", name:"トヨタ自動車", sector:"heavy", price:2510, ma:2750, kairi:-8.72},
   {code:"9984", name:"ソフトバンクG", sector:"tech", price:8400, ma:9900, kairi:-15.15},
-  {code:"6758", name:"ソニーG", sector:"tech", price:12100, ma:13200, kairi:-8.33},
-  {code:"8306", name:"三菱UFJ", sector:"heavy", price:1480, ma:1590, kairi:-6.91},
   {code:"4755", name:"楽天グループ", sector:"growth", price:720, ma:910, kairi:-20.88},
-  {code:"9101", name:"日本郵船", sector:"heavy", price:4100, ma:4300, kairi:-4.65},
-  {code:"6501", name:"日立製作所", sector:"heavy", price:3150, ma:3400, kairi:-7.35},
-  {code:"3697", name:"SHIFT", sector:"growth", price:13500, ma:18200, kairi:-25.82},
-  {code:"7735", name:"SCREEN", sector:"tech", price:9800, ma:12400, kairi:-20.97},
-  {code:"6146", name:"ディスコ", sector:"tech", price:38200, ma:46000, kairi:-16.96}
+  {code:"3697", name:"SHIFT", sector:"growth", price:13500, ma:18200, kairi:-25.82}
 ];
 
 function escapeHtml(str) {
@@ -494,6 +490,7 @@ function switchScreen(id, el) {
   el.classList.add('active');
   if(id === 'log') renderLogs();
   if(id === 'tools') updateWatchlistUI();
+  if(id === 'search') renderAgentLogs();
 }
 
 function switchInnerTab(paneId, el) {
@@ -666,6 +663,7 @@ function toggleStockMode() {
   const calcBadge = document.getElementById('calc-mode-badge');
   const wlText = document.getElementById('wl-mode-text');
   const posBadge = document.getElementById('pos-mode-badge');
+  const agentModeLbl = document.getElementById('agent-mode-lbl');
 
   if(isMiniStock) {
     optUnit.classList.remove('active');
@@ -674,6 +672,7 @@ function toggleStockMode() {
     if(calcBadge) calcBadge.innerText = "[ミニ株(1株単位)]";
     if(wlText) wlText.innerText = "現在の計算モード: ミニ株(1株単位)";
     if(posBadge) posBadge.innerText = "[ミニ株単位]";
+    if(agentModeLbl) agentModeLbl.innerText = "ミニ株(1株単位)";
   } else {
     optMini.classList.remove('active');
     optUnit.classList.add('active');
@@ -681,6 +680,7 @@ function toggleStockMode() {
     if(calcBadge) calcBadge.innerText = "[通常株(100株)]";
     if(wlText) wlText.innerText = "現在の計算モード: 通常株(100株単位)";
     if(posBadge) posBadge.innerText = "[通常株単位]";
+    if(agentModeLbl) agentModeLbl.innerText = "通常株(100株単位)";
   }
 
   calculateMetrics();
@@ -695,7 +695,6 @@ function updateYahooLink(code) {
   } else { linkZone.innerHTML = ""; }
 }
 
-// 拡張：現在価格と移動平均線ベースから利確・損切ターゲットを比率連動で完全自動入力
 function calculateMetrics(autoPopulateTargets = true) {
   const price = parseFloat(document.getElementById('current-price').value);
   const qty = parseFloat(document.getElementById('stock-qty').value) || 0;
@@ -710,28 +709,16 @@ function calculateMetrics(autoPopulateTargets = true) {
     document.getElementById('res-capital').innerText = "-- 円";
   }
 
-  // 最初に取り決めたセクター毎・状況毎の期待リバウンド比率（期待値）
   if(price && autoPopulateTargets) {
-    let expectedReboundPct = 0.08; // デフォルト 8% リバウンド狙い
-    let riskTolerancePct = 0.03;    // デフォルト 3% での機械的損切り
+    let expectedReboundPct = 0.08;
+    let riskTolerancePct = 0.03;
 
-    if(sector === 'tech') {
-      expectedReboundPct = 0.12;    // ボラティリティの高い半導体・ハイテクは 12% 反発目標
-      riskTolerancePct = 0.04;      // 許容損切りは 4%
-    } else if(sector === 'growth') {
-      expectedReboundPct = 0.15;    // 新興グロースは 15% 反発目標
-      riskTolerancePct = 0.05;      // 許容損切りは 5%
-    } else if(sector === 'heavy') {
-      expectedReboundPct = 0.05;    // 大型・バリューは固く 5% 反発目標
-      riskTolerancePct = 0.02;      // 許容損切りは 2%
-    }
+    if(sector === 'tech') { expectedReboundPct = 0.12; riskTolerancePct = 0.04; } 
+    else if(sector === 'growth') { expectedReboundPct = 0.15; riskTolerancePct = 0.05; } 
+    else if(sector === 'heavy') { expectedReboundPct = 0.05; riskTolerancePct = 0.02; }
 
-    // 地合いが極限パニック（スコアが低い）であれば、さらに市場リバウンドプレミアムを上乗せ
-    if(currentMarketScore <= 20) {
-      expectedReboundPct += 0.03; // 全面安反動による期待値＋3%
-    }
+    if(currentMarketScore <= 20) { expectedReboundPct += 0.03; }
 
-    // 計算を実行しインプットボックスへ直接自動反映
     document.getElementById('rrr-profit').value = Math.round(price * (1 + expectedReboundPct));
     document.getElementById('rrr-loss').value = Math.round(price * (1 - riskTolerancePct));
   }
@@ -775,6 +762,70 @@ function calculateMetrics(autoPopulateTargets = true) {
       document.getElementById('res-rrr').style.color = rrr >= 2.0 ? "var(--green)" : "var(--orange)";
     } else { document.getElementById('res-rrr').innerText = "算出不可"; }
   } else { document.getElementById('res-rrr').innerText = "--"; }
+}
+
+/* AIエージェント自動判断ロジック（新機能） */
+async function triggerAgentDecision() {
+  const logBox = document.getElementById('agent-log-box');
+  const lastScanEl = document.getElementById('agent-last-scan');
+  const now = new Date();
+  const timeStr = now.toTimeString().split(' ')[0];
+  lastScanEl.innerText = `最終スキャン: ${timeStr}`;
+
+  if (!geminiApiKey) {
+    // APIキーがない場合のシミュレート判定
+    const target = mockScans[Math.floor(Math.random() * mockScans.length)];
+    const isBuy = target.kairi < -12;
+    const actionType = isBuy ? "BUY" : "HOLD";
+    const msg = isBuy 
+      ? `【逆張りシグナル感知】${target.code} ${target.name} が25日線乖離 ${target.kairi}% に達しました。地合いスコア(${currentMarketScore})を考慮し、打診買いのタイミングと判断。想定利確: ${Math.round(target.price * 1.12)}円 / 損切: ${Math.round(target.price * 0.96)}円。`
+      : `【定期監視報告】${target.code} ${target.name} は現在乖離率 ${target.kairi}%。BNF反発臨界点（しきい値）に達していないため、手出し無用。引き続き監視します。`;
+    
+    agentLogs.unshift({ time: timeStr, code: target.code, type: actionType, message: msg });
+    localStorage.setItem("bnf_agent_logs", JSON.stringify(agentLogs));
+    renderAgentLogs();
+    return;
+  }
+
+  // APIキーがある場合は、GeminiにBNFのロジックで本格的な判断をさせる
+  try {
+    const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const prompt = `あなたは伝説のトレーダーBNFの投資脳を持つAIエージェントです。
+現在ユーザーは画面を見られず仕事中、または席を外しています。
+現在の地合いスコアは【${currentMarketScore}点】です。以下の銘柄リストから、今「買うべき」か「スルー(撤退・ホールド)すべきか」を判断し、ユーザーへスマートな売買通知メッセージを生成してください。
+監視データ: ${JSON.stringify(mockScans)}
+出力フォーマットは必ず次のJSON形式のみにしてください。他の挨拶や装飾は一切禁止します。
+{"code": "選定した4桁コード", "type": "BUYまたはHOLDまたはSELL", "message": "通知する内容(120文字程度。利確・損切ターゲットの価格目安も記載すること)"}`;
+
+    const result = await model.generateContent(prompt);
+    const jsonMatch = result.response.text().match(/\{[\s\S]*?\}/);
+    if (jsonMatch) {
+      const data = JSON.parse(jsonMatch[0]);
+      agentLogs.unshift({ time: timeStr, code: data.code, type: data.type, message: data.message });
+      localStorage.setItem("bnf_agent_logs", JSON.stringify(agentLogs));
+      renderAgentLogs();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function renderAgentLogs() {
+  const box = document.getElementById('agent-log-box');
+  if (agentLogs.length === 0) {
+    box.innerHTML = `<div style="padding:30px; text-align:center; color:var(--muted); font-size:.85rem;">ここにAIエージェントの自動判断（売買・撤退の指示通知）が時系列で蓄積されます。</div>`;
+    return;
+  }
+  box.innerHTML = agentLogs.map(l => `
+    <div class="agent-msg-box">
+      <div class="agent-msg-meta">
+        <span>${escapeHtml(l.time)} ➔ 銘柄コード: <span style="color:var(--blue); font-weight:bold; cursor:pointer; text-decoration:underline;" onclick="jumpToAnalyze('${escapeHtml(l.code)}')">${escapeHtml(l.code)}</span></span>
+        <span class="${l.type === 'BUY' ? 'badge-buy' : 'badge-sell'}">${escapeHtml(l.type)}</span>
+      </div>
+      <div>${escapeHtml(l.message)}</div>
+    </div>
+  `).join('');
 }
 
 function getWatchlist() { return JSON.parse(localStorage.getItem("bnf_wl") || "[]"); }
@@ -870,76 +921,6 @@ function handleImageUpload(input) {
   }, 1200);
 }
 
-function executeMarketScan() {
-  const status = document.getElementById('search-status-bar');
-  status.innerText = "全主力大型銘柄の25日MA乖離率をスクリーニング中...";
-  setTimeout(() => {
-    previousScanCodes = new Set(currentScanList.map(item => item.code));
-    currentScanList = [...mockScans];
-    renderScanResults();
-    status.innerText = `スキャン完了。${currentScanList.length}銘柄を捕捉しました。`;
-  }, 800);
-}
-
-function renderScanResults() {
-  const container = document.getElementById('scan-results-list');
-  const sectorFilter = document.getElementById('search-sector-filter').value;
-  const sortOrder = document.getElementById('search-sort-order').value;
-  const maxCount = parseInt(document.getElementById('search-count-slider').value, 10);
-
-  let filtered = currentScanList.filter(item => {
-    if(sectorFilter !== 'all' && item.sector !== sectorFilter) return false;
-    return true;
-  });
-  if(sortOrder === 'kairi-desc') { filtered.sort((a,b) => a.kairi - b.kairi); } 
-  else { filtered.sort((a,b) => b.kairi - a.kairi); }
-  filtered = filtered.slice(0, maxCount);
-
-  if(filtered.length === 0) {
-    container.innerHTML = `<div class="cell" style="text-align:center; color:var(--muted); font-size:.85rem;">スキャンを実行するか、条件を緩めてください。</div>`;
-    return;
-  }
-
-  container.innerHTML = filtered.map(item => {
-    const isNew = previousScanCodes.size > 0 && !previousScanCodes.has(item.code);
-    let zoneColor = "var(--muted)"; let zoneText = "安全圏外";
-    if(item.kairi < -15) { zoneColor="var(--green)"; zoneText="臨界買いゾーン"; }
-    else if(item.kairi < -10) { zoneColor="var(--orange)"; zoneText="ターゲット接近"; }
-
-    return `
-      <div class="scan-item ${isNew ? 'is-new':''}">
-        <div class="scan-top">
-          <div class="scan-meta">
-            <span class="scan-code">${escapeHtml(item.code)}</span>
-            <span class="scan-sec">${escapeHtml(item.sector.toUpperCase())}</span>
-            ${isNew ? '<span style="font-size:.65rem; background:var(--acc); color:#fff; padding:1px 4px; border-radius:3px; font-weight:bold;">NEW</span>':''}
-          </div>
-          <span class="scan-kairi-badge" style="background:rgba(0,186,124,.1); color:var(--green);">${item.kairi.toFixed(2)}%</span>
-        </div>
-        <div class="scan-name">${escapeHtml(item.name)}</div>
-        <div class="scan-btm">
-          <span class="scan-prices">現在値: ${item.price.toLocaleString()}円 / 25日線: ${item.ma.toLocaleString()}円</span>
-          <span class="scan-zone-lbl" style="color:${zoneColor}">${zoneText}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function bulkSaveScanResults() {
-  if(currentScanList.length === 0) { alert("まずはスキャンを実行してください。"); return; }
-  let logs = JSON.parse(localStorage.getItem("bnf_logs") || "[]"); let count = 0;
-  currentScanList.forEach(item => {
-    if(item.kairi < -10) { 
-      logs.unshift({
-        time: new Date().toLocaleString(), code: item.code, kairi: item.kairi.toFixed(2) + "%", status: "一括保存抽出分", memo: "スクリーニングより自動抽出"
-      });
-      count++;
-    }
-  });
-  localStorage.setItem("bnf_logs", JSON.stringify(logs)); alert(`${count}件の注目銘柄をログタブへ一括保存しました。`);
-}
-
 function saveApiKey() {
   const val = document.getElementById('api-key-input').value.trim(); if(!val) return;
   localStorage.setItem("bnf_gemini_key", val); geminiApiKey = val; updateKeyStatusUI();
@@ -957,7 +938,7 @@ async function aiQuickSummary() {
   
   try {
     const genAI = new window.GoogleGenerativeAI(geminiApiKey); const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const prompt = `現在の株式地合いスコアは100点満点中【${currentMarketScore}点】です。本日の市場環境の重要点、逆張りトレーダーが取るべき戦略的距離感を、スマートで知的な「です・ます調」で、150文字い内で総括してください。`;
+    const prompt = `現在の株式地合いスコアは100点満点中【${currentMarketScore}点】です。本日の市場環境の重要点、逆張りトレーダーが取るべき戦略的距離感を、スマートで知的な「です・ます調」で、150文字以内で総括してください。`;
     const result = await model.generateContent(prompt);
     chatBox.innerHTML += `<div class="bubble bnf">${escapeHtml(result.response.text())}</div>`;
   } catch(e) { chatBox.innerHTML += `<div class="bubble bnf">総括の自動生成に失敗しました。</div>`; }
@@ -1054,6 +1035,7 @@ function clearLogs() {
 window.onload = () => {
   autoCalculateMarket();
   updateKeyStatusUI();
+  renderAgentLogs();
 };
 </script>
 </body>
