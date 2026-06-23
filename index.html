@@ -3,15 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MARKET SCORE - COMPLETE</title>
+<title>MARKET SCORE</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 :root {
-  --black:#000; --s1:#16181C; --s2:#1C1F23; --bdr:#2F3336;
-  --text:#EFF3F4; --muted:#71767B;
-  --acc:#d500f9; --acc-dim:rgba(213,0,249,.10);
-  --blue:#1D9BF0; --green:#00BA7C; --orange:#FF7527; --red:#F4212E;
-  --pill:9999px;
+  --black:#000; --s1:#16181C; --s2:#1C1F23; --bdr:#2F3336; --text:#EFF3F4; --muted:#71767B;
+  --acc:#d500f9; --blue:#1D9BF0; --green:#00BA7C; --orange:#FF7527; --red:#F4212E; --pill:9999px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--black);color:var(--text);font-family:-apple-system,sans-serif;display:flex;flex-direction:column;height:100dvh;overflow:hidden;}
@@ -25,23 +22,11 @@ header{height:53px;display:flex;align-items:center;justify-content:center;backgr
 .cell-lbl{font-size:.78rem;color:var(--muted);margin-bottom:6px;font-weight:600;}
 input,select{width:100%;padding:10px 14px;background:var(--s2);border:1px solid var(--bdr);border-radius:10px;color:var(--text);font-size:1rem;outline:none;}
 input:focus,select:focus{border-color:var(--acc);}
-.btn-pill{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 20px;border:none;border-radius:var(--pill);font-weight:700;font-size:.9rem;cursor:pointer;width:100%;}
+.btn-pill{display:inline-flex;align-items:center;justify-content:center;padding:9px 20px;border:none;border-radius:var(--pill);font-weight:700;font-size:.9rem;cursor:pointer;width:100%;}
 .btn-acc{background:var(--acc);color:#fff;}
 .btn-blue{background:var(--blue);color:#fff;}
 .btn-green{background:var(--green);color:#fff;}
 .btn-outline{background:transparent;border:1px solid var(--bdr);color:var(--text);}
-.btn-save{background:linear-gradient(90deg,var(--blue),var(--acc));color:#fff;}
-.live-badge{display:flex;align-items:center;gap:5px;font-size:.75rem;font-weight:700;color:var(--green);background:rgba(0,186,124,.1);padding:4px 10px;border-radius:var(--pill);}
-.live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;}
-.toggle-switch{display:flex;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--pill);padding:2px;width:150px;cursor:pointer;height:28px;align-items:center;}
-.toggle-opt{flex:1;text-align:center;font-size:.72rem;font-weight:700;color:var(--muted);border-radius:var(--pill);}
-.toggle-opt.active{background:var(--acc);color:#fff;}
-.nav-bar{position:fixed;bottom:0;left:0;width:100%;height:65px;background:rgba(0,0,0,.85);display:flex;justify-content:space-around;align-items:center;border-top:1px solid var(--bdr);z-index:1000;}
-.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;width:20%;height:100%;}
-.nav-item i{font-size:1.25rem;}
-.nav-item span{font-size:0.7rem;margin-top:4px;display:none;font-weight:700;}
-.nav-item.active{color:var(--acc);}
-.nav-item.active span{display:inline;}
 .score-hero{display:flex;flex-direction:column;align-items:center;padding:20px 16px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);}
 .score-big{font-size:3.8rem;font-weight:900;font-family:monospace;}
 .score-suffix{font-size:1.4rem;color:var(--muted);}
@@ -70,7 +55,6 @@ input:focus,select:focus{border-color:var(--acc);}
 .wl-code{font-size:.85rem;font-weight:800;color:var(--blue);font-family:monospace;}
 .wl-name{font-size:.82rem;flex:1;}
 .wl-kairi{font-size:0.95rem;font-weight:900;font-family:monospace;}
-.agent-status-card{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;margin:12px 16px;padding:14px;}
 .agent-msg-box{padding:12px 16px;border-bottom:1px solid var(--bdr);font-size:.9rem;}
 .badge-hold{background:rgba(113,118,123,.15);color:var(--muted);padding:2px 6px;border-radius:4px;font-size:.75rem;}
 .chat-container{display:flex;flex-direction:column;height:calc(100dvh - 210px);}
@@ -79,7 +63,12 @@ input:focus,select:focus{border-color:var(--acc);}
 .bubble.bnf{background:var(--s2);align-self:flex-start;border-bottom-left-radius:4px;}
 .bubble.user{background:var(--acc);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
 .chat-input-zone{display:flex;padding:10px 16px;gap:8px;border-top:1px solid var(--bdr);}
-.log-card{padding:14px 16px;border-bottom:1px solid var(--bdr);}
+.nav-bar{position:fixed;bottom:0;left:0;width:100%;height:65px;background:rgba(0,0,0,.85);display:flex;justify-content:space-around;align-items:center;border-top:1px solid var(--bdr);z-index:1000;}
+.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;width:25%;height:100%;}
+.nav-item i{font-size:1.25rem;}
+.nav-item span{font-size:0.7rem;margin-top:4px;display:none;font-weight:700;}
+.nav-item.active{color:var(--acc);}
+.nav-item.active span{display:inline;}
 </style>
 </head>
 <body>
@@ -87,6 +76,7 @@ input:focus,select:focus{border-color:var(--acc);}
 <header><div class="hdr-title">MARKET SCORE</div></header>
 
 <div class="content-area">
+  <!-- ① 地合い画面 -->
   <div id="screen-market" class="screen active">
     <div class="page-hdr"><h2>地合い環境分析</h2></div>
     <div class="mkt-bar">
@@ -106,6 +96,7 @@ input:focus,select:focus{border-color:var(--acc);}
     <div class="signal-alert-card"><div class="sig-title">最新スキャン判定</div><div class="sig-body" id="sig-alert-body">一括スキャンを実行すると同期されます。</div></div>
   </div>
 
+  <!-- ② ツール画面 -->
   <div id="screen-tools" class="screen">
     <div class="tool-header"><h2>逆張りシミュレータ</h2></div>
     <div class="inner-tabs">
@@ -127,12 +118,14 @@ input:focus,select:focus{border-color:var(--acc);}
     <div id="pane-watchlist" class="inner-pane"><div id="watchlist-container"></div></div>
   </div>
 
+  <!-- ③ AI通知画面 -->
   <div id="screen-search" class="screen">
     <div class="page-hdr"><h2>売買判断ログ</h2></div>
     <div class="cell"><button class="btn-pill btn-acc" onclick="triggerAllStocksScan()">登録株を一括スキャン</button></div>
     <div class="agent-log-container" id="agent-log-box"></div>
   </div>
 
+  <!-- ④ AI脳内画面 -->
   <div id="screen-brain" class="screen">
     <div class="cell" style="display:flex;gap:8px;"><input type="password" id="api-key-input" placeholder="Gemini API Key"><button class="btn-pill btn-outline" style="width:80px;" onclick="saveApiKey()">保存</button></div>
     <div class="chat-container">
@@ -140,8 +133,6 @@ input:focus,select:focus{border-color:var(--acc);}
       <div class="chat-input-zone"><input type="text" id="chat-input" placeholder="送信..."><button class="btn-pill btn-blue" style="width:60px;" onclick="sendChatMessage()">送信</button></div>
     </div>
   </div>
-
-  <div id="screen-log" class="screen"><div id="log-container"></div></div>
 </div>
 
 <div class="nav-bar">
@@ -168,43 +159,35 @@ function switchInnerTab(paneId, el) {
   el.classList.add('active'); document.getElementById('pane-' + paneId).classList.add('active');
 }
 
-// ➔ 100%エラーを回避する中継プロキシ型のAPI通信
 async function callGeminiDirectFetch(promptText, activeKey) {
   const directUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
   const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(directUrl)}`;
-  
   const response = await fetch(proxyUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
   });
-  
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const json = await response.json();
   const data = JSON.parse(json.contents);
-  if (data?.error) throw new Error(data.error.message);
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || "応答エラー";
 }
 
 async function runAiMarketPrediction(newsContext) {
   if(!geminiApiKey) return;
   try {
-    const prompt = `投資家B.N.Fとして、以下のニュースから市場パニック度や逆張り戦術を100文字以内で冷徹にレポートしてください。\nニュース: ${newsContext}`;
+    const prompt = `投資家B.N.Fとして、以下のニュースから市場パニック度や逆張り戦術を100文字以内で冷静にレポートしてください。\nニュース: ${newsContext}`;
     const reply = await callGeminiDirectFetch(prompt, geminiApiKey);
     document.getElementById('ai-report-time').innerText = new Date().toTimeString().split(' ')[0];
     document.getElementById('ai-report-text').innerText = reply;
-  } catch(e) {
-    document.getElementById('ai-report-text').innerText = `エラー: ${e.message}`;
-  }
+  } catch(e) { document.getElementById('ai-report-text').innerText = `エラー: ${e.message}`; }
 }
 
 async function fetchRealtimeStockData(code) {
-  try {
-    if (code === "7412") return { price: 347, ma25: 345.6, kairi: 0.38, name: "アトム" };
-    if (code === "3697") return { price: 618, ma25: 685.0, kairi: -9.78, name: "SHIFT" };
-    if (code === "6920") return { price: 21050, ma25: 23100, kairi: -8.87, name: "レーザー" };
-    return { price: 1000, ma25: 1100, kairi: -9.09, name: `東証(${code})` };
-  } catch(e) { return { price: 1000, ma25: 1000, kairi: 0, name: "エラー代用" }; }
+  if (code === "7412") return { price: 347, ma25: 345.6, kairi: 0.38, name: "アトム" };
+  if (code === "3697") return { price: 618, ma25: 685.0, kairi: -9.78, name: "SHIFT" };
+  if (code === "6920") return { price: 21050, ma25: 23100, kairi: -8.87, name: "レーザー" };
+  return { price: 1000, ma25: 1100, kairi: -9.09, name: `東証(${code})` };
 }
 
 async function syncSingleStock() {
@@ -226,32 +209,29 @@ function calculateMetrics() {
 
 async function triggerAllStocksScan() {
   const timeStr = new Date().toTimeString().split(' ')[0];
-  await runAiMarketPrediction("全体市場：新興ネット株に売り先行、下値模索続く。");
+  await runAiMarketPrediction("全体市場：新興株への売りが継続。");
   agentLogs = [];
   for (let code of watchlist) {
     const data = await fetchRealtimeStockData(code);
-    agentLogs.unshift({ time: timeStr, name: data.name, msg: `${data.name}: 乖離率 ${data.kairi.toFixed(2)}% (${data.price}円)` });
+    agentLogs.unshift({ time: timeStr, msg: `${data.name}: 乖離率 ${data.kairi.toFixed(2)}% (${data.price}円)` });
   }
-  const box = document.getElementById('agent-log-box');
-  box.innerHTML = agentLogs.map(l => `<div class="agent-msg-box"><span class="badge-hold">${l.time}</span> ${l.msg}</div>`).join('');
-  document.getElementById('sig-alert-body').innerText = "一括巡回スキャン完了。全株正常。";
+  document.getElementById('agent-log-box').innerHTML = agentLogs.map(l => `<div class="agent-msg-box"><span class="badge-hold">${l.time}</span> ${l.msg}</div>`).join('');
+  document.getElementById('sig-alert-body').innerText = "一括巡回スキャン完了。";
 }
 
 async function updateWatchlistUI() {
-  const container = document.getElementById('watchlist-container');
   let html = "";
   for(let code of watchlist) {
     const data = await fetchRealtimeStockData(code);
     html += `<div class="wl-item"><span class="wl-code">${code}</span><span class="wl-name">${data.name}</span><span class="wl-kairi">${data.kairi.toFixed(2)}%</span></div>`;
   }
-  container.innerHTML = html;
+  document.getElementById('watchlist-container').innerHTML = html;
 }
 
 function saveApiKey() {
   const val = document.getElementById('api-key-input').value.trim();
   localStorage.setItem("bnf_gemini_key", val); geminiApiKey = val;
-  alert("APIキーを保存しました。");
-  runAiMarketPrediction("初期接続テスト完了");
+  alert("APIキーを保存しました。"); runAiMarketPrediction("初期接続テスト完了");
 }
 
 async function sendChatMessage() {
@@ -259,7 +239,7 @@ async function sendChatMessage() {
   const box = document.getElementById('chat-box'); box.innerHTML += `<div class="bubble user">${txt}</div>`; input.value = "";
   if(!geminiApiKey) { box.innerHTML += `<div class="bubble bnf">キーを設定してください。</div>`; return; }
   try {
-    const prompt = `投資家B.N.Fとして、以下の質問に寡黙かつ冷静に短く答えてください。\n質問: ${txt}`;
+    const prompt = `投資家B.N.Fとして、以下の質問に短く答えてください。\n質問: ${txt}`;
     const reply = await callGeminiDirectFetch(prompt, geminiApiKey);
     box.innerHTML += `<div class="bubble bnf">${reply}</div>`;
   } catch(e) { box.innerHTML += `<div class="bubble bnf">エラー: ${e.message}</div>`; }
