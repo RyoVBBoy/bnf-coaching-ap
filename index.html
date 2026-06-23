@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BNF COACHING APP PURE FETCH</title>
+<title>BNF COACHING APP FIXED</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 :root {
@@ -361,9 +361,9 @@ async function fetchMarketNewsFeed() {
   }
 }
 
-// 変更：ライブラリを完全撤廃し、最もエラーの起きない純粋なFetch APIによるGoogleダイレクト通信に変更
+// 修正：モデル名を「gemini-2.5-flash」に統一し、直感的なダイレクトFetch構造へ完全最適化
 async function callGeminiDirectFetch(promptText, activeKey) {
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -613,7 +613,7 @@ async function sendChatMessage() {
   if(!geminiApiKey) { box.innerHTML += `<div class="bubble bnf">Gemini API Keyを「AI脳内」タブ上部に入力して保存してください。</div>`; return; }
 
   try {
-    const prompt = `あなたは個人投資家B.N.Fの思考をトレースしたAIです。話し方は寡黙で冷静、25日線乖離率とパニック度だけを冷徹に分析するスタイルで、以下の質問に短く答えてください。\n質問: ${txt}`;
+    const prompt = `あなたは個人投資家B.N.Felsの思考をトレースしたAIです。話し方は寡黙で冷静、25日線乖離率とパニック度だけを冷徹に分析するスタイルで、以下の質問に短く答えてください。\n質問: ${txt}`;
     const replyText = await callGeminiDirectFetch(prompt, geminiApiKey);
     box.innerHTML += `<div class="bubble bnf">${replyText}</div>`;
   } catch(e) {
