@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BNF COACHING APP FIXED</title>
+<title>BNF COACHING APP PURE FETCH</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 :root {
@@ -158,11 +158,6 @@ input:focus,select:focus{border-color:var(--acc);}
 .log-code{font-size:1.05rem;font-weight:800;color:var(--blue);font-family:'Courier New',monospace;}
 .log-kairi{font-size:1.05rem;font-weight:900;font-family:'Courier New',monospace;}
 </style>
-
-<script type="module">
-import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
-window.GoogleGenerativeAI = GoogleGenerativeAI;
-</script>
 </head>
 <body>
 
@@ -366,7 +361,24 @@ async function fetchMarketNewsFeed() {
   }
 }
 
-// 修正：新しいエンドポイント用のリクエスト構造に対応
+// 変更：ライブラリを完全撤廃し、最もエラーの起きない純粋なFetch APIによるGoogleダイレクト通信に変更
+async function callGeminiDirectFetch(promptText, activeKey) {
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: promptText }] }]
+    })
+  });
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData?.error?.message || `HTTPエラー ${response.status}`);
+  }
+  const data = await response.json();
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text || "応答を解析できませんでした。";
+}
+
 async function runAiMarketPrediction(newsContext, customKey = "") {
   const activeKey = customKey || geminiApiKey;
   if(!activeKey) {
@@ -375,26 +387,15 @@ async function runAiMarketPrediction(newsContext, customKey = "") {
   }
   
   try {
-    if (typeof window.GoogleGenerativeAI === 'undefined') {
-      document.getElementById('ai-report-text').innerText = "ライブラリ準備中... 3秒後に再実行します。";
-      setTimeout(() => runAiMarketPrediction(newsContext, activeKey), 3000);
-      return;
-    }
-    
-    // 修正：v1エンドポイントと互換性のある呼び出し形式
-    const ai = new window.GoogleGenerativeAI(activeKey);
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
     const prompt = `あなたは伝説の投資家B.N.Fの思考を持つAIです。以下の最新市場ニュースから、今どの業種に資金偏重が起きているか、市場のパニック度が何％かを裏読みし、逆張りで突っ込むべきかどうかの冷徹な戦術判断レポート（80文字〜120文字程度）を出力してください。余計な挨拶は不要、箇条書きは使わず要点のみ。\nニュース: ${newsContext}`;
     
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }]
-    });
+    const replyText = await callGeminiDirectFetch(prompt, activeKey);
     
     const now = new Date();
     document.getElementById('ai-report-time').innerText = now.toTimeString().split(' ')[0];
-    document.getElementById('ai-report-text').innerText = result.response.text();
+    document.getElementById('ai-report-text').innerText = replyText;
   } catch(e) {
-    document.getElementById('ai-report-text').innerText = `AI予想エラー: キーが正しくないか、Google側の制限に達しています。\n(${e.message})`;
+    document.getElementById('ai-report-text').innerText = `AI予想エラー: 通信に失敗しました。\n(${e.message})`;
   }
 }
 
@@ -612,14 +613,9 @@ async function sendChatMessage() {
   if(!geminiApiKey) { box.innerHTML += `<div class="bubble bnf">Gemini API Keyを「AI脳内」タブ上部に入力して保存してください。</div>`; return; }
 
   try {
-    const ai = new window.GoogleGenerativeAI(geminiApiKey);
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
     const prompt = `あなたは個人投資家B.N.Fの思考をトレースしたAIです。話し方は寡黙で冷静、25日線乖離率とパニック度だけを冷徹に分析するスタイルで、以下の質問に短く答えてください。\n質問: ${txt}`;
-    
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }]
-    });
-    box.innerHTML += `<div class="bubble bnf">${result.response.text()}</div>`;
+    const replyText = await callGeminiDirectFetch(prompt, geminiApiKey);
+    box.innerHTML += `<div class="bubble bnf">${replyText}</div>`;
   } catch(e) {
     box.innerHTML += `<div class="bubble bnf">エラーが発生しました。(${e.message})</div>`;
   }
