@@ -145,7 +145,6 @@ input:focus,select:focus{border-color:var(--acc);}
 #preview-img{max-width:100%;max-height:140px;margin-top:10px;border-radius:10px;display:none;}
 .yahoo-link{display:flex;align-items:center;gap:9px;padding:11px 14px;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;font-size:.9rem;border-radius:var(--pill);justify-content:center;}
 
-/* 新エージェント用スタイル */
 .agent-status-card{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;margin:12px 16px;padding:14px;}
 .agent-pulse{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:800;color:var(--acc);}
 .pulse-dot{width:8px;height:8px;background:var(--acc);border-radius:50%;box-shadow:0 0 8px var(--acc);animation:blink 1s infinite;}
@@ -166,7 +165,7 @@ input:focus,select:focus{border-color:var(--acc);}
 .key-row{display:flex;gap:8px;}
 .key-status{font-size:.75rem;margin-top:6px;font-weight:600;}
 
-.summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--s1);border-bottom:1px solid var(--bdr);}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;background:var(--s1);border-bottom:1px solid var(--bdr);}
 .smr-cell{padding:12px;text-align:center;border-right:1px solid var(--bdr);}
 .smr-cell:last-child{border-right:none;}
 .smr-lbl{font-size:.65rem;color:var(--muted);font-weight:700;}
@@ -391,7 +390,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
     </div>
   </div>
 
-  <!-- ================= ③ 【新】エージェント画面 (旧検索) ================= -->
+  <!-- ================= ③ エージェント画面 ================= -->
   <div id="screen-search" class="screen">
     <div class="page-hdr">
       <h2>BNF AI代理監視エージェント</h2>
@@ -399,7 +398,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
     </div>
     
     <div class="agent-status-card">
-      <div style="display:flex; justify-content:between; align-items:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
         <div class="agent-pulse"><div class="pulse-dot"></div>バックグラウンド代理監視中</div>
         <div style="font-size:.7rem; color:var(--muted);" id="agent-last-scan">最終スキャン: --:--</div>
       </div>
@@ -408,8 +407,11 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
       </div>
     </div>
 
-    <div class="cell" style="display:flex; gap:8px;">
-      <button class="btn-pill btn-acc" style="flex:1;" onclick="triggerAgentDecision()"><i class="fa-solid fa-robot"></i> 今すぐAIに強制判断を実行させる</button>
+    <div class="cell" style="display:flex; flex-direction:column; gap:8px;">
+      <button id="btn-request-auth" class="btn-pill btn-outline" onclick="requestNotificationPermission()">
+        <i class="fa-solid fa-bell"></i> デスクトップ通知を許可する
+      </button>
+      <button class="btn-pill btn-acc" onclick="triggerAgentDecision()"><i class="fa-solid fa-robot"></i> 今すぐAIに強制判断を実行させる</button>
     </div>
 
     <div class="cell-lbl" style="padding-left:16px; margin-top:10px;">🚨 BNF AIエージェント売買判断・通知ログ</div>
@@ -428,7 +430,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
       <div class="key-status" id="api-key-status-text">キーが設定されていません</div>
     </div>
     <div class="ai-actions">
-      <button class="ai-action-btn" onclick="aiQuickSummary()"><i class="fa-solid fa-wand-magic-sparkles"></i> 今今日の相場を一言総括</button>
+      <button class="ai-action-btn" onclick="aiQuickSummary()"><i class="fa-solid fa-wand-magic-sparkles"></i> 今日の相場を一言総括</button>
       <button class="ai-action-btn" onclick="injectTemplate('現在の地合いスコアから見て、今逆張り買いを仕掛けても安全な水準ですか？')">今買っていいか</button>
       <button class="ai-action-btn" onclick="injectTemplate('保有株の含み損が拡大しています。BNFの哲学に基づいた最速の損切り判断基準を教えてください。')">損切りすべきか</button>
       <button class="ai-action-btn" onclick="injectTemplate('狙っている特定の銘柄があるのですが、移動平均線から何％まで引き付けるべきでしょうか？')">何円まで引き付けるべきか</button>
@@ -446,7 +448,7 @@ window.GoogleGenerativeAI = GoogleGenerativeAI;
   <div id="screen-log" class="screen">
     <div class="summary-grid">
       <div class="smr-cell"><div class="smr-lbl">勝率</div><div class="smr-val" id="log-win-rate">--%</div></div>
-      <div class="summary-grid" style="border:none;"><div class="smr-cell" style="border:none;"><div class="smr-lbl">保存ログ件数</div><div class="smr-val" id="log-count">0件</div></div></div>
+      <div class="smr-cell"><div class="smr-lbl">保存ログ件数</div><div class="smr-val" id="log-count">0件</div></div>
     </div>
     <div class="cell" style="display:flex; gap:8px; background:var(--s1);">
       <button class="btn-pill btn-outline" style="font-size:.8rem; padding:6px 12px;" onclick="exportLogsCSV()"><i class="fa-solid fa-file-csv"></i> CSVエクスポート</button>
@@ -535,7 +537,6 @@ function initMarketSummary() {
       </div>`;
   });
 
-  const totalStocks = 1650;
   let simulatedValues = { 100: 120, 90: 250, 80: 340, 70: 450, 60: 510, 50: 620, 40: 780, 30: 980, 20: 1220, 10: 1410, 0: 1580 };
   let currentDown = simulatedValues[Math.round(currentMarketScore / 10) * 10] || 600;
   let remain = 1400 - currentDown;
@@ -764,7 +765,41 @@ function calculateMetrics(autoPopulateTargets = true) {
   } else { document.getElementById('res-rrr').innerText = "--"; }
 }
 
-/* AIエージェント自動判断ロジック（新機能） */
+/* ================= ポップアップ通知制御ロジック ================= */
+function checkNotificationAuth() {
+  const btn = document.getElementById('btn-request-auth');
+  if (!btn) return;
+  if (!("Notification" in window)) {
+    btn.innerText = "ブラウザが通知に対応していません";
+    btn.disabled = true;
+    return;
+  }
+  if (Notification.permission === "granted") {
+    btn.innerHTML = `<i class="fa-solid fa-bell-check" style="color:var(--green)"></i> デスクトップ通知許可済み`;
+    btn.style.borderColor = "var(--green)";
+  }
+}
+
+function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    alert("このブラウザは通知に対応していません。");
+    return;
+  }
+  Notification.requestPermission().then(permission => {
+    if (permission === "granted") {
+      alert("通知権限を承認しました。AIがチャンスを画面上にポップアップ通知します。");
+      checkNotificationAuth();
+    }
+  });
+}
+
+function sendPopupNotification(title, body) {
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(title, { body: body });
+  }
+}
+
+/* AIエージェント自動判断ロジック */
 async function triggerAgentDecision() {
   const logBox = document.getElementById('agent-log-box');
   const lastScanEl = document.getElementById('agent-last-scan');
@@ -784,6 +819,9 @@ async function triggerAgentDecision() {
     agentLogs.unshift({ time: timeStr, code: target.code, type: actionType, message: msg });
     localStorage.setItem("bnf_agent_logs", JSON.stringify(agentLogs));
     renderAgentLogs();
+
+    // デスクトップポップアップ発動
+    sendPopupNotification(`【BNF AI】監視報告 (${target.code}: ${actionType})`, msg);
     return;
   }
 
@@ -805,6 +843,9 @@ async function triggerAgentDecision() {
       agentLogs.unshift({ time: timeStr, code: data.code, type: data.type, message: data.message });
       localStorage.setItem("bnf_agent_logs", JSON.stringify(agentLogs));
       renderAgentLogs();
+
+      // デスクトップポップアップ発動
+      sendPopupNotification(`【BNF AI】${data.type}シグナル感知 (${data.code})`, data.message);
     }
   } catch (e) {
     console.error(e);
@@ -1036,6 +1077,7 @@ window.onload = () => {
   autoCalculateMarket();
   updateKeyStatusUI();
   renderAgentLogs();
+  checkNotificationAuth();
 };
 </script>
 </body>
