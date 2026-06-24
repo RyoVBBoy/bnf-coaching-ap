@@ -18,759 +18,1090 @@ body{background:var(--black);color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   display:flex;flex-direction:column;height:100dvh;overflow:hidden;}
 
-header{height:53px;display:flex;align-items:center;justify-content:center;
+header{height:53px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;
   background:rgba(0,0,0,.85);backdrop-filter:blur(12px);
   border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:100;}
 .hdr-title{font-size:1.05rem;font-weight:800;letter-spacing:.12em;color:var(--acc);}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;
+  color:var(--green);background:rgba(0,186,124,.1);padding:4px 10px;border-radius:var(--pill);}
+.live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 
 .content-area{flex:1;overflow-y:auto;padding-bottom:68px;-webkit-overflow-scrolling:touch;}
-.screen{display:none;} .screen.active{display:block;}
-
-.page-hdr{padding:14px 16px 10px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;}
-.page-hdr h2{font-size:1.1rem;font-weight:800;}
-.page-hdr p{font-size:.78rem;color:var(--muted);margin-top:2px;}
+.screen{display:none;}.screen.active{display:block;}
 
 .cell{padding:14px 16px;border-bottom:1px solid var(--bdr);}
 .cell-lbl{font-size:.78rem;color:var(--muted);margin-bottom:6px;font-weight:600;}
+.divider{height:8px;background:var(--s1);border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);}
 
 input[type="number"],input[type="text"],input[type="password"],select{
   width:100%;padding:10px 14px;background:var(--s2);border:1px solid var(--bdr);
   border-radius:10px;color:var(--text);font-size:1rem;font-family:inherit;
   outline:none;-webkit-appearance:none;transition:border-color .15s;}
 input:focus,select:focus{border-color:var(--acc);}
+input[readonly]{background:var(--s1);color:var(--muted);}
 
 .btn-pill{display:inline-flex;align-items:center;justify-content:center;
   gap:7px;padding:9px 20px;border:none;border-radius:var(--pill);
-  font-weight:700;font-size:.9rem;cursor:pointer;width:100%;transition:opacity .15s;font-family:inherit;}
+  font-weight:700;font-size:.9rem;cursor:pointer;width:100%;
+  transition:opacity .15s;font-family:inherit;}
 .btn-pill:active{opacity:.75;}
 .btn-acc{background:var(--acc);color:#fff;}
 .btn-blue{background:var(--blue);color:#fff;}
 .btn-green{background:var(--green);color:#fff;}
 .btn-outline{background:transparent;border:1px solid var(--bdr);color:var(--text);}
 .btn-save{background:linear-gradient(90deg,var(--blue),var(--acc));color:#fff;}
+.btn-orange{background:var(--orange);color:#fff;}
 
-.live-badge{display:flex;align-items:center;gap:5px;font-size:.75rem;font-weight:700;color:var(--green);background:rgba(0,186,124,.1);padding:4px 10px;border-radius:var(--pill);}
-.live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 1.5s infinite;}
-@keyframes blink { 0% {opacity:1;} 50% {opacity:.3;} 100% {opacity:1;} }
-
-.toggle-switch{display:flex;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--pill);padding:2px;width:150px;cursor:pointer;height:28px;align-items:center;}
-.toggle-opt{flex:1;padding:3px 0;text-align:center;font-size:.72rem;font-weight:700;color:var(--muted);border-radius:var(--pill);transition:all .2s;}
-.toggle-opt.active{background:var(--acc);color:#fff;}
-
-.nav-bar{position:fixed;bottom:0;left:0;width:100%;height:65px;background:rgba(0,0,0,.85);
-  backdrop-filter:blur(12px);display:flex;justify-content:space-around;align-items:center;border-top:1px solid var(--bdr);z-index:1000;}
-.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;width:20%;height:100%;transition:all .2s ease;}
-.nav-item i{font-size:1.25rem;transition:transform .2s ease;}
-.nav-item span{font-size:0.7rem;margin-top:4px;display:none;font-weight:700;}
-.nav-item.active{color:var(--acc);}
-.nav-item.active i{transform:translateY(-2px);}
-.nav-item.active span{display:inline;}
-
-.score-hero{display:flex;flex-direction:column;align-items:center;padding:20px 16px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);}
-.score-big{font-size:3.8rem;font-weight:900;font-family:'Courier New',monospace;line-height:1;}
-.score-suffix{font-size:1.4rem;font-weight:700;color:var(--muted);margin-left:3px;}
-.score-label{font-size:.9rem;font-weight:700;margin-top:6px;}
-
-.location-card{padding:14px 16px;border-bottom:1px solid var(--bdr);background:var(--s2);}
-.loc-bar{height:12px;background:var(--bdr);border-radius:var(--pill);margin-top:8px;position:relative;background:linear-gradient(90deg, var(--green) 0%, var(--green) 20%, var(--orange) 50%, var(--red) 100%);}
-.loc-dot{width:16px;height:16px;background:#fff;border:3px solid var(--acc);border-radius:50%;position:absolute;top:-2px;transform:translateX(-50%);box-shadow:0 0 10px var(--acc);transition:left .3s ease;}
-
-.ai-report-card { background:rgba(213,0,249,.04); border:1px dashed var(--acc); border-radius:12px; margin:12px 16px; padding:14px; }
-.ai-report-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:.85rem; font-weight:800; color:var(--acc); }
-.ai-report-body { font-size:.86rem; line-height:1.5; color:var(--text); white-space:pre-wrap; }
-
-/* BNF提案エリアスタイル */
-.bnf-hot-card { background:rgba(0,186,124,.04); border:1px solid var(--green); border-radius:12px; margin:12px 16px; padding:14px; }
-.bnf-hot-hdr { font-size:.85rem; font-weight:800; color:var(--green); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
-.bnf-hot-item { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed var(--bdr); font-size:.85rem; }
-.bnf-hot-item:last-child { border-bottom:none; }
-.bnf-hot-badge { background:var(--green); color:#fff; font-size:.7rem; font-weight:800; padding:2px 6px; border-radius:4px; }
-
-.signal-alert-card{background:rgba(0,186,124,.06);border:1px dashed var(--green);border-radius:12px;margin:12px 16px;padding:12px 14px;}
-.sig-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.sig-title{font-size:.85rem;font-weight:800;color:var(--green);display:flex;align-items:center;gap:6px;}
-.sig-time{font-size:.7rem;color:var(--muted);font-family:'Courier New',monospace;}
-.sig-body{font-size:.88rem;line-height:1.4;}
-
+/* マーケットバー */
 .mkt-bar{display:flex;border-bottom:1px solid var(--bdr);background:var(--s1);}
 .mkt-cell{flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--bdr);}
 .mkt-cell:last-child{border-right:none;}
-.mkt-lbl{font-size:.65rem;color:var(--muted);font-weight:600;}
-.mkt-val{font-size:.95rem;font-weight:800;font-family:'Courier New',monospace;margin-top:2px;}
+.mkt-lbl{font-size:.65rem;color:var(--muted);font-weight:600;letter-spacing:.03em;}
+.mkt-val{font-size:.92rem;font-weight:800;font-family:'Courier New',monospace;margin-top:2px;}
+.mkt-chg{font-size:.7rem;font-weight:700;margin-top:1px;}
+.up{color:var(--red);}.dn{color:var(--blue);}
 
+/* スコアヒーロー */
+.score-hero{display:flex;flex-direction:column;align-items:center;
+  padding:20px 16px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);}
+.score-big{font-size:3.8rem;font-weight:900;font-family:'Courier New',monospace;line-height:1;transition:color .3s;}
+.score-suffix{font-size:1.4rem;font-weight:700;color:var(--muted);margin-left:3px;}
+.score-label{font-size:.9rem;font-weight:700;margin-top:6px;transition:color .3s;}
+
+/* 1400カウントダウン */
 .countdown-bar{padding:12px 16px;border-bottom:1px solid var(--bdr);background:var(--s2);}
 .cd-label{font-size:.75rem;color:var(--muted);margin-bottom:6px;font-weight:600;}
 .cd-track{height:8px;background:var(--bdr);border-radius:var(--pill);overflow:hidden;}
 .cd-fill{height:100%;background:var(--green);border-radius:var(--pill);transition:width .5s;}
-.cd-numbers{display:flex;justify-content:space-between;margin-top:5px;font-size:.75rem;}
+.cd-nums{display:flex;justify-content:space-between;margin-top:5px;font-size:.75rem;}
 
+/* BNFコメント */
 .bnf-quote{display:flex;gap:10px;padding:14px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);}
-.bnf-avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--acc-dim);border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;color:var(--acc);}
+.bnf-avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--acc-dim);
+  border:2px solid var(--acc);display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:900;color:var(--acc);}
 .bnf-qname{font-size:.85rem;font-weight:700;}
 .bnf-qhandle{font-size:.78rem;color:var(--muted);margin-left:4px;}
 .bnf-qtext{font-size:.9rem;margin-top:3px;line-height:1.5;font-style:italic;}
 
-.tool-header{padding:14px 16px 0;background:var(--s1);display:flex;justify-content:space-between;align-items:center;}
-.tool-title{font-size:1.1rem;font-weight:800;}
-.inner-tabs{display:flex;border-bottom:1px solid var(--bdr);background:var(--s1);margin-top:10px;}
-.inner-tab{flex:1;padding:11px 0;text-align:center;font-size:.78rem;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
-.inner-tab.active{color:var(--acc);border-bottom-color:var(--acc);}
-.inner-pane{display:none;} .inner-pane.active{display:block;}
+/* AIレポートカード */
+.ai-report-card{background:rgba(213,0,249,.04);border:1px dashed var(--acc);
+  border-radius:12px;margin:12px 16px;padding:14px;}
+.ai-report-hdr{display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:8px;font-size:.85rem;font-weight:800;color:var(--acc);}
+.ai-report-body{font-size:.86rem;line-height:1.6;color:var(--text);white-space:pre-wrap;}
 
-.result-row{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--bdr);}
+/* 全株スキャン結果 */
+.scan-result-card{background:rgba(0,186,124,.04);border:1px solid var(--green);
+  border-radius:12px;margin:12px 16px;padding:14px;}
+.scan-result-hdr{font-size:.85rem;font-weight:800;color:var(--green);
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.scan-stock-item{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px dashed var(--bdr);font-size:.85rem;}
+.scan-stock-item:last-child{border-bottom:none;}
+.scan-stock-name{flex:1;}
+.scan-stock-kairi{font-family:'Courier New',monospace;font-weight:900;margin:0 10px;}
+.scan-badge{font-size:.7rem;font-weight:800;padding:2px 8px;border-radius:4px;}
+.badge-buy{background:rgba(0,186,124,.2);color:var(--green);}
+.badge-watch{background:rgba(255,117,39,.2);color:var(--orange);}
+.badge-hold{background:rgba(113,118,123,.2);color:var(--muted);}
+
+/* シグナルアラート */
+.signal-card{background:rgba(29,155,240,.04);border:1px solid var(--bdr);
+  border-radius:12px;margin:12px 16px;padding:12px 14px;}
+.sig-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.sig-title{font-size:.85rem;font-weight:800;color:var(--blue);display:flex;align-items:center;gap:6px;}
+.sig-time{font-size:.7rem;color:var(--muted);font-family:'Courier New',monospace;}
+.sig-body{font-size:.85rem;line-height:1.5;color:var(--text);}
+
+/* ツール：内部タブ */
+.tool-header{padding:14px 16px 0;background:var(--s1);}
+.tool-title{font-size:1.1rem;font-weight:800;}
+.mode-toggle{display:flex;background:var(--s2);border:1px solid var(--bdr);
+  border-radius:var(--pill);overflow:hidden;width:160px;}
+.mode-btn{flex:1;padding:5px 0;text-align:center;font-size:.72rem;font-weight:700;
+  color:var(--muted);cursor:pointer;border:none;background:transparent;font-family:inherit;transition:all .2s;}
+.mode-btn.active{background:var(--acc);color:#fff;}
+.inner-tabs{display:flex;border-bottom:1px solid var(--bdr);background:var(--s1);margin-top:10px;}
+.inner-tab{flex:1;padding:11px 0;text-align:center;font-size:.78rem;font-weight:700;
+  color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.inner-tab.active{color:var(--acc);border-bottom-color:var(--acc);}
+.inner-pane{display:none;}.inner-pane.active{display:block;}
+
+.result-row{display:flex;justify-content:space-between;align-items:center;
+  padding:13px 16px;border-bottom:1px solid var(--bdr);}
 .res-val{font-size:1.15rem;font-weight:800;font-family:'Courier New',monospace;}
 
-.wl-item{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bdr);gap:8px;}
-.wl-code{font-size:.85rem;font-weight:800;color:var(--blue);font-family:'Courier New',monospace;min-width:50px;}
+/* ウォッチリスト */
+.wl-item{display:flex;align-items:center;padding:12px 16px;
+  border-bottom:1px solid var(--bdr);gap:8px;}
+.wl-code{font-size:.85rem;font-weight:800;color:var(--blue);
+  font-family:'Courier New',monospace;min-width:50px;}
 .wl-name{font-size:.82rem;color:var(--text);flex:1;font-weight:600;}
-.wl-price{font-size:0.9rem;font-family:'Courier New',monospace;color:var(--muted);}
-.wl-kairi{font-size:0.95rem;font-weight:900;font-family:'Courier New',monospace;min-width:70px;text-align:right;}
+.wl-kairi{font-size:.95rem;font-weight:900;font-family:'Courier New',monospace;min-width:70px;text-align:right;}
 .wl-del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:4px;}
 
+/* 計算機 */
 .calc-section{padding:14px 16px;border-bottom:1px solid var(--bdr);}
 .calc-title{font-size:.82rem;font-weight:800;color:var(--blue);margin-bottom:10px;}
-.calc-result{margin-top:10px;padding:10px 12px;background:var(--s2);border-radius:10px;font-size:.88rem;line-height:1.7;}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.calc-result{margin-top:10px;padding:10px 12px;background:var(--s2);
+  border-radius:10px;font-size:.88rem;line-height:1.7;}
 
-.agent-status-card{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;margin:12px 16px;padding:14px;}
-.agent-pulse{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:800;color:var(--acc);}
-.pulse-dot{width:8px;height:8px;background:var(--acc);border-radius:50%;box-shadow:0 0 8px var(--acc);animation:blink 1s infinite;}
-.agent-log-container{background:var(--black);margin-top:10px;}
-.agent-msg-box{padding:12px 16px;border-bottom:1px solid var(--bdr);font-size:.9rem;line-height:1.45;}
-.agent-msg-meta{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px;}
-.badge-buy{background:rgba(0,186,124,.15);color:var(--green);padding:2px 6px;border-radius:4px;font-weight:800;font-size:.75rem;}
-.badge-hold{background:rgba(113,118,123,.15);color:var(--muted);padding:2px 6px;border-radius:4px;font-weight:800;font-size:.75rem;}
-.badge-alert{background:rgba(255,117,39,.15);color:var(--orange);padding:2px 6px;border-radius:4px;font-weight:800;font-size:.75rem;}
+/* AIエージェントログ（全株スキャン）*/
+.page-hdr{padding:14px 16px 10px;border-bottom:1px solid var(--bdr);}
+.page-hdr h2{font-size:1.1rem;font-weight:800;}
+.page-hdr p{font-size:.78rem;color:var(--muted);margin-top:2px;}
+.agent-card{background:var(--s1);border:1px solid var(--bdr);
+  border-radius:12px;margin:12px 16px;padding:14px;}
+.agent-pulse{display:flex;align-items:center;gap:8px;
+  font-size:.85rem;font-weight:800;color:var(--acc);}
+.pulse-dot{width:8px;height:8px;background:var(--acc);border-radius:50%;
+  box-shadow:0 0 8px var(--acc);animation:blink 1s infinite;}
+.full-scan-result{margin:0 16px 12px;background:var(--black);
+  border:1px solid var(--bdr);border-radius:12px;overflow:hidden;}
+.fsr-item{padding:12px 14px;border-bottom:1px solid var(--bdr);font-size:.85rem;}
+.fsr-item:last-child{border-bottom:none;}
+.fsr-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.fsr-name{font-weight:700;color:var(--text);}
+.fsr-reason{font-size:.78rem;color:var(--muted);line-height:1.5;margin-top:4px;}
+.fsr-actions{display:flex;gap:8px;margin-top:8px;}
+.fsr-btn{flex:1;padding:6px;border:none;border-radius:var(--pill);font-size:.75rem;
+  font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;gap:5px;}
 
-.chat-container{background:var(--black);display:flex;flex-direction:column;height:calc(100dvh - 210px);}
-.chat-timeline{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
-.bubble{max-width:85%;padding:10px 14px;border-radius:18px;font-size:.92rem;line-height:1.45;word-break:break-word;}
-.bubble.bnf{background:var(--s2);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--bdr);}
-.bubble.user{background:var(--acc);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
-.chat-input-zone{display:flex;padding:10px 16px;gap:8px;background:var(--black);border-top:1px solid var(--bdr);align-items:center;}
-
+/* チャット */
 .key-section{padding:12px 16px;border-bottom:1px solid var(--bdr);background:var(--s1);}
-.key-row{display:flex;gap:8px;}
-.key-status{font-size:.75rem;margin-top:6px;font-weight:600;}
+.key-row{display:flex;gap:8px;margin-bottom:6px;}
+.key-eye-btn{background:var(--s2);border:1px solid var(--bdr);color:var(--muted);
+  border-radius:10px;padding:0 14px;cursor:pointer;font-size:1rem;}
+.chat-wrap{display:flex;flex-direction:column;height:calc(100dvh - 53px - 68px);}
+.chat-feed{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;}
+.bubble{max-width:85%;padding:10px 14px;border-radius:18px;font-size:.9rem;line-height:1.5;word-break:break-word;}
+.bubble.bnf{background:var(--s2);color:var(--text);align-self:flex-start;
+  border-bottom-left-radius:4px;border:1px solid var(--bdr);}
+.bubble.user{background:var(--acc);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+.chat-footer{border-top:1px solid var(--bdr);padding:10px 12px;
+  display:flex;align-items:center;gap:10px;background:var(--black);}
+.chat-footer input{flex:1;border-radius:var(--pill);padding:10px 16px;font-size:.9rem;}
+.send-btn{border:none;background:none;color:var(--acc);font-size:1.2rem;cursor:pointer;padding:6px;}
+.tmpl-btn{background:var(--s2);border:1px solid var(--bdr);border-radius:var(--pill);
+  color:var(--text);padding:7px 14px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
 
-.summary-grid{display:grid;grid-template-columns:1fr 1fr;background:var(--s1);border-bottom:1px solid var(--bdr);}
-.smr-cell{padding:12px;text-align:center;border-right:1px solid var(--bdr);}
-.smr-cell:last-child{border-right:none;}
-.smr-lbl{font-size:.65rem;color:var(--muted);font-weight:700;}
-.smr-val{font-size:1.1rem;font-weight:900;font-family:'Courier New',monospace;margin-top:2px;}
-.log-card{padding:14px 16px;border-bottom:1px solid var(--bdr);background:var(--black);}
-.log-top{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-bottom:4px;}
+/* ログ */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);
+  background:var(--s1);border-bottom:1px solid var(--bdr);}
+.stat-cell{padding:12px;text-align:center;border-right:1px solid var(--bdr);}
+.stat-cell:last-child{border-right:none;}
+.stat-num{font-size:1.2rem;font-weight:900;font-family:'Courier New',monospace;}
+.stat-lbl{font-size:.65rem;color:var(--muted);margin-top:2px;}
+.log-card{padding:14px 16px;border-bottom:1px solid var(--bdr);}
+.log-top{font-size:.72rem;color:var(--muted);margin-bottom:3px;}
 .log-mid{display:flex;justify-content:space-between;align-items:center;}
-.log-code{font-size:1.05rem;font-weight:800;color:var(--blue);font-family:'Courier New',monospace;}
-.log-kairi{font-size:1.05rem;font-weight:900;font-family:'Courier New',monospace;}
+.log-code{font-size:1rem;font-weight:800;color:var(--blue);font-family:'Courier New',monospace;}
+.log-kairi{font-size:1rem;font-weight:900;font-family:'Courier New',monospace;}
+
+.nav-bar{position:fixed;bottom:0;left:0;right:0;height:68px;
+  background:rgba(0,0,0,.92);backdrop-filter:blur(12px);
+  border-top:1px solid var(--bdr);display:flex;z-index:200;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;color:var(--muted);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.nav-item i{font-size:1.3rem;}
+.nav-item span{font-size:.65rem;font-weight:700;display:none;}
+.nav-item.active{color:var(--acc);}
+.nav-item.active span{display:block;}
+.status-line{text-align:center;font-size:.8rem;font-weight:700;padding:4px 16px 8px;color:var(--muted);min-height:26px;}
 </style>
+<script type="module">
+  import{GoogleGenerativeAI}from"https://esm.run/@google/generative-ai";
+  window.GoogleGenerativeAI=GoogleGenerativeAI;
+</script>
 </head>
 <body>
 
-<header><div class="hdr-title">MARKET SCORE</div></header>
+<header>
+  <div class="hdr-title">BNF PREMIUM</div>
+  <div class="live-badge"><div class="live-dot"></div>AI LIVE</div>
+</header>
 
 <div class="content-area">
-  <div id="screen-market" class="screen active">
-    <div class="page-hdr"><h2>地合い環境分析</h2><div class="live-badge"><div class="live-dot"></div>AUTOMATION LIVE</div></div>
-    <div class="mkt-bar">
-      <div class="mkt-cell"><div class="mkt-lbl">日経平均</div><div class="mkt-val" id="live-nikkei">38,420円</div></div>
-      <div class="mkt-cell"><div class="mkt-lbl">値下がり銘柄数</div><div class="mkt-val" id="live-down-stocks">560銘柄</div></div>
-      <div class="mkt-cell"><div class="mkt-lbl">パニック度</div><div class="mkt-val" id="live-panic-ratio">40%</div></div>
-    </div>
-    
-    <div class="score-hero">
-      <div style="display:flex;align-items:baseline;"><span class="score-big" id="live-score">50</span><span class="score-suffix">/100</span></div>
-      <div class="score-label" id="live-status">ニュートラル</div>
-    </div>
 
-    <div class="bnf-hot-card">
-      <div class="bnf-hot-hdr"><i class="fa-solid fa-fire"></i> BNF視点・今仕込むべき逆張り銘柄BEST3</div>
-      <div id="bnf-suggestion-list">
-        <div style="font-size:0.8rem; color:var(--muted); text-align:center; padding:6px 0;">全株監視リストをスキャンすると、ここに買うべき株が自動提示されます。</div>
-      </div>
-    </div>
-    
-    <div class="ai-report-card">
-      <div class="ai-report-hdr">
-        <span><i class="fa-solid fa-brain"></i> リアルタイムAI業種・相場観予想</span>
-        <span id="ai-report-time" style="font-size:0.7rem; color:var(--muted);">未更新</span>
-      </div>
-      <div class="ai-report-body" id="ai-report-text">「AI脳内」タブにGemini APIキーを設定すると、ここに全自動のニュース・業種トレンド裏読みレポートが毎分生成されます。</div>
-    </div>
+<!-- ══ 地合い ══ -->
+<div id="screen-market" class="screen active">
 
-    <div class="location-card">
-      <div class="cell-lbl">パニック臨界点までの現在地</div>
-      <div class="loc-bar"><div class="loc-dot" id="loc-dot" style="left: 50%;"></div></div>
+  <!-- マーケットサマリー -->
+  <div class="mkt-bar">
+    <div class="mkt-cell">
+      <div class="mkt-lbl">日経平均</div>
+      <div class="mkt-val" id="mkt-nikkei">--</div>
+      <div class="mkt-chg" id="mkt-nikkei-chg">--</div>
     </div>
-    <div class="signal-alert-card">
-      <div class="sig-header">
-        <div class="sig-title"><i class="fa-solid fa-bell"></i> 最新一括監視シグナル</div>
-        <div class="sig-time" id="sig-update-time">--:--:--</div>
-      </div>
-      <div class="sig-body" id="sig-alert-body">全株監視ログ画面からスキャンを行うと、ここに判定が連動同期されます。</div>
+    <div class="mkt-cell">
+      <div class="mkt-lbl">値下がり銘柄</div>
+      <div class="mkt-val" id="mkt-down">--</div>
+      <div class="mkt-chg" id="mkt-down-chg" style="color:var(--muted);">東証全体</div>
     </div>
-    <div class="countdown-bar">
-      <div class="cd-label">BNFパニック臨界点（値下がり1400銘柄）まで</div>
-      <div class="cd-track"><div class="cd-fill" id="cd-fill-bar" style="width: 40%;"></div></div>
-      <div class="cd-numbers"><span id="cd-current-stocks">値下がり: 560銘柄</span><span id="cd-remain-stocks">残り 840銘柄</span></div>
-    </div>
-    <div class="bnf-quote">
-      <div class="bnf-avatar">BNF</div>
-      <div>
-        <div><span class="bnf-qname">B.N.F</span><span class="bnf-qhandle">@market_shadow</span></div>
-        <div class="bnf-qtext">「……。地合いと値下がり数は完全にネットから自動同期するようにしました。乖離が揃うのを待つだけです」</div>
-      </div>
+    <div class="mkt-cell">
+      <div class="mkt-lbl">ドル円</div>
+      <div class="mkt-val" id="mkt-usdjpy">--</div>
+      <div class="mkt-chg" id="mkt-usdjpy-chg">--</div>
     </div>
   </div>
 
-  <div id="screen-tools" class="screen">
-    <div class="tool-header">
-      <div class="tool-title">逆張り分析・シミュレータ</div>
-      <div class="toggle-switch" onclick="toggleStockMode()">
-        <div class="toggle-opt active" id="opt-unit">通常株 (100)</div>
-        <div class="toggle-opt" id="opt-mini">ミニ株 (1)</div>
-      </div>
+  <!-- スコア -->
+  <div class="score-hero">
+    <div>
+      <span class="score-big" id="live-score">--</span>
+      <span class="score-suffix">/100</span>
     </div>
-    <div class="inner-tabs">
-      <div class="inner-tab active" onclick="switchInnerTab('calc', this)">単発計算</div>
-      <div class="inner-tab" onclick="switchInnerTab('watchlist', this)">全株監視リスト</div>
-      <div class="inner-tab" onclick="switchInnerTab('position', this)">ナンピン計算</div>
-    </div>
+    <div class="score-label" id="live-status">AIで同期してください</div>
+  </div>
 
-    <div id="pane-calc" class="inner-pane active">
-      <div class="cell">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div><label class="cell-lbl">銘柄コード</label><input type="number" id="stock-code" value="7412" oninput="autoSyncOnInput()"></div>
-          <div><label class="cell-lbl">自動判定セクター</label><input type="text" id="stock-sector-display" value="自動解析中..." readonly style="background:var(--s1); color:var(--muted);"></div>
-        </div>
-        <button class="btn-pill btn-green" style="margin-top:12px;" onclick="syncSingleStock()"><i class="fa-solid fa-rotate"></i> ネット上からこの銘柄を即時同期</button>
-      </div>
-      <div class="cell">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div><label class="cell-lbl">現在値</label><input type="number" id="current-price" oninput="calculateMetrics()"></div>
-          <div><label class="cell-lbl">25日移動平均線</label><input type="number" id="ma-value" oninput="calculateMetrics()"></div>
-        </div>
-      </div>
-      <div class="result-row"><span>必要資金</span><span class="res-val" id="res-capital">-- 円</span></div>
-      <div class="result-row"><span>25日線乖離率</span><span class="res-val" id="res-kairi">-- %</span></div>
-      <div class="result-row"><span>判定</span><span class="res-val" id="res-status">未入力</span></div>
-      <div class="cell"><button class="btn-pill btn-save" onclick="saveTradeLog()"><i class="fa-solid fa-floppy-disk"></i> 計算結果をログに保存</button></div>
-    </div>
-
-    <div id="pane-watchlist" class="inner-pane">
-      <div class="cell">
-        <p style="font-size:0.75rem; color:var(--muted); margin-bottom:8px;">ここに登録した全ての株番号をAI通知エージェントが一括同時監視します。</p>
-        <div style="display:flex;gap:8px;"><input type="number" id="wl-add-code" placeholder="4桁コード"><button class="btn-pill btn-blue" style="width:90px;" onclick="addWatchlist()">追加</button></div>
-      </div>
-      <div id="watchlist-container"></div>
-    </div>
-
-    <div id="pane-position" class="inner-pane">
-      <div class="calc-section">
-        <div class="calc-title">含み損益・ナンピンシミュレータ</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <div><label class="cell-lbl">購入単価</label><input type="number" id="pos-buy-price" value="380" oninput="calcPosition()"></div>
-          <div><label class="cell-lbl">保有株数</label><input type="number" id="pos-qty" value="100" oninput="calcPosition()"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div><label class="cell-lbl">現在の株価</label><input type="number" id="pos-now-price" value="347" oninput="calcPosition()"></div>
-          <div><label class="cell-lbl">総資産残高</label><input type="number" id="pos-total-cash" value="1000000" oninput="calcPosition()"></div>
-        </div>
-        <div class="calc-result" id="pos-result-box">データを入力してください</div>
-      </div>
+  <!-- 1400カウントダウン -->
+  <div class="countdown-bar">
+    <div class="cd-label">BNF臨界点まで（東証値下がり銘柄 / 1,400銘柄）</div>
+    <div class="cd-track"><div class="cd-fill" id="cd-fill" style="width:0%"></div></div>
+    <div class="cd-nums">
+      <span id="cd-current" style="color:var(--muted);">-- 銘柄が値下がり中</span>
+      <span id="cd-remain" style="color:var(--green);">あと -- 銘柄</span>
     </div>
   </div>
 
-  <div id="screen-search" class="screen">
-    <div class="page-hdr"><h2>売買判断・通知ログ</h2><p id="agent-last-scan">最終一括スキャン: 未実行</p></div>
-    <div class="agent-status-card"><div class="agent-pulse"><div class="pulse-dot"></div>全銘柄一括巡回監視エンジン稼働中</div></div>
-    <div class="cell">
-      <button id="btn-request-auth" class="btn-pill btn-outline" onclick="requestNotificationPermission()" style="margin-bottom:8px;"><i class="fa-solid fa-bell"></i> ポップアップ通知を許可する</button>
-      <button class="btn-pill btn-acc" onclick="triggerAllStocksScan()"><i class="fa-solid fa-robot"></i> 登録中の全株を今すぐスキャン・判定更新</button>
-    </div>
-    <div class="cell-lbl" style="padding-left:16px;">🚨 全株スキャン判定ログ履歴</div>
-    <div class="agent-log-container" id="agent-log-box"></div>
-  </div>
-
-  <div id="screen-brain" class="screen">
-    <div class="key-section">
-      <div class="key-row"><input type="password" id="api-key-input" placeholder="Gemini API Key を入力"><button class="btn-pill btn-outline" style="width:80px;" onclick="saveApiKey()">保存</button></div>
-      <div class="key-status" id="api-key-status-text">キー未設定</div>
-    </div>
-    <div class="chat-container">
-      <div class="chat-timeline" id="chat-box"><div class="bubble bnf">何か地合いや逆張り戦略について質問はありますか？</div></div>
-      <div class="chat-input-zone">
-        <input type="text" id="chat-input" placeholder="メッセージを入力...">
-        <button class="btn-pill btn-blue" style="width:50px; padding:0;" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
-      </div>
+  <!-- BNFコメント -->
+  <div class="bnf-quote">
+    <div class="bnf-avatar">BNF</div>
+    <div>
+      <span class="bnf-qname">B.N.F</span>
+      <span class="bnf-qhandle">@market_shadow</span>
+      <div class="bnf-qtext" id="bnf-comment">「AIで同期すると状況コメントが出ます」</div>
     </div>
   </div>
 
-  <div id="screen-log" class="screen">
-    <div class="summary-grid"><div class="smr-cell"><div class="smr-lbl">保存済みログ</div><div class="smr-val" id="log-count">0件</div></div></div>
-    <div id="log-container"></div>
+  <!-- AI同期ボタン -->
+  <div class="cell">
+    <button class="btn-pill btn-blue" onclick="syncMarketWithAI()" id="market-sync-btn">
+      <i class="fa-solid fa-bolt"></i> AIで今日の地合いをリアルタイム同期
+    </button>
+    <div class="status-line" id="market-sync-status"></div>
+  </div>
+
+  <!-- AIレポート -->
+  <div class="ai-report-card">
+    <div class="ai-report-hdr">
+      <span><i class="fa-solid fa-brain"></i> AI相場観レポート</span>
+      <span id="ai-report-time" style="font-size:.7rem;color:var(--muted);">未更新</span>
+    </div>
+    <div class="ai-report-body" id="ai-report-text">
+「AI脳内」タブでAPIキーを設定すると、地合い同期時にリアルタイムのAI相場観レポートが生成されます。</div>
+  </div>
+
+  <!-- 全株スキャン結果（地合いタブに連動表示） -->
+  <div id="market-scan-zone"></div>
+
+  <!-- シグナルアラート -->
+  <div class="signal-card">
+    <div class="sig-hdr">
+      <div class="sig-title"><i class="fa-solid fa-bell"></i> 最新全株スキャン結果</div>
+      <div class="sig-time" id="sig-time">--:--:--</div>
+    </div>
+    <div class="sig-body" id="sig-body">「AI通知」タブから全株スキャンを実行すると、ここに最新シグナルが表示されます。</div>
   </div>
 </div>
 
+<!-- ══ ツール ══ -->
+<div id="screen-tools" class="screen">
+  <div class="tool-header">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="tool-title">逆張り分析ツール</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-normal" onclick="setStockMode(false)">通常(100株)</button>
+        <button class="mode-btn" id="mode-mini" onclick="setStockMode(true)">ミニ(1株)</button>
+      </div>
+    </div>
+  </div>
+  <div class="inner-tabs">
+    <div class="inner-tab active" onclick="switchInner('calc',this)">単発計算</div>
+    <div class="inner-tab" onclick="switchInner('watchlist',this)">個別監視リスト</div>
+    <div class="inner-tab" onclick="switchInner('position',this)">ナンピン計算</div>
+  </div>
+
+  <!-- 単発計算 -->
+  <div id="pane-calc" class="inner-pane active">
+    <div class="cell">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><div class="cell-lbl">銘柄コード</div>
+          <input type="number" id="tool-code" placeholder="例: 6920" oninput="onToolCodeInput()"></div>
+        <div><div class="cell-lbl">自動判定セクター</div>
+          <input type="text" id="tool-sector-display" value="コード入力で自動判定" readonly></div>
+      </div>
+      <button class="btn-pill btn-green" style="margin-top:12px;" onclick="syncSingleStockTool()">
+        <i class="fa-solid fa-rotate"></i> AIでこの銘柄を即時同期
+      </button>
+      <div class="status-line" id="tool-sync-status"></div>
+    </div>
+    <div class="cell">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><div class="cell-lbl">現在値（円）</div>
+          <input type="number" id="current-price" placeholder="例: 21050" oninput="calculateMetrics()"></div>
+        <div><div class="cell-lbl">25日移動平均線</div>
+          <input type="number" id="ma-value" placeholder="例: 23100" oninput="calculateMetrics()"></div>
+      </div>
+    </div>
+    <div class="result-row"><span>必要資金</span><span class="res-val" id="res-capital">-- 円</span></div>
+    <div class="result-row"><span>25日線 乖離率</span><span class="res-val" id="res-kairi">-- %</span></div>
+    <div class="result-row"><span>判定</span><span class="res-val" id="res-status" style="font-size:.9rem;">未入力</span></div>
+    <div class="result-row"><span>しきい値（地合い調整）</span><span class="res-val" id="res-threshold" style="font-size:.82rem;color:var(--muted);">--</span></div>
+    <div class="cell">
+      <button class="btn-pill btn-save" onclick="saveLog()">
+        <i class="fa-solid fa-floppy-disk"></i> ログに保存
+      </button>
+    </div>
+  </div>
+
+  <!-- 個別監視リスト -->
+  <div id="pane-watchlist" class="inner-pane">
+    <div class="cell">
+      <div class="cell-lbl" style="color:var(--orange);">
+        ⚡ これは「お気に入り銘柄」のクイック確認リストです。<br>
+        東証全銘柄スキャンは「AI通知」タブから実行できます。
+      </div>
+    </div>
+    <div class="cell" style="display:flex;gap:8px;">
+      <input type="number" id="wl-code" placeholder="4桁コード" style="flex:1;">
+      <input type="text" id="wl-name" placeholder="銘柄名（任意）" style="flex:1.2;">
+      <button class="btn-pill btn-blue" style="width:60px;padding:0;" onclick="addWatchlist()">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+    </div>
+    <div id="watchlist-container"></div>
+    <div class="cell">
+      <button class="btn-pill btn-outline" onclick="refreshWatchlist()">
+        <i class="fa-solid fa-rotate"></i> リストを一括更新（AI同期）
+      </button>
+    </div>
+  </div>
+
+  <!-- ナンピン計算 -->
+  <div id="pane-position" class="inner-pane">
+    <div class="calc-section">
+      <div class="calc-title"><i class="fa-solid fa-arrow-trend-down"></i> 含み損益・ナンピンシミュレータ</div>
+      <div class="calc-grid">
+        <div><div class="cell-lbl">購入単価（円）</div><input type="number" id="pos-buy" placeholder="例: 5000" oninput="calcPos()"></div>
+        <div><div class="cell-lbl">保有株数</div><input type="number" id="pos-qty" placeholder="例: 100" oninput="calcPos()"></div>
+        <div><div class="cell-lbl">現在の株価（円）</div><input type="number" id="pos-now" placeholder="例: 4700" oninput="calcPos()"></div>
+        <div><div class="cell-lbl">口座残高（円）</div><input type="number" id="pos-cash" placeholder="例: 3000000" oninput="calcPos()"></div>
+      </div>
+      <div class="calc-result" id="pos-result" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AI通知（全株スキャン） ══ -->
+<div id="screen-search" class="screen">
+  <div class="page-hdr">
+    <h2>全株スキャン（東証全銘柄対象）</h2>
+    <p id="last-scan-time">最終スキャン: 未実行</p>
+  </div>
+
+  <div class="agent-card">
+    <div class="agent-pulse"><div class="pulse-dot"></div>Gemini AIが東証全銘柄をリアルタイム監視</div>
+    <div style="margin-top:8px;font-size:.78rem;color:var(--muted);line-height:1.6;">
+      Gemini AIのWeb検索機能を使い、東証プライム・スタンダード・グロース市場の
+      約3,800銘柄すべての中からBNFロジックに合致する銘柄をリアルタイムで抽出します。
+    </div>
+  </div>
+
+  <!-- スキャン設定 -->
+  <div class="cell" style="display:flex;flex-direction:column;gap:10px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div>
+        <div class="cell-lbl">候補件数</div>
+        <select id="scan-count">
+          <option value="5">5件（高精度）</option>
+          <option value="10" selected>10件（標準）</option>
+          <option value="20">20件（広範囲）</option>
+        </select>
+      </div>
+      <div>
+        <div class="cell-lbl">対象セクター</div>
+        <select id="scan-sector">
+          <option value="all">全セクター</option>
+          <option value="tech">ハイテク・半導体</option>
+          <option value="heavy">バリュー・大型</option>
+          <option value="growth">新興グロース</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div>
+        <div class="cell-lbl">乖離率フィルター</div>
+        <select id="scan-zone">
+          <option value="all">全ゾーン</option>
+          <option value="buy">買いゾーンのみ</option>
+          <option value="watch">監視ゾーンのみ</option>
+        </select>
+      </div>
+      <div>
+        <div class="cell-lbl">並び替え</div>
+        <select id="scan-sort">
+          <option value="kairi">乖離率が大きい順</option>
+          <option value="risk">リスクが低い順</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-pill btn-acc" id="scan-btn" onclick="runFullMarketScan()">
+      <i class="fa-solid fa-satellite-dish"></i> 東証全銘柄をAIスキャン（〜30秒）
+    </button>
+    <div class="status-line" id="scan-status"></div>
+
+    <!-- 通知許可 -->
+    <button class="btn-pill btn-outline" id="notif-btn" onclick="requestNotifPermission()">
+      <i class="fa-solid fa-bell"></i> ブラウザ通知を許可する
+    </button>
+  </div>
+
+  <div id="full-scan-results"></div>
+</div>
+
+<!-- ══ AI脳内 ══ -->
+<div id="screen-brain" class="screen">
+  <div class="chat-wrap">
+    <div class="key-section">
+      <div class="key-row">
+        <input type="password" id="api-key-input" placeholder="Gemini APIキーを入力">
+        <button class="key-eye-btn" onclick="toggleKey()"><i class="fa-solid fa-eye" id="key-icon"></i></button>
+      </div>
+      <button class="btn-pill btn-acc" onclick="saveApiKey()" style="margin-top:8px;">接続する</button>
+      <div id="api-key-status" style="font-size:.75rem;margin-top:6px;color:var(--muted);">未設定</div>
+    </div>
+    <!-- テンプレート -->
+    <div style="padding:10px 12px;border-bottom:1px solid var(--bdr);display:flex;gap:8px;flex-wrap:wrap;background:var(--s1);">
+      <button class="tmpl-btn" onclick="sendTmpl('今日の相場を総括して')"><i class="fa-solid fa-newspaper"></i> 今日の相場</button>
+      <button class="tmpl-btn" onclick="sendTmpl('今買っていいですか？')"><i class="fa-solid fa-circle-question"></i> 今買っていい？</button>
+      <button class="tmpl-btn" onclick="sendTmpl('損切りすべきですか？')"><i class="fa-solid fa-scissors"></i> 損切り判断</button>
+      <button class="tmpl-btn" onclick="sendTmpl('逆張りで引き付けるべき価格帯を教えてください')"><i class="fa-solid fa-crosshairs"></i> 引き付け価格</button>
+    </div>
+    <div class="chat-feed" id="chat-box">
+      <div class="bubble bnf">何か地合いや逆張り戦略についてご質問はありますか？</div>
+    </div>
+    <div class="chat-footer">
+      <input type="text" id="chat-input" placeholder="メッセージを入力..." onkeypress="if(event.key==='Enter')sendChat()">
+      <button class="send-btn" onclick="sendChat()"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ログ ══ -->
+<div id="screen-log" class="screen">
+  <div class="page-hdr"><h2>売買ログ</h2></div>
+  <div class="stats-grid" id="stats-grid"></div>
+  <div style="padding:10px 16px;border-bottom:1px solid var(--bdr);">
+    <button class="btn-pill btn-outline" style="width:auto;padding:8px 18px;font-size:.8rem;" onclick="exportCSV()">
+      <i class="fa-solid fa-file-csv"></i> CSVエクスポート
+    </button>
+  </div>
+  <div id="log-container"></div>
+  <div class="cell">
+    <button class="btn-pill" style="background:transparent;border:1px solid var(--red);color:var(--red);" onclick="clearLogs()">
+      すべてリセット
+    </button>
+  </div>
+</div>
+
+</div><!-- /content-area -->
+
 <div class="nav-bar">
-  <div class="nav-item active" onclick="switchScreen('market', this)"><i class="fa-solid fa-earth-asia"></i><span>地合い</span></div>
-  <div class="nav-item" onclick="switchScreen('tools', this)"><i class="fa-solid fa-screwdriver-wrench"></i><span>ツール</span></div>
-  <div class="nav-item" onclick="switchScreen('search', this)"><i class="fa-solid fa-robot"></i><span>AI通知</span></div>
-  <div class="nav-item" onclick="switchScreen('brain', this)"><i class="fa-solid fa-brain"></i><span>AI脳内</span></div>
-  <div class="nav-item" onclick="switchScreen('log', this)"><i class="fa-solid fa-chart-line"></i><span>ログ</span></div>
+  <div class="nav-item active" onclick="switchScreen('market',this)"><i class="fa-solid fa-earth-asia"></i><span>地合い</span></div>
+  <div class="nav-item" onclick="switchScreen('tools',this)"><i class="fa-solid fa-screwdriver-wrench"></i><span>ツール</span></div>
+  <div class="nav-item" onclick="switchScreen('search',this)"><i class="fa-solid fa-satellite-dish"></i><span>全株スキャン</span></div>
+  <div class="nav-item" onclick="switchScreen('brain',this)"><i class="fa-solid fa-brain"></i><span>AI脳内</span></div>
+  <div class="nav-item" onclick="switchScreen('log',this)"><i class="fa-solid fa-chart-line"></i><span>ログ</span></div>
 </div>
 
 <script>
-let isMiniStock = false;
+/* ════ グローバル状態 ════ */
 let geminiApiKey = localStorage.getItem("bnf_gemini_key") || "";
-let watchlist = JSON.parse(localStorage.getItem("bnf_watchlist") || '["7412", "3697", "6920", "9984"]');
-let agentLogs = JSON.parse(localStorage.getItem("bnf_agent_logs") || "[]");
-let savedLogs = JSON.parse(localStorage.getItem("bnf_saved_logs") || "[]");
+let isMiniStock  = false;
+let marketScore  = 50;
+let savedLogs    = JSON.parse(localStorage.getItem("bnf_saved_logs")  || "[]");
+let watchlist    = JSON.parse(localStorage.getItem("bnf_watchlist")   || "[]");
+let lastScanData = [];
 
-const stockNames = { "7412":"アトム", "3697":"SHIFT", "6920":"レーザーテック", "9984":"ソフトバンクG" };
+const SECTOR_TH = {
+  heavy:{watch:-10,buy:-15}, tech:{watch:-15,buy:-20},
+  defensive:{watch:-10,buy:-15}, growth:{watch:-30,buy:-40}
+};
 
-// 銘柄コードから自動でセクター判定する辞書
-function detectSector(code) {
-  const c = parseInt(code, 10);
-  if ((c >= 3000 && c <= 3999) || (c >= 4000 && c <= 4999)) return "growth"; // 新興・IT・グロース株
-  if (c >= 6000 && c <= 6999) return "tech"; // 電気機器・ハイテク大型
-  return "heavy"; // その他バリュー株・大型株
+function escapeHtml(s){
+  const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;
 }
 
-function getSectorLabel(type) {
-  if (type === "growth") return "グロース株 (臨界目標: -15%)";
-  if (type === "tech") return "ハイテク株 (臨界目標: -12%)";
-  return "バリュー株 (臨界目標: -10%)";
-}
-
-function switchScreen(id, el) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-  document.getElementById('screen-' + id).classList.add('active');
+/* ════ ナビ ════ */
+function switchScreen(id,el){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
   el.classList.add('active');
-  if(id === 'tools') updateWatchlistUI();
-  if(id === 'search') renderAgentLogs();
-  if(id === 'log') renderSavedLogs();
+  if(id==='log')renderLogs();
+  if(id==='tools')renderWatchlist();
 }
-
-function switchInnerTab(paneId, el) {
-  document.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.inner-pane').forEach(p => p.classList.remove('active'));
+function switchInner(id,el){
+  document.querySelectorAll('.inner-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.inner-pane').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('pane-' + paneId).classList.add('active');
+  document.getElementById('pane-'+id).classList.add('active');
 }
 
-// 完全にネット上の本物のリアルタイムデータをスクレイピングして自動同期する関数
-async function autoFetchMarketData() {
-  try {
-    const targetUrl = encodeURIComponent(`https://finance.yahoo.co.jp/`);
-    const res = await fetch(`https://api.allorigins.win/get?url=${targetUrl}`);
-    if(!res.ok) throw new Error();
-    const json = await res.json();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(json.contents, 'text/html');
-    
-    // 日経平均株価の自動抽出
-    let nikkeiText = doc.querySelector('[class*="Nikkei225"] [class*="price"], ._3Xis0_O9')?.textContent || "38,420";
-    document.getElementById('live-nikkei').innerText = nikkeiText.includes('円') ? nikkeiText : nikkeiText + "円";
-    
-    // 値下がり銘柄数の自動抽出（プロキシ経由でランキング等から変動値を擬似合成・取得）
-    let downStocks = Math.floor(Math.random() * (1200 - 400 + 1)) + 400; // リアルタイムデータ不在時の安全フォールバック
-    const downEl = doc.querySelector('[class*="down"], [class*="decline"]');
-    if(downEl) {
-      const match = downEl.textContent.match(/\d+/);
-      if(match) downStocks = parseInt(match[0], 10);
-    }
-    
-    document.getElementById('live-down-stocks').innerText = downStocks + "銘柄";
-    
-    // パニック度の全自動計算
-    let panicRatio = Math.min(100, Math.round((downStocks / 1400) * 100));
-    document.getElementById('live-panic-ratio').innerText = panicRatio + "%";
-    
-    // 地合いスコアの自動反映
-    let totalScore = 100 - panicRatio; 
-    document.getElementById('live-score').innerText = totalScore;
-    document.getElementById('loc-dot').style.left = totalScore + "%";
-    
-    let status = "ニュートラル";
-    if(totalScore <= 30) status = "全面パニック（買い場）";
-    else if(totalScore <= 45) status = "警戒下落トレンド";
-    else if(totalScore >= 70) status = "過熱・安全圏";
-    document.getElementById('live-status').innerText = status;
-
-    // カウントダウンバーの完全自動連動
-    document.getElementById('cd-fill-bar').style.width = panicRatio + "%";
-    document.getElementById('cd-current-stocks').innerText = `値下がり: ${downStocks}銘柄`;
-    let remain = Math.max(0, 1400 - downStocks);
-    document.getElementById('cd-remain-stocks').innerText = remain === 0 ? "臨界点突破！" : `残り ${remain}銘柄`;
-
-  } catch(e) {
-    // 通信エラー時のデフォルト自動計算
-    document.getElementById('live-nikkei').innerText = "38,420円";
-    document.getElementById('live-down-stocks').innerText = "560銘柄";
-    document.getElementById('live-panic-ratio').innerText = "40%";
-  }
+/* ════ APIキー ════ */
+function toggleKey(){
+  const i=document.getElementById('api-key-input');
+  const ic=document.getElementById('key-icon');
+  i.type=i.type==='password'?'text':'password';
+  ic.className=i.type==='password'?'fa-solid fa-eye':'fa-solid fa-eye-slash';
+}
+function saveApiKey(){
+  const k=document.getElementById('api-key-input').value.trim();
+  if(!k){alert("APIキーを入力してください。");return;}
+  localStorage.setItem("bnf_gemini_key",k);
+  geminiApiKey=k;
+  document.getElementById('api-key-input').value="";
+  document.getElementById('api-key-status').innerText="接続済み ✅";
+  document.getElementById('api-key-status').style.color="var(--green)";
 }
 
-async function fetchMarketNewsFeed() {
-  try {
-    const targetUrl = encodeURIComponent(`https://finance.yahoo.co.jp/news/category/economic`);
-    const res = await fetch(`https://api.allorigins.win/get?url=${targetUrl}`);
-    if(!res.ok) return "主要経済ニュース：新興市場は下値模索、大型株に資金シフト。";
-    const json = await res.json();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(json.contents, 'text/html');
-    const titles = Array.from(doc.querySelectorAll('a')).map(a => a.textContent.trim()).filter(t => t.length > 15).slice(0, 5);
-    return titles.length > 0 ? titles.join(' | ') : "主要経済ニュース：新興市場は下値模索、大型株に資金シフト。";
-  } catch(e) {
-    return "主要経済ニュース：半導体セクターに利益確定売り先行、新興市場は下値模索。";
-  }
+/* ════ Gemini呼び出し（Web検索あり／なし） ════ */
+async function callGemini(prompt,useSearch=false){
+  if(!geminiApiKey)throw new Error("APIキー未設定");
+  const genAI=new window.GoogleGenerativeAI(geminiApiKey);
+  const tools=useSearch?[{googleSearch:{}}]:undefined;
+  const model=genAI.getGenerativeModel({model:"gemini-2.5-flash",...(tools&&{tools})});
+  const result=await model.generateContent(prompt);
+  return result.response.candidates[0].content.parts
+    .filter(p=>p.text).map(p=>p.text).join("");
 }
 
-// 修正：モデル名を「gemini-2.5-flash」に統一
-async function callGeminiDirectFetch(promptText, activeKey) {
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: promptText }] }]
-    })
-  });
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData?.error?.message || `HTTPエラー ${response.status}`);
-  }
-  const data = await response.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text || "応答を解析できませんでした。";
-}
+/* ════ 地合いタブ ════ */
+async function syncMarketWithAI(){
+  if(!geminiApiKey){alert("AI脳内タブでAPIキーを設定してください。");return;}
+  const btn=document.getElementById('market-sync-btn');
+  const st=document.getElementById('market-sync-status');
+  btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> 同期中...';
+  st.innerText="日本市場の最新データを検索中...";st.style.color="var(--blue)";
+  try{
+    const raw=await callGemini(
+      `今日の日本株市場を検索し、以下のJSONのみで出力してください。説明不要。
+{"nikkei":日経平均の数値,"nikkei_chg":前日比%数値,"usdjpy":ドル円レート数値,"usdjpy_chg":前日比数値,
+ "down_stocks":東証全体の値下がり銘柄数の数値,"score":0〜100の地合いスコア数値（0=極度のパニック/100=過熱）,
+ "status":"相場状況を一言で","comment":"B.N.Fスタイルの短いコメント（カギ括弧付き）"}`,
+      true
+    );
+    const m=raw.match(/\{[\s\S]*?\}/);
+    if(!m)throw new Error("JSON取得失敗");
+    const d=JSON.parse(m[0]);
 
-async function runAiMarketPrediction(newsContext, customKey = "") {
-  const activeKey = customKey || geminiApiKey;
-  if(!activeKey) {
-    document.getElementById('ai-report-text').innerText = "「AI脳内」タブにGemini APIキーを設定して保存してください。";
-    return;
-  }
-  try {
-    const prompt = `あなたは伝説の投資家B.N.Fの思考を持つAIです。以下の最新市場ニュースから、今どの業種に資金偏重が起きているか、市場のパニック度が何％かを裏読みし、逆張りで突っ込むべきかどうかの冷徹な戦術判断レポート（80文字〜120文字程度）を出力してください。余計な挨拶は不要、箇条書きは使わず要点のみ。\nニュース: ${newsContext}`;
-    const replyText = await callGeminiDirectFetch(prompt, activeKey);
-    const now = new Date();
-    document.getElementById('ai-report-time').innerText = now.toTimeString().split(' ')[0];
-    document.getElementById('ai-report-text').innerText = replyText;
-  } catch(e) {
-    document.getElementById('ai-report-text').innerText = `AI予想エラー: 通信に失敗しました。\n(${e.message})`;
-  }
-}
-
-// スクレイピングアルゴリズムの大幅強化による数値精度向上
-async function fetchRealtimeStockData(code) {
-  try {
-    const targetUrl = encodeURIComponent(`https://finance.yahoo.co.jp/quote/${code}.T`);
-    const res = await fetch(`https://api.allorigins.win/get?url=${targetUrl}`);
-    if (!res.ok) throw new Error();
-    const json = await res.json();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(json.contents, 'text/html');
-    
-    let priceText = doc.querySelector('._3Xis0_O9')?.textContent || 
-                    doc.querySelector('[class*="price"]')?.textContent || 
-                    doc.querySelector('span[class*="StyledNumber"]')?.textContent || "0";
-    let price = parseFloat(priceText.replace(/,/g, ''));
-
-    let ma25 = 0;
-    const scripts = Array.from(doc.querySelectorAll('script'));
-    for (let script of scripts) {
-      if (script.textContent.includes('movingAverage')) {
-        const match = script.textContent.match(/"movingAverage25"\s*:\s*([\d.]+)/);
-        if (match) ma25 = parseFloat(match[1]);
-      }
+    // マーケットバー更新
+    setMktCell('mkt-nikkei','mkt-nikkei-chg',d.nikkei,d.nikkei_chg,false);
+    setMktCell('mkt-usdjpy','mkt-usdjpy-chg',d.usdjpy,d.usdjpy_chg,true);
+    if(d.down_stocks){
+      document.getElementById('mkt-down').innerText=(+d.down_stocks).toLocaleString()+"銘柄";
     }
 
-    if (!price || price === 0) {
-      if (code === "7412") { price = 347; ma25 = 345.69; }
-      else if (code === "3697") { price = 618.8; ma25 = 685.0; }
-      else if (code === "6920") { price = 21050; ma25 = 23100; }
-      else { price = 1000; ma25 = 1050; }
+    // スコア更新
+    const sc=parseInt(d.score)||50;
+    marketScore=sc;
+    document.getElementById('live-score').innerText=sc;
+    let color="var(--muted)";
+    if(sc<=20)color="var(--green)";
+    else if(sc<=40)color="var(--blue)";
+    else if(sc>=80)color="var(--red)";
+    else if(sc>=60)color="var(--orange)";
+    document.getElementById('live-score').style.color=color;
+    document.getElementById('live-status').innerText=d.status||"--";
+    document.getElementById('live-status').style.color=color;
+    document.getElementById('bnf-comment').innerText=d.comment||"……。";
+
+    // 1400カウントダウン
+    if(d.down_stocks){
+      const dn=+d.down_stocks;
+      const pct=Math.min(100,(dn/1400)*100);
+      document.getElementById('cd-fill').style.width=pct+"%";
+      document.getElementById('cd-fill').style.background=dn>=1400?"var(--red)":"var(--green)";
+      document.getElementById('cd-current').innerText=`約${dn.toLocaleString()}銘柄が値下がり中`;
+      const rem=1400-dn;
+      document.getElementById('cd-remain').innerText=rem>0?`臨界点まであと${rem}銘柄`:"⚠️ 臨界点到達！";
+      document.getElementById('cd-remain').style.color=rem>0?"var(--green)":"var(--red)";
     }
-    if (ma25 === 0) { ma25 = price * 1.05; }
 
-    let kairi = ((price - ma25) / ma25) * 100;
-    return { price, ma25, kairi, name: stockNames[code] || `東証銘柄(${code})` };
-  } catch (e) {
-    if (code === "7412") return { price: 347, ma25: 345.69, kairi: 0.38, name: "アトム" };
-    return { price: 1000, ma25: 1050, kairi: -4.76, name: `東証銘柄(${code})` };
+    // AIレポート生成
+    generateAiReport(d);
+    st.innerText="同期完了しました。";st.style.color="var(--green)";
+
+  }catch(e){
+    st.innerText="同期失敗："+e.message;st.style.color="var(--red)";
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='<i class="fa-solid fa-bolt"></i> AIで今日の地合いをリアルタイム同期';
   }
 }
 
-// 入力と同時にセクターを自動解析・表示する
-let inputTimeout;
-function autoSyncOnInput() {
-  clearTimeout(inputTimeout);
-  const code = document.getElementById('stock-code').value;
-  if(code.length === 4) {
-    const sector = detectSector(code);
-    document.getElementById('stock-sector-display').value = getSectorLabel(sector);
-    inputTimeout = setTimeout(syncSingleStock, 600); // 打ち終わり0.6秒後に自動データ同期
+function setMktCell(idV,idC,val,chg,isYen){
+  if(!val)return;
+  document.getElementById(idV).innerText=isYen
+    ?(+val).toFixed(2)
+    :(+val).toLocaleString('ja',{maximumFractionDigits:2});
+  if(chg!==undefined){
+    const n=+chg,pos=n>=0;
+    const el=document.getElementById(idC);
+    el.innerText=(pos?"+":"")+n.toFixed(2)+(isYen?"円":"%");
+    el.className="mkt-chg "+(pos?"up":"dn");
   }
 }
 
-async function syncSingleStock() {
-  const code = document.getElementById('stock-code').value;
-  const data = await fetchRealtimeStockData(code);
-  document.getElementById('current-price').value = data.price;
-  document.getElementById('ma-value').value = data.ma25.toFixed(2);
+async function generateAiReport(mktData){
+  try{
+    const text=await callGemini(
+      `あなたはB.N.Fの思考を持つAIです。以下の市場データから、今日の相場の裏読みレポート（100字程度）を出力してください。挨拶・箇条書き不要。
+日経:${mktData.nikkei||"--"} 値下がり:${mktData.down_stocks||"--"}銘柄 地合いスコア:${mktData.score||"--"}/100`,
+      false
+    );
+    document.getElementById('ai-report-text').innerText=text;
+    document.getElementById('ai-report-time').innerText=new Date().toTimeString().slice(0,8);
+  }catch(e){/* サイレント失敗 */}
+}
+
+/* ════ 東証全銘柄スキャン（メイン機能） ════ */
+async function runFullMarketScan(){
+  if(!geminiApiKey){alert("AI脳内タブでAPIキーを設定してください。");return;}
+  const btn=document.getElementById('scan-btn');
+  const st=document.getElementById('scan-status');
+  const resultsEl=document.getElementById('full-scan-results');
+  const count=document.getElementById('scan-count').value;
+  const sector=document.getElementById('scan-sector').value;
+  const zone=document.getElementById('scan-zone').value;
+  const sort=document.getElementById('scan-sort').value;
+
+  btn.disabled=true;
+  btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> 東証全銘柄を検索・分析中...';
+  st.innerText="GeminiがWeb検索で東証全銘柄をスキャン中（〜30秒）";
+  st.style.color="var(--blue)";
+  resultsEl.innerHTML=`<div style="padding:32px 16px;text-align:center;">
+    <div style="font-size:2rem;color:var(--acc);animation:blink 1s infinite;margin-bottom:10px;">
+      <i class="fa-solid fa-satellite-dish"></i></div>
+    <div style="color:var(--muted);font-size:.85rem;">
+      Gemini AIが東証プライム・スタンダード・グロース<br>
+      約3,800銘柄の中からBNF条件に合致する銘柄を抽出中...</div>
+  </div>`;
+
+  const sectorNote={all:"東証プライム・スタンダード・グロース全市場の全セクター",
+    tech:"ハイテク・半導体・電気機器セクター（6000番台中心）",
+    heavy:"バリュー・大型株・金融・素材セクター",
+    growth:"新興グロース・IT・バイオセクター（3000〜4000番台中心）"}[sector];
+  const mktNote=marketScore<=20?"極度のパニック（全面安）、あらゆるセクターで大きな乖離が発生中"
+    :marketScore<=40?"やや悲観・連れ安、ハイテク・半導体セクターに特に注目"
+    :"通常相場、個別に深押しした銘柄のみ厳選が必要";
+
+  const prompt=`あなたはB.N.Fの逆張りスイング手法を熟知したAIアシスタントです。
+今日の日本株市場をWeb検索してください。以下の条件で検索対象とする市場とセクターは「${sectorNote}」です。
+
+【必須検索内容】
+1. 本日の東証全銘柄の値下がり率ランキング（プライム・スタンダード・グロース全市場）
+2. 各候補銘柄の現在株価と25日移動平均線
+3. 急落の背景・業績情報・最近のニュース
+
+【BNF選定基準】
+- 25日MAから大きく下方乖離（バリュー:-10〜-15%、ハイテク:-15〜-20%、グロース:-30〜-50%）
+- 恐怖・追証による過剰な売り込み（業績に致命的問題なし）
+- 出来高急増（売り尽くしのサイン）
+- 現在の地合い: ${mktNote}（スコア${marketScore}/100）
+
+上記条件に最も合致する銘柄を${count}つ厳選し、以下のJSON配列のみで返答してください。
+説明文・マークダウン・コードブロック一切不要。
+[{"rank":1,"code":"4桁コード","name":"銘柄名","market":"プライム/スタンダード/グロース",
+  "sector":"セクター名","price":現在株価数値,"ma25":25日MA数値,"kairi":乖離率数値,
+  "zone":"buy or watch","reason":"BNF基準合致理由（2〜3文）","risk":"最大リスク（1文）"}]`;
+
+  try{
+    const raw=await callGemini(prompt,true);
+    const m=raw.match(/\[[\s\S]*\]/);
+    if(!m)throw new Error("スキャン結果の解析に失敗しました");
+    let stocks=JSON.parse(m[0]);
+    if(!Array.isArray(stocks)||!stocks.length)throw new Error("該当銘柄が見つかりませんでした");
+
+    // フィルタリング
+    if(zone==="buy")stocks=stocks.filter(s=>s.zone==="buy");
+    if(zone==="watch")stocks=stocks.filter(s=>s.zone==="watch");
+
+    // ソート
+    if(sort==="kairi")stocks.sort((a,b)=>parseFloat(a.kairi)-parseFloat(b.kairi));
+
+    lastScanData=stocks;
+
+    // 結果描画
+    resultsEl.innerHTML=`<div style="padding:10px 16px 6px;font-size:.78rem;color:var(--muted);">
+      ${stocks.length}件 · ${new Date().toLocaleTimeString('ja')} · Gemini Web検索ベース
+    </div>`+stocks.map(s=>buildScanCard(s)).join('');
+
+    // 地合いタブのシグナルを更新
+    const now=new Date().toTimeString().slice(0,8);
+    document.getElementById('sig-time').innerText=now;
+    const buyCount=stocks.filter(s=>s.zone==="buy").length;
+    document.getElementById('sig-body').innerText=
+      `東証全銘柄スキャン完了。対象${stocks.length}件。うち買いゾーン${buyCount}件。最上位: ${stocks[0]?.name||"--"}(${stocks[0]?.code||"--"}) 乖離率${(+stocks[0]?.kairi||0).toFixed(1)}%`;
+    document.getElementById('last-scan-time').innerText=`最終スキャン: ${now}`;
+
+    // 地合いタブのBNF提案カードも更新
+    updateMarketScanZone(stocks.slice(0,3));
+
+    // 買いゾーン銘柄があれば通知
+    if(buyCount>0)sendNotif(`【BNF買いゾーン ${buyCount}件】`,`${stocks.find(s=>s.zone==="buy")?.name}など${buyCount}銘柄が臨界点突破`);
+
+    st.innerText=`${stocks.length}件の候補を抽出しました。`;st.style.color="var(--green)";
+  }catch(e){
+    console.error(e);
+    resultsEl.innerHTML=`<div style="padding:32px 16px;text-align:center;color:var(--red);font-size:.85rem;">
+      <i class="fa-solid fa-triangle-exclamion" style="font-size:1.8rem;margin-bottom:10px;"></i><br>
+      スキャンに失敗しました。<br>${escapeHtml(e.message)}
+    </div>`;
+    st.innerText="スキャン失敗";st.style.color="var(--red)";
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='<i class="fa-solid fa-satellite-dish"></i> 東証全銘柄をAIスキャン（〜30秒）';
+  }
+}
+
+function buildScanCard(s){
+  const kn=parseFloat(s.kairi)||0,ks=kn.toFixed(1)+"%";
+  const isBuy=s.zone==="buy";
+  const bdg=isBuy?`<span class="scan-badge badge-buy">買いゾーン</span>`
+                  :`<span class="scan-badge badge-watch">監視ゾーン</span>`;
+  const mktBdg=`<span class="scan-badge badge-hold">${escapeHtml(s.market||"")}</span>`;
+  return `<div class="fsr-item">
+    <div class="fsr-meta">
+      <div>
+        <span style="font-size:.72rem;font-weight:800;color:var(--acc);background:var(--acc-dim);padding:2px 8px;border-radius:var(--pill);margin-right:6px;">#${escapeHtml(String(s.rank))}</span>
+        <span class="fsr-name">${escapeHtml(s.name||"")} <span style="color:var(--muted);font-family:'Courier New',monospace;font-size:.82rem;">${escapeHtml(s.code||"")}</span></span>
+      </div>
+      <span style="font-size:1.2rem;font-weight:900;font-family:'Courier New',monospace;color:${isBuy?"var(--green)":"var(--orange)"};">${escapeHtml(ks)}</span>
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin:6px 0;">${bdg}${mktBdg}
+      <span class="scan-badge badge-hold">${escapeHtml(s.sector||"")}</span>
+      <span class="scan-badge badge-hold">現在値 ${escapeHtml(String(s.price))}円</span>
+      <span class="scan-badge badge-hold">MA25 ${escapeHtml(String(s.ma25))}円</span>
+    </div>
+    <div class="fsr-reason">${escapeHtml(s.reason||"")}</div>
+    <div style="font-size:.75rem;color:var(--red);margin:4px 0 8px;">⚠️ ${escapeHtml(s.risk||"")}</div>
+    <div class="fsr-actions">
+      <a href="https://finance.yahoo.co.jp/quote/${encodeURIComponent(s.code)}" target="_blank"
+        class="fsr-btn" style="background:var(--blue);color:#fff;flex:1;">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i> Yahoo!確認
+      </a>
+      <button class="fsr-btn" style="background:var(--acc-dim);color:var(--acc);border:1px solid var(--acc);flex:1;"
+        onclick="loadToTool('${escapeHtml(s.code)}','${escapeHtml(String(s.price))}','${escapeHtml(String(s.ma25))}')">
+        <i class="fa-solid fa-wrench"></i> ツールで分析
+      </button>
+    </div>
+  </div>`;
+}
+
+function updateMarketScanZone(stocks){
+  const z=document.getElementById('market-scan-zone');
+  if(!stocks.length){z.innerHTML="";return;}
+  z.innerHTML=`<div class="scan-result-card">
+    <div class="scan-result-hdr"><i class="fa-solid fa-fire"></i> BNF視点・今仕込むべき上位${stocks.length}銘柄</div>
+    ${stocks.map((s,i)=>{
+      const isBuy=s.zone==="buy";
+      return `<div class="scan-stock-item">
+        <span class="scan-stock-name"><b>第${i+1}位</b> ${escapeHtml(s.name||"")} (${escapeHtml(s.code||"")})</span>
+        <span class="scan-stock-kairi" style="color:${isBuy?"var(--green)":"var(--orange)"}">${(+s.kairi).toFixed(1)}%</span>
+        <span class="scan-badge ${isBuy?"badge-buy":"badge-watch"}">${isBuy?"狙い目":"監視中"}</span>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ════ ツールタブ ════ */
+function setStockMode(isMini){
+  isMiniStock=isMini;
+  document.getElementById('mode-normal').classList.toggle('active',!isMini);
+  document.getElementById('mode-mini').classList.toggle('active',isMini);
   calculateMetrics();
 }
 
-function calculateMetrics() {
-  const price = parseFloat(document.getElementById('current-price').value);
-  const ma25 = parseFloat(document.getElementById('ma-value').value);
-  const code = document.getElementById('stock-code').value;
-  const sector = detectSector(code);
-  const qty = isMiniStock ? 1 : 100;
-  
-  if(price) document.getElementById('res-capital').innerText = (price * qty).toLocaleString() + " 円";
-  if(price && ma25) {
-    const kairi = ((price - ma25) / ma25) * 100;
-    document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
-    
-    let target = sector === 'growth' ? -15 : (sector === 'tech' ? -12 : -10);
-    document.getElementById('res-status').innerText = kairi <= target ? "買い臨界点（シグナル）" : "静観";
-    document.getElementById('res-status').style.color = kairi <= target ? "var(--green)" : "var(--text)";
+function detectSector(code){
+  const c=parseInt(code,10);
+  if(c>=3000&&c<=4999)return "growth";
+  if(c>=6000&&c<=6999)return "tech";
+  if(c>=8000&&c<=8999)return "heavy";
+  return "heavy";
+}
+function getSectorLabel(s){
+  return {tech:"ハイテク（目安-15〜-20%）",heavy:"バリュー（目安-10〜-15%）",
+          defensive:"内需（目安-10〜-15%）",growth:"グロース（目安-30〜-50%）"}[s]||"--";
+}
+
+let toolInputTimer;
+function onToolCodeInput(){
+  clearTimeout(toolInputTimer);
+  const code=document.getElementById('tool-code').value;
+  if(code.length===4){
+    const sec=detectSector(code);
+    document.getElementById('tool-sector-display').value=getSectorLabel(sec);
+    toolInputTimer=setTimeout(syncSingleStockTool,700);
   }
 }
 
-// 復活＆連動：一括スキャン時に最も買うべき上位3銘柄を自動選定して地合い画面へ提示
-async function triggerAllStocksScan() {
-  const now = new Date();
-  const timeStr = now.toTimeString().split(' ')[0];
-  document.getElementById('agent-last-scan').innerText = `最終一括スキャン: ${timeStr}`;
-  let hitCount = 0;
-  let allScannedStocks = [];
-
-  await autoFetchMarketData();
-  const newsContext = await fetchMarketNewsFeed();
-  await runAiMarketPrediction(newsContext);
-
-  for (let code of watchlist) {
-    const data = await fetchRealtimeStockData(code);
-    const sector = detectSector(code);
-    let type = "HOLD", badgeClass = "badge-hold";
-    let msg = `${data.name}(${code})の現在値は${data.price}円。25日線乖離率は ${data.kairi.toFixed(2)}% です。`;
-    
-    let target = sector === 'growth' ? -15 : (sector === 'tech' ? -12 : -10);
-    
-    if (data.kairi <= target) {
-      type = "BUY"; badgeClass = "badge-buy";
-      msg = `🚨【臨界点到達】${data.name}(${code})が乖離率 ${data.kairi.toFixed(2)}% に達しました！買いチャンス。`;
-      hitCount++;
-      // 復活：ポップアップ通知
-      sendPopupNotification(`【買い判定】${data.name}(${code})`, `乖離率 ${data.kairi.toFixed(2)}% でBNF臨界点突破！`);
-    } else if (data.kairi <= target + 3) {
-      type = "ALERT"; badgeClass = "badge-alert";
-      msg = `⚠️【要監視】${data.name}(${code})が乖離率 ${data.kairi.toFixed(2)}% まで突入。`;
-    }
-    agentLogs.unshift({ time: timeStr, code, name: data.name, type, badgeClass, message: msg });
-    allScannedStocks.push({ code, name: data.name, kairi: data.kairi });
-  }
-  
-  if(agentLogs.length > 100) agentLogs = agentLogs.slice(0, 100);
-  localStorage.setItem("bnf_agent_logs", JSON.stringify(agentLogs));
-  renderAgentLogs();
-
-  document.getElementById('sig-update-time').innerText = timeStr;
-  document.getElementById('sig-alert-body').innerText = `全株巡回完了。対象: ${watchlist.length}銘柄。臨界点ヒット: ${hitCount}件。`;
-
-  // BNF的視点で買うべき株ベスト3提示ロジックの実行
-  renderBnfHotSuggestions(allScannedStocks);
-}
-
-function renderBnfHotSuggestions(stocks) {
-  // 乖離率が低い（マイナスが大きい）順にソート
-  stocks.sort((a, b) => a.kairi - b.kairi);
-  const container = document.getElementById('bnf-suggestion-list');
-  
-  const topStocks = stocks.slice(0, 3);
-  if(topStocks.length === 0) {
-    container.innerHTML = `<div style="font-size:0.8rem; color:var(--muted); text-align:center; padding:6px 0;">監視中の銘柄がありません。</div>`;
+async function syncSingleStockTool(){
+  const code=document.getElementById('tool-code').value;
+  if(code.length!==4)return;
+  if(!geminiApiKey){
+    document.getElementById('tool-sync-status').innerText="APIキーを設定してください";
     return;
   }
-
-  container.innerHTML = topStocks.map((s, idx) => {
-    const sector = detectSector(s.code);
-    const target = sector === 'growth' ? -15 : (sector === 'tech' ? -12 : -10);
-    const isSignal = s.kairi <= target ? `<span class="bnf-hot-badge">狙い目!</span>` : `<span class="bnf-hot-badge" style="background:var(--bdr); color:var(--muted);">監視中</span>`;
-    return `
-      <div class="bnf-hot-item">
-        <span><strong>第 ${idx+1} 位</strong> : ${s.name} (${s.code})</span>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-family:'Courier New', monospace; font-weight:800; color:${s.kairi <= target ? 'var(--green)':'var(--text)'}">${s.kairi.toFixed(2)}%</span>
-          ${isSignal}
-        </div>
-      </div>
-    `;
-  }).join('');
+  const st=document.getElementById('tool-sync-status');
+  st.innerText="同期中...";st.style.color="var(--blue)";
+  try{
+    const raw=await callGemini(
+      `「${code}」（東証銘柄コード）の現在株価と25日移動平均線をWeb検索して取得し、
+JSONのみで返答してください。{"price":現在株価数値,"ma25":25日MA数値,"name":"銘柄名"}`,
+      true
+    );
+    const m=raw.match(/\{[\s\S]*?\}/);
+    if(!m)throw new Error();
+    const d=JSON.parse(m[0]);
+    if(d.price)document.getElementById('current-price').value=d.price;
+    if(d.ma25)document.getElementById('ma-value').value=d.ma25;
+    calculateMetrics();
+    st.innerText=`${d.name||code} を同期しました。`;st.style.color="var(--green)";
+  }catch(e){
+    st.innerText="同期失敗。手動で入力してください。";st.style.color="var(--red)";
+  }
 }
 
-function renderAgentLogs() {
-  const box = document.getElementById('agent-log-box');
-  if (agentLogs.length === 0) {
-    box.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted);">全株監視ログはまだありません。</div>`;
+function calculateMetrics(){
+  const price=parseFloat(document.getElementById('current-price').value);
+  const ma=parseFloat(document.getElementById('ma-value').value);
+  const code=document.getElementById('tool-code').value;
+  const sector=detectSector(code);
+  const qty=isMiniStock?1:100;
+  if(price)document.getElementById('res-capital').innerText=(price*qty).toLocaleString()+"円";
+  if(!price||!ma){
+    document.getElementById('res-kairi').innerText="-- %";
+    document.getElementById('res-status').innerText="未入力";
+    document.getElementById('res-threshold').innerText="--";
     return;
   }
-  box.innerHTML = agentLogs.map(l => `
-    <div class="agent-msg-box">
-      <div class="agent-msg-meta"><span>${l.time} ➔ 銘柄: ${l.name} (${l.code})</span><span class="${l.badgeClass}">${l.type}</span></div>
-      <div>${l.message}</div>
-    </div>
-  `).join('');
+  const kairi=((price-ma)/ma)*100;
+  document.getElementById('res-kairi').innerText=kairi.toFixed(2)+" %";
+  const adj=(marketScore-50)/10;
+  const base=SECTOR_TH[sector]||SECTOR_TH.heavy;
+  const tw=base.watch-adj,tb=base.buy-adj;
+  let label="静観（バネ未収縮）",color="var(--muted)";
+  if(kairi<tb){label="限界突破（BNF買いゾーン）";color="var(--green)";}
+  else if(kairi<tw){label="チャンス目前（監視強化）";color="var(--orange)";}
+  document.getElementById('res-status').innerText=label;
+  document.getElementById('res-status').style.color=color;
+  document.getElementById('res-threshold').innerText=`監視 ${tw.toFixed(1)}% / 買い ${tb.toFixed(1)}%`;
 }
 
-function addWatchlist() {
-  const code = document.getElementById('wl-add-code').value.trim();
-  if(code.length === 4 && !watchlist.includes(code)) {
-    watchlist.push(code); localStorage.setItem("bnf_watchlist", JSON.stringify(watchlist));
-    updateWatchlistUI(); document.getElementById('wl-add-code').value = "";
+function loadToTool(code,price,ma){
+  document.getElementById('tool-code').value=code;
+  document.getElementById('current-price').value=price;
+  document.getElementById('ma-value').value=ma;
+  const sec=detectSector(code);
+  document.getElementById('tool-sector-display').value=getSectorLabel(sec);
+  calculateMetrics();
+  const toolNav=document.querySelector('.nav-bar .nav-item:nth-child(2)');
+  switchScreen('tools',toolNav);
+  switchInner('calc',document.querySelector('.inner-tab'));
+}
+
+/* ウォッチリスト */
+function addWatchlist(){
+  const code=document.getElementById('wl-code').value.trim();
+  const name=document.getElementById('wl-name').value.trim()||code;
+  if(code.length!==4){alert("4桁の銘柄コードを入力してください。");return;}
+  if(watchlist.find(w=>w.code===code)){alert("すでに登録済みです。");return;}
+  watchlist.push({code,name});
+  localStorage.setItem("bnf_watchlist",JSON.stringify(watchlist));
+  document.getElementById('wl-code').value="";
+  document.getElementById('wl-name').value="";
+  renderWatchlist();
+}
+function removeWatchlist(code){
+  watchlist=watchlist.filter(w=>w.code!==code);
+  localStorage.setItem("bnf_watchlist",JSON.stringify(watchlist));
+  renderWatchlist();
+}
+function renderWatchlist(){
+  const c=document.getElementById('watchlist-container');
+  if(!watchlist.length){
+    c.innerHTML=`<div class="cell" style="color:var(--muted);text-align:center;padding:24px;">
+      登録銘柄なし。上の入力欄から追加してください。</div>`;
+    return;
   }
+  c.innerHTML=watchlist.map(w=>`
+    <div class="wl-item">
+      <span class="wl-code">${escapeHtml(w.code)}</span>
+      <span class="wl-name">${escapeHtml(w.name)}</span>
+      <span class="wl-kairi" style="color:var(--muted);">-- %</span>
+      <button class="wl-del" onclick="removeWatchlist('${escapeHtml(w.code)}')">
+        <i class="fa-solid fa-xmark"></i></button>
+    </div>`).join('');
 }
-function removeWatchlist(code) {
-  watchlist = watchlist.filter(c => c !== code); localStorage.setItem("bnf_watchlist", JSON.stringify(watchlist));
-  updateWatchlistUI();
-}
-async function updateWatchlistUI() {
-  const container = document.getElementById('watchlist-container');
-  container.innerHTML = `<div style="padding:16px; text-align:center; color:var(--muted);">全株同期中...</div>`;
-  let html = "";
-  for(let code of watchlist) {
-    const data = await fetchRealtimeStockData(code);
-    const sector = detectSector(code);
-    const target = sector === 'growth' ? -15 : (sector === 'tech' ? -12 : -10);
-    const color = data.kairi <= target ? "var(--green)" : "var(--text)";
-    html += `
-      <div class="wl-item">
-        <span class="wl-code">${code}</span><span class="wl-name">${data.name}</span>
-        <span class="wl-price">${Math.round(data.price).toLocaleString()}円</span>
-        <span class="wl-kairi" style="color:${color}">${data.kairi.toFixed(2)}%</span>
-        <button class="wl-del" onclick="removeWatchlist('${code}')"><i class="fa-solid fa-trash-can"></i></button>
+async function refreshWatchlist(){
+  if(!geminiApiKey){alert("AIキーを設定してください。");return;}
+  if(!watchlist.length){alert("ウォッチリストが空です。");return;}
+  const codes=watchlist.map(w=>w.code).join("、");
+  try{
+    const raw=await callGemini(
+      `以下の銘柄コードの現在株価と25日移動平均線をWeb検索で取得し、JSON配列のみで返答してください。
+コード: ${codes}
+[{"code":"コード","price":現在株価数値,"ma25":25日MA数値}]`,
+      true
+    );
+    const m=raw.match(/\[[\s\S]*\]/);
+    if(!m)throw new Error();
+    const data=JSON.parse(m[0]);
+    const c=document.getElementById('watchlist-container');
+    c.innerHTML=watchlist.map(w=>{
+      const d=data.find(x=>x.code===w.code);
+      let kairiStr="-- %",color="var(--muted)";
+      if(d&&d.price&&d.ma25){
+        const k=((d.price-d.ma25)/d.ma25)*100;
+        kairiStr=k.toFixed(1)+"%";
+        const adj=(marketScore-50)/10;
+        const base=SECTOR_TH[detectSector(w.code)]||SECTOR_TH.heavy;
+        color=k<(base.buy-adj)?"var(--green)":k<(base.watch-adj)?"var(--orange)":"var(--muted)";
+      }
+      return `<div class="wl-item">
+        <span class="wl-code">${escapeHtml(w.code)}</span>
+        <span class="wl-name">${escapeHtml(w.name)}</span>
+        <span class="wl-kairi" style="color:${color}">${escapeHtml(kairiStr)}</span>
+        <button class="wl-del" onclick="removeWatchlist('${escapeHtml(w.code)}')">
+          <i class="fa-solid fa-xmark"></i></button>
       </div>`;
+    }).join('');
+  }catch(e){alert("更新に失敗しました。");}
+}
+
+function calcPos(){
+  const buy=parseFloat(document.getElementById('pos-buy').value);
+  const qty=parseFloat(document.getElementById('pos-qty').value);
+  const now=parseFloat(document.getElementById('pos-now').value);
+  const cash=parseFloat(document.getElementById('pos-cash').value);
+  const r=document.getElementById('pos-result');
+  if(!buy||!qty||!now){r.style.display='none';return;}
+  const pnl=(now-buy)*qty;
+  const pnlPct=((now-buy)/buy*100).toFixed(2);
+  const bq=isMiniStock?1:100;
+  const newAvg=(buy*qty+now*bq)/(qty+bq);
+  r.style.display='block';
+  let html=`含み${pnl>=0?"益":"損"}: <b style="color:${pnl>=0?"var(--red)":"var(--blue)"}">${pnl.toLocaleString()}円 (${pnlPct}%)</b>`;
+  if(cash){const ratio=(Math.abs(pnl)/cash*100).toFixed(2);html+=`<br>口座比率: <b>${ratio}%</b>`;}
+  html+=`<div style="margin-top:6px;border-top:1px dashed var(--bdr);padding-top:6px;color:var(--orange);">
+    ➔ ナンピン後平均単価: <b>${Math.round(newAvg).toLocaleString()}円</b><br>
+    ➔ 損益分岐点: <b>${Math.round(newAvg).toLocaleString()}円以上で含み益</b></div>`;
+  r.innerHTML=html;
+}
+
+function saveLog(){
+  const code=document.getElementById('tool-code').value;
+  const kairi=document.getElementById('res-kairi').innerText;
+  if(kairi==="-- %"){alert("乖離率を計算してから保存してください。");return;}
+  savedLogs.unshift({
+    time:new Date().toLocaleString(),code:code||"不明",
+    kairi,status:document.getElementById('res-status').innerText,memo:""
+  });
+  localStorage.setItem("bnf_saved_logs",JSON.stringify(savedLogs));
+  alert("保存しました。");
+}
+
+/* ════ チャット ════ */
+function sendTmpl(text){document.getElementById('chat-input').value=text;sendChat();}
+async function sendChat(){
+  const input=document.getElementById('chat-input');
+  const box=document.getElementById('chat-box');
+  if(!input.value.trim()||!geminiApiKey)return;
+  const txt=input.value.trim();input.value="";
+  box.innerHTML+=`<div class="bubble user">${escapeHtml(txt)}</div>`;
+  box.scrollTop=box.scrollHeight;
+  try{
+    const rep=await callGemini(
+      `あなたはB.N.Fの逆張りスイング手法を熟知したAIコーチです。
+【核心原則】狙いは「パニックの売り尽くし」/ハイテク-15〜-20%・バリュー-10〜-15%・グロース-30〜-50%/東証1,400銘柄値下がりの全面パニックを待つ/主力株の最後の投げがエントリー/損切りは「シナリオが外れた瞬間」/1〜2日で決済
+現在地合いスコア:${marketScore}/100。「です・ます調」で具体的に回答してください。
+質問：${txt}`
+    );
+    box.innerHTML+=`<div class="bubble bnf">${escapeHtml(rep)}</div>`;
+  }catch(e){
+    box.innerHTML+=`<div class="bubble bnf">エラーが発生しました: ${escapeHtml(e.message)}</div>`;
   }
-  container.innerHTML = html || `<div style="padding:16px; text-align:center; color:var(--muted);">リストは空です。</div>`;
+  box.scrollTop=box.scrollHeight;
 }
 
-function calcPosition() {
-  const buyP = parseFloat(document.getElementById('pos-buy-price').value) || 0;
-  const qty = parseFloat(document.getElementById('pos-qty').value) || 0;
-  const nowP = parseFloat(document.getElementById('pos-now-price').value) || 0;
-  const box = document.getElementById('pos-result-box');
-
-  if(buyP && qty && nowP) {
-    const currentVal = nowP * qty;
-    const pl = (nowP - buyP) * qty;
-    const plRatio = ((nowP - buyP) / buyP) * 100;
-    const bqty = isMiniStock ? 1 : 100;
-    const nextCost = nowP * bqty;
-    const newQty = qty + bqty;
-    const newAvg = ((buyP * qty) + (nowP * bqty)) / newQty;
-
-    box.innerHTML = `
-      <div>評価損益: <span style="color:${pl>=0?'var(--red)':'var(--blue)'}; font-weight:800;">${pl.toLocaleString()} 円 (${plRatio.toFixed(2)}%)</span></div>
-      <div>現在の評価額: ${currentVal.toLocaleString()} 円</div>
-      <div style="margin-top:6px; border-top:1px dashed var(--bdr); padding-top:6px; color:var(--orange);">
-        ➔ 次回ナンピン(${bqty}株)必要額: ${nextCost.toLocaleString()} 円<br>
-        ➔ ナンピン後平均取得単価: ${Math.round(newAvg).toLocaleString()} 円
-      </div>
-    `;
-  }
-}
-
-function saveTradeLog() {
-  const code = document.getElementById('stock-code').value;
-  const price = document.getElementById('current-price').value;
-  const kairi = document.getElementById('res-kairi').innerText;
-  if(!price) return;
-  savedLogs.unshift({ date: new Date().toLocaleDateString(), code, price, kairi });
-  localStorage.setItem("bnf_saved_logs", JSON.stringify(savedLogs));
-  alert("ログを保存しました");
-}
-function renderSavedLogs() {
-  document.getElementById('log-count').innerText = savedLogs.length + "件";
-  const box = document.getElementById('log-container');
-  box.innerHTML = savedLogs.map(l => `
+/* ════ ログ ════ */
+function renderLogs(){
+  savedLogs=JSON.parse(localStorage.getItem("bnf_saved_logs")||"[]");
+  const c=document.getElementById('log-container');
+  const g=document.getElementById('stats-grid');
+  g.innerHTML=`
+    <div class="stat-cell"><div class="stat-num" style="color:var(--acc)">${savedLogs.length}</div><div class="stat-lbl">総ログ</div></div>
+    <div class="stat-cell"><div class="stat-num" style="color:var(--green)">${savedLogs.filter(l=>l.status&&l.status.includes("買い")).length}</div><div class="stat-lbl">買いゾーン</div></div>
+    <div class="stat-cell"><div class="stat-num" style="color:var(--blue)">${savedLogs.length?((+savedLogs.reduce((s,l)=>s+(parseFloat(l.kairi)||0),0)/savedLogs.length).toFixed(1))+"%":"--"}</div><div class="stat-lbl">平均乖離率</div></div>`;
+  if(!savedLogs.length){c.innerHTML=`<div class="cell" style="color:var(--muted);text-align:center;padding:32px;">ログはありません</div>`;return;}
+  c.innerHTML=savedLogs.map(l=>`
     <div class="log-card">
-      <div class="log-top"><span>${l.date}</span></div>
-      <div class="log-mid"><span class="log-code">${l.code}</span><span class="log-kairi">${l.kairi}</span></div>
-    </div>
-  `).join('');
+      <div class="log-top">${escapeHtml(l.time)}</div>
+      <div class="log-mid">
+        <span class="log-code">${escapeHtml(l.code)}</span>
+        <span class="log-kairi" style="color:${l.status&&l.status.includes("買い")?"var(--green)":"var(--muted)"}">${escapeHtml(l.kairi)}</span>
+        <span style="font-size:.78rem;color:var(--muted);">${escapeHtml(l.status||"")}</span>
+      </div>
+    </div>`).join('');
 }
-
-function saveApiKey() {
-  const val = document.getElementById('api-key-input').value.trim();
-  localStorage.setItem("bnf_gemini_key", val); 
-  geminiApiKey = val;
-  document.getElementById('api-key-status-text').innerText = val ? "接続確認済" : "未設定";
-  if(val) { 
-    document.getElementById('ai-report-text').innerText = "最新ニュースを分析中...";
-    fetchMarketNewsFeed().then(news => runAiMarketPrediction(news, val)); 
+function exportCSV(){
+  if(!savedLogs.length){alert("ログがありません。");return;}
+  const rows=savedLogs.map(l=>[l.time,l.code,l.kairi,l.status].join(",")).join("\n");
+  const blob=new Blob(["\uFEFF日時,銘柄,乖離率,判定\n"+rows],{type:"text/csv;charset=utf-8;"});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download="bnf_log.csv";a.click();
+}
+function clearLogs(){
+  if(confirm("すべてリセットしますか？")){
+    savedLogs=[];localStorage.removeItem("bnf_saved_logs");renderLogs();
   }
 }
 
-async function sendChatMessage() {
-  const input = document.getElementById('chat-input');
-  const txt = input.value.trim(); if(!txt) return;
-  const box = document.getElementById('chat-box');
-  
-  box.innerHTML += `<div class="bubble user">${txt}</div>`; input.value = "";
-  if(!geminiApiKey) { box.innerHTML += `<div class="bubble bnf">Gemini API Keyを設定してください。</div>`; return; }
-
-  try {
-    const prompt = `あなたは個人投資家B.N.Fの思考をトレースしたAIです。話し方は寡黙で冷静、25日線乖離率とパニック度だけを冷徹に分析するスタイルで、以下の質問に短く答えてください。\n質問: ${txt}`;
-    const replyText = await callGeminiDirectFetch(prompt, geminiApiKey);
-    box.innerHTML += `<div class="bubble bnf">${replyText}</div>`;
-  } catch(e) {
-    box.innerHTML += `<div class="bubble bnf">エラーが発生しました。(${e.message})</div>`;
-  }
-}
-
-// 復活：ポップアップ通知の許可要求＆実行システム
-function requestNotificationPermission() {
-  if (!("Notification" in window)) {
-    alert("このブラウザはプッシュ通知に対応していません");
-    return;
-  }
-  Notification.requestPermission().then(p => { 
-    if(p === "granted") {
-      document.getElementById('btn-request-auth').innerText = "通知承認済み ✅";
-      new Notification("通知テスト", { body: "BNF通知エージェントが正常に有効化されました。" });
-    } else {
-      alert("通知が拒否されました。ブラウザの設定から変更してください。");
-    }
+/* ════ ブラウザ通知 ════ */
+function requestNotifPermission(){
+  if(!("Notification"in window)){alert("このブラウザは通知に対応していません。");return;}
+  Notification.requestPermission().then(p=>{
+    if(p==="granted"){
+      document.getElementById('notif-btn').innerHTML='<i class="fa-solid fa-bell"></i> 通知許可済み ✅';
+      new Notification("BNF PREMIUM",{body:"ブラウザ通知が有効になりました。"});
+    }else{alert("通知が拒否されました。ブラウザの設定から変更してください。");}
   });
 }
-
-function sendPopupNotification(title, body) {
-  if ("Notification" in window && Notification.permission === "granted") { 
-    new Notification(title, { body, icon: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/bell.svg" }); 
-  }
+function sendNotif(title,body){
+  if("Notification"in window&&Notification.permission==="granted")
+    new Notification(title,{body});
 }
 
-function toggleStockMode() { isMiniStock = !isMiniStock; document.getElementById('opt-unit').classList.toggle('active', !isMiniStock); document.getElementById('opt-mini').classList.toggle('active', isMiniStock); calculateMetrics(); calcPosition(); }
-
-window.onload = () => {
-  if(geminiApiKey) { 
-    document.getElementById('api-key-input').value = geminiApiKey; 
-    document.getElementById('api-key-status-text').innerText = "接続確認済"; 
-    fetchMarketNewsFeed().then(news => runAiMarketPrediction(news, geminiApiKey));
-  } else {
-    document.getElementById('ai-report-text').innerText = "「AI脳内」タブにGemini APIキーを設定して保存してください。";
+/* ════ 初期化 ════ */
+window.onload=()=>{
+  if(geminiApiKey){
+    document.getElementById('api-key-status').innerText="接続済み ✅";
+    document.getElementById('api-key-status').style.color="var(--green)";
   }
-  autoFetchMarketData();
-  autoSyncOnInput();
-  renderAgentLogs(); 
-  calcPosition();
-  
-  if ("Notification" in window && Notification.permission === "granted") {
-    document.getElementById('btn-request-auth').innerText = "通知承認済み ✅";
+  if(Notification.permission==="granted"){
+    document.getElementById('notif-btn').innerHTML='<i class="fa-solid fa-bell"></i> 通知許可済み ✅';
   }
+  renderWatchlist();
+  renderLogs();
 };
 </script>
 </body>
