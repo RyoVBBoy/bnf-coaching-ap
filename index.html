@@ -214,6 +214,25 @@ input[readonly]{background:var(--s1);color:var(--muted);}
 .nav-item.active{color:var(--acc);}
 .nav-item.active span{display:block;}
 .status-line{text-align:center;font-size:.8rem;font-weight:700;padding:4px 16px 8px;color:var(--muted);min-height:26px;}
+
+/* 利確・損切りカード */
+.target-card{margin:0;border-bottom:1px solid var(--bdr);}
+.target-hdr{padding:12px 16px 0;font-size:.82rem;font-weight:800;color:var(--acc);
+  display:flex;align-items:center;gap:6px;}
+.target-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;
+  border-top:1px solid var(--bdr);margin-top:10px;}
+.target-cell{padding:14px 16px;border-bottom:1px solid var(--bdr);border-right:1px solid var(--bdr);}
+.target-cell:nth-child(even){border-right:none;}
+.target-lbl{font-size:.72rem;color:var(--muted);font-weight:600;margin-bottom:4px;}
+.target-val{font-size:1.25rem;font-weight:900;font-family:'Courier New',monospace;}
+.target-sub{font-size:.75rem;margin-top:2px;}
+.rrr-row{padding:12px 16px;border-bottom:1px solid var(--bdr);
+  display:flex;justify-content:space-between;align-items:center;}
+.rrr-val{font-size:1.1rem;font-weight:900;font-family:'Courier New',monospace;}
+.slider-row{padding:10px 16px 12px;border-bottom:1px solid var(--bdr);}
+.slider-lbl{font-size:.75rem;color:var(--muted);font-weight:600;margin-bottom:6px;
+  display:flex;justify-content:space-between;}
+input[type="range"]{width:100%;accent-color:var(--acc);height:4px;}
 </style>
 <script type="module">
   import{GoogleGenerativeAI}from"https://esm.run/@google/generative-ai";
@@ -354,9 +373,57 @@ input[readonly]{background:var(--s1);color:var(--muted);}
     <div class="result-row"><span>25日線 乖離率</span><span class="res-val" id="res-kairi">-- %</span></div>
     <div class="result-row"><span>判定</span><span class="res-val" id="res-status" style="font-size:.9rem;">未入力</span></div>
     <div class="result-row"><span>しきい値（地合い調整）</span><span class="res-val" id="res-threshold" style="font-size:.82rem;color:var(--muted);">--</span></div>
+
+    <!-- 利確・損切りターゲット -->
+    <div class="target-card">
+      <div style="padding:14px 16px 0;">
+        <div style="font-size:.82rem;font-weight:800;color:var(--acc);display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+          <i class="fa-solid fa-bullseye"></i> 利確 &amp; 損切りターゲット
+        </div>
+        <div class="slider-row" style="padding:0 0 10px;">
+          <div class="slider-lbl">
+            <span>損切り幅（エントリー価格から）</span>
+            <span id="stop-pct-label" style="color:var(--red);font-weight:800;">-3.0 %</span>
+          </div>
+          <input type="range" id="stop-slider" min="1" max="15" step="0.5" value="3"
+            oninput="onSliderChange()">
+        </div>
+        <div class="slider-row" style="padding:0 0 10px;">
+          <div class="slider-lbl">
+            <span>利確ターゲット②（カスタム幅）</span>
+            <span id="profit-pct-label" style="color:var(--green);font-weight:800;">+5.0 %</span>
+          </div>
+          <input type="range" id="profit-slider" min="1" max="30" step="0.5" value="5"
+            oninput="onSliderChange()">
+        </div>
+      </div>
+      <div class="target-grid">
+        <div class="target-cell">
+          <div class="target-lbl">🎯 利確①（MA25回帰）</div>
+          <div class="target-val" id="tgt-profit-ma" style="color:var(--green);">-- 円</div>
+          <div class="target-sub" id="tgt-profit-ma-pct" style="color:var(--green);">-- %</div>
+        </div>
+        <div class="target-cell">
+          <div class="target-lbl">🎯 利確②（カスタム）</div>
+          <div class="target-val" id="tgt-profit-custom" style="color:var(--blue);">-- 円</div>
+          <div class="target-sub" id="tgt-profit-custom-pct" style="color:var(--blue);">-- %</div>
+        </div>
+        <div class="target-cell">
+          <div class="target-lbl">🔪 損切りライン</div>
+          <div class="target-val" id="tgt-stop" style="color:var(--red);">-- 円</div>
+          <div class="target-sub" id="tgt-stop-pct" style="color:var(--red);">-- %</div>
+        </div>
+        <div class="target-cell">
+          <div class="target-lbl">⚖️ RRR（MA25基準）</div>
+          <div class="target-val" id="tgt-rrr">--</div>
+          <div class="target-sub" id="tgt-rrr-badge" style="color:var(--muted);">--</div>
+        </div>
+      </div>
+    </div>
+
     <div class="cell">
       <button class="btn-pill btn-save" onclick="saveLog()">
-        <i class="fa-solid fa-floppy-disk"></i> ログに保存
+        <i class="fa-solid fa-floppy-disk"></i> ログに保存（ターゲット含む）
       </button>
     </div>
   </div>
@@ -904,6 +971,61 @@ function calculateMetrics(){
   document.getElementById('res-status').innerText=label;
   document.getElementById('res-status').style.color=color;
   document.getElementById('res-threshold').innerText=`監視 ${tw.toFixed(1)}% / 買い ${tb.toFixed(1)}%`;
+  calculateTargets();
+}
+
+/* ════ 利確・損切りターゲット計算 ════ */
+function onSliderChange(){
+  const stopPct  = parseFloat(document.getElementById('stop-slider').value);
+  const profitPct= parseFloat(document.getElementById('profit-slider').value);
+  document.getElementById('stop-pct-label').innerText   = `-${stopPct.toFixed(1)} %`;
+  document.getElementById('profit-pct-label').innerText = `+${profitPct.toFixed(1)} %`;
+  calculateTargets();
+}
+
+function calculateTargets(){
+  const price = parseFloat(document.getElementById('current-price').value);
+  const ma    = parseFloat(document.getElementById('ma-value').value);
+  if(!price){
+    ['tgt-profit-ma','tgt-profit-ma-pct','tgt-profit-custom','tgt-profit-custom-pct',
+     'tgt-stop','tgt-stop-pct','tgt-rrr','tgt-rrr-badge'].forEach(id=>{
+      document.getElementById(id).innerText='--';
+    });
+    return;
+  }
+
+  const stopPct   = parseFloat(document.getElementById('stop-slider').value)  / 100;
+  const profitPct = parseFloat(document.getElementById('profit-slider').value) / 100;
+
+  // 利確① MA25回帰（BNFの基本ターゲット）
+  const profitMaPrice = ma || price * (1 + profitPct);
+  const profitMaPct   = ((profitMaPrice - price) / price * 100);
+
+  // 利確② カスタム幅
+  const profitCustomPrice = price * (1 + profitPct);
+  const profitCustomPct   = profitPct * 100;
+
+  // 損切りライン
+  const stopPrice = price * (1 - stopPct);
+  const stopPctVal= stopPct * 100;
+
+  // RRR（MA25回帰基準）
+  const reward = profitMaPrice - price;
+  const risk   = price - stopPrice;
+  const rrr    = risk > 0 ? reward / risk : 0;
+  const rrrGood= rrr >= 2;
+
+  // 表示
+  document.getElementById('tgt-profit-ma').innerText      = Math.round(profitMaPrice).toLocaleString()+'円';
+  document.getElementById('tgt-profit-ma-pct').innerText  = (profitMaPct>=0?'+':'')+profitMaPct.toFixed(2)+'%';
+  document.getElementById('tgt-profit-custom').innerText  = Math.round(profitCustomPrice).toLocaleString()+'円';
+  document.getElementById('tgt-profit-custom-pct').innerText = '+'+profitCustomPct.toFixed(1)+'%';
+  document.getElementById('tgt-stop').innerText           = Math.round(stopPrice).toLocaleString()+'円';
+  document.getElementById('tgt-stop-pct').innerText       = '-'+stopPctVal.toFixed(1)+'%';
+  document.getElementById('tgt-rrr').innerText            = '1 : '+rrr.toFixed(2);
+  document.getElementById('tgt-rrr').style.color          = rrrGood?'var(--green)':rrr>=1?'var(--orange)':'var(--red)';
+  document.getElementById('tgt-rrr-badge').innerText      = rrrGood?'✅ BNF基準クリア':rrr>=1?'⚠️ ギリギリ':'❌ リスク大';
+  document.getElementById('tgt-rrr-badge').style.color    = rrrGood?'var(--green)':rrr>=1?'var(--orange)':'var(--red)';
 }
 
 function loadToTool(code,price,ma){
@@ -1012,8 +1134,20 @@ function saveLog(){
   const kairi=document.getElementById('res-kairi').innerText;
   if(kairi==="-- %"){alert("乖離率を計算してから保存してください。");return;}
   savedLogs.unshift({
-    time:new Date().toLocaleString(),code:code||"不明",
-    kairi,status:document.getElementById('res-status').innerText,memo:""
+    time:       new Date().toLocaleString(),
+    code:       code||"不明",
+    kairi,
+    status:     document.getElementById('res-status').innerText,
+    price:      document.getElementById('current-price').value,
+    ma:         document.getElementById('ma-value').value,
+    tgtMa:      document.getElementById('tgt-profit-ma').innerText,
+    tgtMaPct:   document.getElementById('tgt-profit-ma-pct').innerText,
+    tgtCustom:  document.getElementById('tgt-profit-custom').innerText,
+    tgtCustomPct:document.getElementById('tgt-profit-custom-pct').innerText,
+    tgtStop:    document.getElementById('tgt-stop').innerText,
+    tgtStopPct: document.getElementById('tgt-stop-pct').innerText,
+    rrr:        document.getElementById('tgt-rrr').innerText,
+    memo:""
   });
   localStorage.setItem("bnf_saved_logs",JSON.stringify(savedLogs));
   alert("保存しました。");
@@ -1052,20 +1186,44 @@ function renderLogs(){
     <div class="stat-cell"><div class="stat-num" style="color:var(--green)">${savedLogs.filter(l=>l.status&&l.status.includes("買い")).length}</div><div class="stat-lbl">買いゾーン</div></div>
     <div class="stat-cell"><div class="stat-num" style="color:var(--blue)">${savedLogs.length?((+savedLogs.reduce((s,l)=>s+(parseFloat(l.kairi)||0),0)/savedLogs.length).toFixed(1))+"%":"--"}</div><div class="stat-lbl">平均乖離率</div></div>`;
   if(!savedLogs.length){c.innerHTML=`<div class="cell" style="color:var(--muted);text-align:center;padding:32px;">ログはありません</div>`;return;}
-  c.innerHTML=savedLogs.map(l=>`
-    <div class="log-card">
-      <div class="log-top">${escapeHtml(l.time)}</div>
-      <div class="log-mid">
+  c.innerHTML=savedLogs.map(l=>{
+    const hasTarget=l.tgtMa&&l.tgtMa!=="--";
+    const isBuy=l.status&&l.status.includes("買い");
+    return `<div class="log-card">
+      <div class="log-top" style="display:flex;justify-content:space-between;">
+        <span>${escapeHtml(l.time)}</span>
+        ${l.rrr&&l.rrr!=="--"?`<span style="font-size:.72rem;font-weight:700;color:var(--acc);">RRR ${escapeHtml(l.rrr)}</span>`:""}
+      </div>
+      <div class="log-mid" style="margin-bottom:${hasTarget?'8px':'0'};">
         <span class="log-code">${escapeHtml(l.code)}</span>
-        <span class="log-kairi" style="color:${l.status&&l.status.includes("買い")?"var(--green)":"var(--muted)"}">${escapeHtml(l.kairi)}</span>
+        <span class="log-kairi" style="color:${isBuy?"var(--green)":"var(--muted)"}">${escapeHtml(l.kairi)}</span>
         <span style="font-size:.78rem;color:var(--muted);">${escapeHtml(l.status||"")}</span>
       </div>
-    </div>`).join('');
+      ${hasTarget?`
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <div style="background:rgba(0,186,124,.08);border:1px solid rgba(0,186,124,.3);border-radius:8px;padding:7px 10px;">
+          <div style="font-size:.65rem;color:var(--muted);margin-bottom:2px;">🎯 利確①MA25</div>
+          <div style="font-size:.88rem;font-weight:800;color:var(--green);font-family:'Courier New',monospace;">${escapeHtml(l.tgtMa||"--")}</div>
+          <div style="font-size:.7rem;color:var(--green);">${escapeHtml(l.tgtMaPct||"")}</div>
+        </div>
+        <div style="background:rgba(29,155,240,.08);border:1px solid rgba(29,155,240,.3);border-radius:8px;padding:7px 10px;">
+          <div style="font-size:.65rem;color:var(--muted);margin-bottom:2px;">🎯 利確②カスタム</div>
+          <div style="font-size:.88rem;font-weight:800;color:var(--blue);font-family:'Courier New',monospace;">${escapeHtml(l.tgtCustom||"--")}</div>
+          <div style="font-size:.7rem;color:var(--blue);">${escapeHtml(l.tgtCustomPct||"")}</div>
+        </div>
+        <div style="background:rgba(244,33,46,.08);border:1px solid rgba(244,33,46,.3);border-radius:8px;padding:7px 10px;">
+          <div style="font-size:.65rem;color:var(--muted);margin-bottom:2px;">🔪 損切り</div>
+          <div style="font-size:.88rem;font-weight:800;color:var(--red);font-family:'Courier New',monospace;">${escapeHtml(l.tgtStop||"--")}</div>
+          <div style="font-size:.7rem;color:var(--red);">${escapeHtml(l.tgtStopPct||"")}</div>
+        </div>
+      </div>`:""}
+    </div>`;
+  }).join('');
 }
 function exportCSV(){
   if(!savedLogs.length){alert("ログがありません。");return;}
-  const rows=savedLogs.map(l=>[l.time,l.code,l.kairi,l.status].join(",")).join("\n");
-  const blob=new Blob(["\uFEFF日時,銘柄,乖離率,判定\n"+rows],{type:"text/csv;charset=utf-8;"});
+  const rows=savedLogs.map(l=>[l.time,l.code,l.kairi,l.status,l.tgtMa||"--",l.tgtMaPct||"--",l.tgtStop||"--",l.tgtStopPct||"--",l.rrr||"--"].join(",")).join("\n");
+  const blob=new Blob(["\uFEFF日時,銘柄,乖離率,判定,利確①MA25,利確①%,損切りライン,損切り%,RRR\n"+rows],{type:"text/csv;charset=utf-8;"});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download="bnf_log.csv";a.click();
