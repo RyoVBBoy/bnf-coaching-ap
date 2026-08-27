@@ -623,6 +623,8 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("onboardingModal").classList.add("active");
   }
   loadConfigToUI();
+  renderLogs();
+  renderWatchlist();
 });
 
 function loadConfigToUI(){
@@ -675,199 +677,198 @@ function saveDefaultMode(){
 }
 
 function saveDefaultStop(){
-  defaultStop = parseFloat(document.getElementById('cfg-default-stop').value) || 3.0;
-  localStorage.setItem("bnf_stop_default", defaultStop);
-  document.getElementById('stop-slider').value = defaultStop;
+  const val = parseFloat(document.getElementById('cfg-default-stop').value) || 3.0;
+  defaultStop = val;
+  localStorage.setItem("bnf_stop_default", val.toString());
+  document.getElementById('stop-slider').value = val;
   onSliderChange();
 }
 
-function exportAllData(){
-  const data = { savedLogs, watchlist, geminiApiKey, workerUrl, isMiniStock, defaultStop };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `bnf_backup_${Date.now()}.json`;
-  a.click();
-}
+/* ════ 指数バックオフ付き GEMINI API エンジン (503 / 429 エラー自動再試行) ════ */
+async function callGeminiWithRetry(prompt, modelName = 'gemini-2.5-flash', maxRetries = 3, initialDelayMs = 2000) {
+  if (!window.GoogleGenerativeAI) {
+    throw new Error('GoogleGenerativeAI ライブラリが読み込まれていません。');
+  }
+  if (!geminiApiKey) {
+    throw new Error('Gemini APIキーが設定されていません。設定画面（歯車アイコン）でAPIキーを保存してください。');
+  }
 
-function importAllData(){
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'application/json';
-  input.onchange = e => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = event => {
-      try{
-        const data = JSON.parse(event.target.result);
-        if(data.savedLogs) localStorage.setItem("bnf_saved_logs", JSON.stringify(data.savedLogs));
-        if(data.watchlist) localStorage.setItem("bnf_watchlist", JSON.stringify(data.watchlist));
-        if(data.geminiApiKey) localStorage.setItem("bnf_gemini_key", data.geminiApiKey);
-        if(data.workerUrl) localStorage.setItem("bnf_worker_url", data.workerUrl);
-        location.reload();
-      }catch(err){ alert("ファイルの読み込みに失敗しました"); }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
+  const genAI = new window.GoogleGenerativeAI(geminiApiKey);
+  const model = genAI.getGenerativeModel({ model: modelName });
 
-function resetAllApp(){
-  if(confirm("全データおよび設定を初期化しますか？")){
-    localStorage.clear();
-    location.reload();
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      const errorMsg = String(error?.message || error);
+      const isRetryable = errorMsg.includes('503') || errorMsg.includes('429');
+
+      if (isRetryable && attempt < maxRetries) {
+        // 指数バックオフ計算: 2^attempt * initialDelayMs (例: 2000ms -> 4000ms -> 8000ms)
+        const delay = Math.pow(2, attempt) * initialDelayMs;
+        console.warn(`[Retry Attempt ${attempt + 1}/${maxRetries}] 通信エラー発生 (${errorMsg})。${delay / 1000}秒後に自動再試行します...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        throw error;
+      }
+    }
   }
 }
 
-/* ════ ナビ画面切替 ════ */
-function switchScreen(id, el){
+/* ════ 画面切り替え & タブ切り替え ════ */
+function switchScreen(screenId, navEl){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('screen-' + id).classList.add('active');
-  el.classList.add('active');
-  if(id === 'log') renderLogs();
-  if(id === 'tools') renderWatchlist();
+  document.getElementById('screen-' + screenId).classList.add('active');
+  if(navEl) navEl.classList.add('active');
 }
 
-function switchInner(id, el){
-  document.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
+function switchInner(paneId, tabEl){
   document.querySelectorAll('.inner-pane').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('pane-' + id).classList.add('active');
+  document.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('pane-' + paneId).classList.add('active');
+  if(tabEl) tabEl.classList.add('active');
 }
 
-/* ════ Gemini API ════ */
-async function callGemini(prompt, useSearch = false){
-  if(!geminiApiKey) throw new Error("APIキー未設定");
-  const genAI = new window.GoogleGenerativeAI(geminiApiKey);
-  const tools = useSearch ? [{googleSearch:{}}] : undefined;
-  const model = genAI.getGenerativeModel({model:"gemini-2.5-flash", ...(tools && {tools})});
-  const result = await model.generateContent(prompt);
-  return result.response.candidates[0].content.parts.filter(p=>p.text).map(p=>p.text).join("");
-}
-
-/* ════ 1. 地合い同期 ════ */
-function setMktCell(valId, chgId, val, chg, reverseColor = false) {
-  const vElem = document.getElementById(valId);
-  const cElem = document.getElementById(chgId);
-  if (vElem) vElem.innerText = typeof val === 'number' ? val.toLocaleString() : val;
-  if (cElem) {
-    const prefix = chg >= 0 ? "+" : "";
-    cElem.innerText = `${prefix}${chg}%`;
-    cElem.className = "mkt-chg " + ((chg >= 0 ^ reverseColor) ? "up" : "dn");
-  }
-}
-
-async function syncMarketWithAI(){
-  if(!geminiApiKey){ alert("設定（歯車）アイコンからAPIキーを入力してください。"); return; }
-  const btn = document.getElementById('market-sync-btn');
-  const st = document.getElementById('market-sync-status');
-  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 同期中...';
-  st.innerText = "日本市場の最新データを検索中..."; st.style.color = "var(--blue)";
-  try{
-    const raw = await callGemini(
-      `今日の日本株市場を検索し、以下のJSONのみで出力してください。説明不要。
-{"nikkei":38500,"nikkei_chg":-1.2,"usdjpy":152.4,"usdjpy_chg":0.3,"down_stocks":1120,"score":35,"status":"パニック売り警戒圏","comment":"「25日線乖離率が広がっている。引き付けていく局面。」","report":"【相場観分析】..."}`,
-      true
-    );
-    const m = raw.match(/\{[\s\S]*?\}/);
-    if(!m) throw new Error("JSON取得失敗");
-    const d = JSON.parse(m[0]);
-
-    setMktCell('mkt-nikkei','mkt-nikkei-chg',d.nikkei,d.nikkei_chg);
-    setMktCell('mkt-usdjpy','mkt-usdjpy-chg',d.usdjpy,d.usdjpy_chg,true);
-
-    document.getElementById('mkt-down').innerText = d.down_stocks;
-    document.getElementById('live-score').innerText = d.score;
-    document.getElementById('live-status').innerText = d.status;
-    document.getElementById('bnf-comment').innerText = d.comment;
-    if(d.report) document.getElementById('ai-report-text').innerText = d.report;
-    document.getElementById('ai-report-time').innerText = new Date().toLocaleTimeString();
-
-    const pct = Math.min(100, Math.max(0, (d.down_stocks / 1400) * 100));
-    document.getElementById('cd-fill').style.width = pct + "%";
-    document.getElementById('cd-current').innerText = `${d.down_stocks} 銘柄が値下がり中`;
-    document.getElementById('cd-remain').innerText = `あと ${Math.max(0, 1400 - d.down_stocks)} 銘柄`;
-
-    st.innerText = "同期完了 ✅"; st.style.color = "var(--green)";
-  }catch(e){
-    st.innerText = "エラー: " + e.message; st.style.color = "var(--red)";
-  }finally{
-    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> AIで今日の地合いをリアルタイム同期';
-  }
-}
-
-/* ════ 2. ツール（計算 & ターゲット & ナンピン） ════ */
-function setStockMode(isMini){
-  isMiniStock = isMini;
-  document.getElementById('mode-normal').classList.toggle('active', !isMini);
-  document.getElementById('mode-mini').classList.toggle('active', isMini);
+function setStockMode(mini){
+  isMiniStock = mini;
+  document.getElementById('mode-normal').classList.toggle('active', !isMiniStock);
+  document.getElementById('mode-mini').classList.toggle('active', isMiniStock);
   calculateMetrics();
 }
 
+/* ════ 地合い AI同期 ════ */
+async function syncMarketWithAI(){
+  const statusEl = document.getElementById('market-sync-status');
+  statusEl.innerText = "AI同期中 (指数バックオフ適用中)...";
+  statusEl.style.color = "var(--blue)";
+
+  const prompt = `日本株式市場の最新リアルタイム状況を分析し、以下のJSON形式のみで回答してください。余計な文章やMarkdown装飾は含めないでください。
+{
+  "nikkei": "日経平均株価 (例: 38,500.25)",
+  "nikkeiChg": "前日比 (例: +250.10)",
+  "decliningCount": 1150,
+  "usdjpy": "ドル円 (例: 155.20)",
+  "usdjpyChg": "前日比 (例: -0.45)",
+  "score": 75,
+  "statusText": "絶好の逆張り好機 / 静観推奨 など",
+  "bnfComment": "BNFのトレード思考に基づいた短評 (150文字以内)",
+  "aiReport": "今日の相場の地合いとセクター動向の詳細レポート (200文字程度)"
+}`;
+
+  try {
+    const rawText = await callGeminiWithRetry(prompt);
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("JSON形式の抽出に失敗しました");
+    
+    const data = JSON.parse(jsonMatch[0]);
+
+    document.getElementById('mkt-nikkei').innerText = data.nikkei || "--";
+    document.getElementById('mkt-nikkei-chg').innerText = data.nikkeiChg || "--";
+    document.getElementById('mkt-down').innerText = (data.decliningCount || "--") + " 銘柄";
+    document.getElementById('mkt-usdjpy').innerText = data.usdjpy || "--";
+    document.getElementById('mkt-usdjpy-chg').innerText = data.usdjpyChg || "--";
+
+    document.getElementById('live-score').innerText = data.score ?? "--";
+    document.getElementById('live-status').innerText = data.statusText || "";
+
+    const dec = parseInt(data.decliningCount) || 0;
+    const fillPct = Math.min(100, Math.max(0, (dec / 1400) * 100));
+    document.getElementById('cd-fill').style.width = fillPct + "%";
+    document.getElementById('cd-current').innerText = `${dec} 銘柄が値下がり中`;
+    document.getElementById('cd-remain').innerText = `あと ${Math.max(0, 1400 - dec)} 銘柄`;
+
+    document.getElementById('bnf-comment').innerText = `「${data.bnfComment || "相場全体を引き付けて観察中"}」`;
+    document.getElementById('ai-report-text').innerText = data.aiReport || "取得完了";
+    document.getElementById('ai-report-time').innerText = new Date().toLocaleTimeString();
+
+    statusEl.innerText = "同期完了 ✅";
+    statusEl.style.color = "var(--green)";
+  } catch (err) {
+    console.error(err);
+    statusEl.innerText = "同期失敗: " + err.message;
+    statusEl.style.color = "var(--red)";
+  }
+}
+
+/* ════ 逆張り分析ツール ════ */
 function onToolCodeInput(){
-  const code = document.getElementById('tool-code').value;
-  const secElem = document.getElementById('tool-sector-display');
-  if(!code) { secElem.value = "コード入力で自動判定"; return; }
+  const code = document.getElementById('tool-code').value.trim();
+  const sectorEl = document.getElementById('tool-sector-display');
+  if(!code) { sectorEl.value = "コード入力で自動判定"; return; }
   
-  if (code.startsWith('6') || code.startsWith('7')) secElem.value = "ハイテク・半導体/自動車";
-  else if (code.startsWith('9')) secElem.value = "海運/インフラ/電力";
-  else if (code.startsWith('4')) secElem.value = "新興グロース/バイオ";
-  else secElem.value = "バリュー/大型";
+  if(["6920","8035","6758","6501"].includes(code)) sectorEl.value = "ハイテク・半導体";
+  else if(["7203","7267"].includes(code)) sectorEl.value = "自動車・輸出";
+  else if(["8306","8316"].includes(code)) sectorEl.value = "銀行・金融";
+  else sectorEl.value = "一般セクター";
+  calculateMetrics();
 }
 
 async function syncSingleStockTool(){
-  const code = document.getElementById('tool-code').value;
+  const code = document.getElementById('tool-code').value.trim();
   if(!code){ alert("銘柄コードを入力してください"); return; }
-  const st = document.getElementById('tool-sync-status');
-  st.innerText = "データ取得中...";
-  try{
-    if(workerUrl){
-      const res = await fetch(`${workerUrl}?symbol=${code}.T`);
-      const data = await res.json();
-      const closes = data.chart.result[0].indicators.quote[0].close.filter(v=>v!==null);
-      const price = closes[closes.length - 1];
-      const sma25 = closes.slice(-25).reduce((a,b)=>a+b,0) / 25;
-      
-      document.getElementById('current-price').value = Math.round(price);
-      document.getElementById('ma-value').value = Math.round(sma25);
-    } else {
-      const raw = await callGemini(`銘柄コード${code}の現在の最新株価と25日移動平均線を検索して次のJSONのみ出力: {"price":2000,"ma":2200}`, true);
-      const m = raw.match(/\{[\s\S]*?\}/);
-      if(m){
-        const d = JSON.parse(m[0]);
-        document.getElementById('current-price').value = d.price;
-        document.getElementById('ma-value').value = d.ma;
-      }
-    }
-    st.innerText = "同期成功"; st.style.color = "var(--green)";
+
+  const statusEl = document.getElementById('tool-sync-status');
+  statusEl.innerText = `銘柄 ${code} を検索同期中...`;
+  statusEl.style.color = "var(--blue)";
+
+  const prompt = `日本株の銘柄コード ${code} について、現在の株価と25日移動平均線を調査し、以下のJSONのみで回答してください。
+{
+  "price": 21050,
+  "ma25": 23100,
+  "sectorName": "半導体製造装置"
+}`;
+
+  try {
+    const rawText = await callGeminiWithRetry(prompt);
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("データの解析に失敗しました");
+    
+    const data = JSON.parse(jsonMatch[0]);
+    if(data.price) document.getElementById('current-price').value = data.price;
+    if(data.ma25) document.getElementById('ma-value').value = data.ma25;
+    if(data.sectorName) document.getElementById('tool-sector-display').value = data.sectorName;
+
     calculateMetrics();
-  }catch(e){
-    st.innerText = "取得失敗: " + e.message; st.style.color = "var(--red)";
+    statusEl.innerText = "株価取得成功 ✅";
+    statusEl.style.color = "var(--green)";
+  } catch (err) {
+    statusEl.innerText = "取得エラー: " + err.message;
+    statusEl.style.color = "var(--red)";
   }
 }
 
 function calculateMetrics(){
   const price = parseFloat(document.getElementById('current-price').value);
   const ma = parseFloat(document.getElementById('ma-value').value);
-  if(!price || !ma) return;
 
-  const capital = price * (isMiniStock ? 1 : 100);
+  if(!price || !ma){
+    document.getElementById('res-capital').innerText = "-- 円";
+    document.getElementById('res-kairi').innerText = "-- %";
+    document.getElementById('res-status').innerText = "未入力";
+    return;
+  }
+
+  const unit = isMiniStock ? 1 : 100;
+  const capital = price * unit;
   const kairi = ((price - ma) / ma) * 100;
 
-  document.getElementById('res-capital').innerText = `¥${Math.round(capital).toLocaleString()}`;
-  document.getElementById('res-kairi').innerText = `${kairi.toFixed(2)} %`;
+  document.getElementById('res-capital').innerText = capital.toLocaleString() + " 円";
+  document.getElementById('res-kairi').innerText = kairi.toFixed(2) + " %";
+  document.getElementById('res-kairi').className = "res-val " + (kairi < 0 ? "dn" : "up");
 
-  const statusElem = document.getElementById('res-status');
+  const statusEl = document.getElementById('res-status');
   if(kairi <= -15){
-    statusElem.innerText = "🎯 買いシグナル圏内";
-    statusElem.style.color = "var(--green)";
+    statusEl.innerText = "🔥 絶好の逆張り水準 (買い検討)";
+    statusEl.style.color = "var(--green)";
   } else if(kairi <= -10){
-    statusElem.innerText = "👀 監視ゾーン";
-    statusElem.style.color = "var(--orange)";
+    statusEl.innerText = "👀 打診買い検討水準";
+    statusEl.style.color = "var(--blue)";
   } else {
-    statusElem.innerText = "静観";
-    statusElem.style.color = "var(--muted)";
+    statusEl.innerText = "⏸️ 様子見推奨 (乖離不足)";
+    statusEl.style.color = "var(--muted)";
   }
 
   onSliderChange();
@@ -876,88 +877,91 @@ function calculateMetrics(){
 function onSliderChange(){
   const price = parseFloat(document.getElementById('current-price').value);
   const ma = parseFloat(document.getElementById('ma-value').value);
+
   const stopPct = parseFloat(document.getElementById('stop-slider').value);
-  const profitPct = parseFloat(document.getElementById('profit-slider').value);
+  const profitCustomPct = parseFloat(document.getElementById('profit-slider').value);
 
   document.getElementById('stop-pct-label').innerText = `-${stopPct.toFixed(1)} %`;
-  document.getElementById('profit-pct-label').innerText = `+${profitPct.toFixed(1)} %`;
+  document.getElementById('profit-pct-label').innerText = `+${profitCustomPct.toFixed(1)} %`;
 
-  if(!price) return;
-
-  const stopPrice = price * (1 - stopPct / 100);
-  const customProfitPrice = price * (1 + profitPct / 100);
-
-  document.getElementById('tgt-stop').innerText = `¥${Math.round(stopPrice).toLocaleString()}`;
-  document.getElementById('tgt-stop-pct').innerText = `-${stopPct.toFixed(1)} %`;
-
-  document.getElementById('tgt-profit-custom').innerText = `¥${Math.round(customProfitPrice).toLocaleString()}`;
-  document.getElementById('tgt-profit-custom-pct').innerText = `+${profitPct.toFixed(1)} %`;
-
-  if(ma){
-    const maProfitPct = ((ma - price) / price) * 100;
-    document.getElementById('tgt-profit-ma').innerText = `¥${Math.round(ma).toLocaleString()}`;
-    document.getElementById('tgt-profit-ma-pct').innerText = `${maProfitPct >= 0 ? '+' : ''}${maProfitPct.toFixed(1)} %`;
-
-    if(maProfitPct > 0 && stopPct > 0){
-      const rrr = (maProfitPct / stopPct).toFixed(2);
-      document.getElementById('tgt-rrr').innerText = rrr;
-      const rrrBadge = document.getElementById('tgt-rrr-badge');
-      if(rrr >= 2.0){ rrrBadge.innerText = "優良 (2.0以上)"; rrrBadge.style.color = "var(--green)"; }
-      else if(rrr >= 1.0){ rrrBadge.innerText = "標準"; rrrBadge.style.color = "var(--orange)"; }
-      else { rrrBadge.innerText = "リスク高"; rrrBadge.style.color = "var(--red)"; }
-    }
-  }
-}
-
-function saveLog(){
-  const code = document.getElementById('tool-code').value || "----";
-  const price = document.getElementById('current-price').value;
-  const kairi = document.getElementById('res-kairi').innerText;
-  if(!price){ alert("価格を入力してください"); return; }
-
-  const item = {
-    id: Date.now(),
-    date: new Date().toLocaleString(),
-    code: code,
-    price: price,
-    kairi: kairi,
-    status: document.getElementById('res-status').innerText
-  };
-  savedLogs.unshift(item);
-  localStorage.setItem("bnf_saved_logs", JSON.stringify(savedLogs));
-  alert("ログに保存しました");
-}
-
-/* ════ ウォッチリスト & ナンピン ════ */
-function renderWatchlist(){
-  const container = document.getElementById('watchlist-container');
-  if(!container) return;
-  if(watchlist.length === 0){
-    container.innerHTML = `<div style="padding:16px;text-align:center;color:var(--muted);font-size:.85rem;">登録されている銘柄はありません</div>`;
+  if(!price){
+    document.getElementById('tgt-profit-ma').innerText = "-- 円";
+    document.getElementById('tgt-profit-custom').innerText = "-- 円";
+    document.getElementById('tgt-stop').innerText = "-- 円";
+    document.getElementById('tgt-rrr').innerText = "--";
     return;
   }
-  container.innerHTML = watchlist.map((item, idx) => `
-    <div class="wl-item">
-      <div class="wl-code">${escapeHtml(item.code)}</div>
-      <div class="wl-name">${escapeHtml(item.name || "未設定")}</div>
-      <div class="wl-kairi" style="color:${(item.kairi||0)<=-10?'var(--green)':'var(--text)'}">${item.kairi ? item.kairi+'%' : '--'}</div>
-      <button class="wl-del" onclick="removeWatchlist(${idx})"><i class="fa-solid fa-trash"></i></button>
-    </div>
-  `).join('');
+
+  // 1. 利確①（MA25回帰）
+  const profitMaPrice = ma || price;
+  const profitMaPct = ((profitMaPrice - price) / price) * 100;
+  document.getElementById('tgt-profit-ma').innerText = Math.round(profitMaPrice).toLocaleString() + " 円";
+  document.getElementById('tgt-profit-ma-pct').innerText = (profitMaPct >= 0 ? "+" : "") + profitMaPct.toFixed(1) + " %";
+
+  // 2. 利確②（カスタム）
+  const profitCustomPrice = price * (1 + profitCustomPct / 100);
+  document.getElementById('tgt-profit-custom').innerText = Math.round(profitCustomPrice).toLocaleString() + " 円";
+  document.getElementById('tgt-profit-custom-pct').innerText = "+" + profitCustomPct.toFixed(1) + " %";
+
+  // 3. 損切りライン
+  const stopPrice = price * (1 - stopPct / 100);
+  document.getElementById('tgt-stop').innerText = Math.round(stopPrice).toLocaleString() + " 円";
+  document.getElementById('tgt-stop-pct').innerText = "-" + stopPct.toFixed(1) + " %";
+
+  // 4. RRR (リスクリワード比)
+  const risk = price - stopPrice;
+  const reward = profitMaPrice - price;
+  if(risk > 0 && reward > 0){
+    const rrr = reward / risk;
+    document.getElementById('tgt-rrr').innerText = rrr.toFixed(2);
+    const badgeEl = document.getElementById('tgt-rrr-badge');
+    if(rrr >= 2.0){
+      badgeEl.innerText = "優良 (RRR ≥ 2.0)";
+      badgeEl.style.color = "var(--green)";
+    } else if(rrr >= 1.0){
+      badgeEl.innerText = "普通";
+      badgeEl.style.color = "var(--blue)";
+    } else {
+      badgeEl.innerText = "リスク過大";
+      badgeEl.style.color = "var(--red)";
+    }
+  } else {
+    document.getElementById('tgt-rrr').innerText = "--";
+    document.getElementById('tgt-rrr-badge').innerText = "--";
+  }
 }
 
+/* ════ ウォッチリスト ════ */
 function addWatchlist(){
   const code = document.getElementById('wl-code').value.trim();
-  const name = document.getElementById('wl-name').value.trim();
+  const name = document.getElementById('wl-name').value.trim() || `銘柄 ${code}`;
   if(!code) return;
-  watchlist.push({ code, name, kairi: null });
+
+  watchlist.push({ code, name, kairi: 0 });
   localStorage.setItem("bnf_watchlist", JSON.stringify(watchlist));
   document.getElementById('wl-code').value = "";
   document.getElementById('wl-name').value = "";
   renderWatchlist();
 }
 
-function removeWatchlist(idx){
+function renderWatchlist(){
+  const container = document.getElementById('watchlist-container');
+  if(watchlist.length === 0){
+    container.innerHTML = '<div class="cell" style="color:var(--muted);font-size:.8rem;">登録された銘柄はありません。</div>';
+    return;
+  }
+
+  container.innerHTML = watchlist.map((item, idx) => `
+    <div class="wl-item">
+      <div class="wl-code">${escapeHtml(item.code)}</div>
+      <div class="wl-name">${escapeHtml(item.name)}</div>
+      <div class="wl-kairi ${item.kairi < 0 ? 'dn' : 'up'}">${item.kairi.toFixed(1)}%</div>
+      <button class="wl-del" onclick="deleteWatchlist(${idx})"><i class="fa-solid fa-trash"></i></button>
+    </div>
+  `).join('');
+}
+
+function deleteWatchlist(idx){
   watchlist.splice(idx, 1);
   localStorage.setItem("bnf_watchlist", JSON.stringify(watchlist));
   renderWatchlist();
@@ -965,163 +969,282 @@ function removeWatchlist(idx){
 
 async function refreshWatchlist(){
   if(watchlist.length === 0) return;
-  for(let item of watchlist){
-    try{
-      if(workerUrl){
-        const res = await fetch(`${workerUrl}?symbol=${item.code}.T`);
-        const data = await res.json();
-        const closes = data.chart.result[0].indicators.quote[0].close.filter(v=>v!==null);
-        const price = closes[closes.length - 1];
-        const sma25 = closes.slice(-25).reduce((a,b)=>a+b,0) / 25;
-        item.kairi = (((price - sma25) / sma25) * 100).toFixed(1);
+  alert("AIで監視リストを一括同期します (リトライエンジン作動)");
+  
+  for(let i = 0; i < watchlist.length; i++){
+    try {
+      const prompt = `日本株 ${watchlist[i].code} の現在株価と25日移動平均線からの乖離率(%)を算出し、以下のJSONのみで回答してください。 {"kairi": -12.5}`;
+      const raw = await callGeminiWithRetry(prompt);
+      const match = raw.match(/\{[\s\S]*\}/);
+      if(match){
+        const res = JSON.parse(match[0]);
+        if(res.kairi !== undefined) watchlist[i].kairi = parseFloat(res.kairi);
       }
-    }catch(e){}
+    } catch(e) {
+      console.error(e);
+    }
   }
   localStorage.setItem("bnf_watchlist", JSON.stringify(watchlist));
   renderWatchlist();
 }
 
+/* ════ ナンピンシミュレータ ════ */
 function calcPos(){
   const buy = parseFloat(document.getElementById('pos-buy').value);
   const qty = parseFloat(document.getElementById('pos-qty').value);
   const now = parseFloat(document.getElementById('pos-now').value);
-  const cash = parseFloat(document.getElementById('pos-cash').value);
-  const res = document.getElementById('pos-result');
+  const cash = parseFloat(document.getElementById('pos-cash').value) || 0;
 
-  if(!buy || !qty || !now){ res.style.display="none"; return; }
-  res.style.display="block";
+  const resContainer = document.getElementById('pos-result');
+  if(!buy || !qty || !now){
+    resContainer.style.display = "none";
+    return;
+  }
 
-  const diff = (now - buy) * qty;
-  const pct = ((now - buy) / buy) * 100;
-  
-  res.innerHTML = `
-    <div>含み損益: <b style="color:${diff>=0?'var(--green)':'var(--red)'}">${diff>=0?'+':''}${Math.round(diff).toLocaleString()} 円 (${pct.toFixed(2)}%)</b></div>
-    ${cash ? `<div style="font-size:.8rem;color:var(--muted);margin-top:4px;">残高に対するリスク比率: ${((Math.abs(diff)/cash)*100).toFixed(1)}%</div>` : ''}
+  const totalCost = buy * qty;
+  const currentValue = now * qty;
+  const pnl = currentValue - totalCost;
+  const pnlPct = ((now - buy) / buy) * 100;
+
+  resContainer.style.display = "block";
+  resContainer.innerHTML = `
+    <div><b>含み損益:</b> <span style="color:${pnl >= 0 ? 'var(--red)' : 'var(--blue)'};font-weight:800;">${pnl.toLocaleString()} 円 (${pnlPct.toFixed(2)}%)</span></div>
+    <div><b>現在の評価額:</b> ${currentValue.toLocaleString()} 円</div>
+    <div style="margin-top:6px;font-size:.78rem;color:var(--muted);">
+      同株数を現在値でナンピン買いする場合: 必要資金 ${(now * qty).toLocaleString()} 円 / 平均取得単価 ${((buy + now) / 2).toLocaleString()} 円
+    </div>
   `;
 }
 
-/* ════ 3. 全株スキャン ════ */
+/* ════ 全株スキャン ════ */
 async function runFullMarketScan(){
-  if(!geminiApiKey){ alert("設定画面からAPIキーを入力してください"); return; }
   const btn = document.getElementById('scan-btn');
-  const st = document.getElementById('scan-status');
-  btn.disabled = true; st.innerText = "東証全銘柄をAI検索中...";
+  const statusEl = document.getElementById('scan-status');
+  const count = document.getElementById('scan-count').value;
+  const sector = document.getElementById('scan-sector').value;
 
-  try{
-    const raw = await callGemini(
-      `東証全銘柄から現在BNF手法の逆張り買い条件（25日移動平均線からの大幅マイナス乖離）に合致する上位銘柄を検索し、以下のJSON配列のみを出力してください:
-[{"code":"6920","name":"レーザーテック","price":20500,"kairi":-16.5,"reason":"半導体株一斉安により急落。25日線乖離率-16.5%に達する"}]`,
-      true
-    );
-    const m = raw.match(/\[[\s\S]*?\]/);
-    if(!m) throw new Error("スキャン結果の解析に失敗しました");
-    const list = JSON.parse(m[0]);
+  btn.disabled = true;
+  statusEl.innerText = "東証全銘柄をAIスキャン中 (自動リトライ対応)...";
+  statusEl.style.color = "var(--acc)";
 
+  const prompt = `日本株（東証上場銘柄）の中から、現在25日移動平均線から大きくマイナス乖離している（逆張り好機）銘柄を${count}件抽出してください。セクター指定: ${sector}。
+回答は必ず以下のJSON配列のみを出力してください。余分な記述は不要です。
+[
+  {
+    "code": "6920",
+    "name": "レーザーテック",
+    "price": "21,050円",
+    "kairi": "-16.2%",
+    "reason": "半導体株全体の急落に伴う過熱感冷え込み。乖離率15%超え到達。"
+  }
+]`;
+
+  try {
+    const raw = await callGeminiWithRetry(prompt);
+    const match = raw.match(/\[[\s\S]*\]/);
+    if(!match) throw new Error("スキャン結果のJSON抽出に失敗しました");
+
+    const items = JSON.parse(match[0]);
     const container = document.getElementById('full-scan-results');
+    
     container.innerHTML = `
       <div class="full-scan-result">
-        ${list.map(item => `
+        ${items.map(it => `
           <div class="fsr-item">
             <div class="fsr-meta">
-              <span class="fsr-name">${escapeHtml(item.name)} (${item.code})</span>
-              <span class="scan-badge badge-buy">${item.kairi}%</span>
+              <span class="fsr-name">[${escapeHtml(it.code)}] ${escapeHtml(it.name)}</span>
+              <span class="res-val dn" style="font-size:1rem;">${escapeHtml(it.kairi)}</span>
             </div>
-            <div>株価: ¥${item.price ? item.price.toLocaleString() : '--'}</div>
-            <div class="fsr-reason">${escapeHtml(item.reason)}</div>
+            <div style="font-size:.78rem;color:var(--text);">現在値: ${escapeHtml(it.price)}</div>
+            <div class="fsr-reason">${escapeHtml(it.reason)}</div>
           </div>
         `).join('')}
       </div>
     `;
 
     document.getElementById('last-scan-time').innerText = "最終スキャン: " + new Date().toLocaleTimeString();
-    st.innerText = "スキャン完了 ✅";
-  }catch(e){
-    st.innerText = "エラー: " + e.message;
-  }finally{
+    statusEl.innerText = "スキャン完了 ✅";
+    statusEl.style.color = "var(--green)";
+
+    if(Notification.permission === "granted"){
+      new Notification("全株スキャン完了", { body: `25日線乖離銘柄が${items.length}件抽出されました。` });
+    }
+  } catch(err){
+    statusEl.innerText = "スキャン失敗: " + err.message;
+    statusEl.style.color = "var(--red)";
+  } finally {
     btn.disabled = false;
   }
 }
 
 function requestNotifPermission(){
-  if("Notification" in window){
-    Notification.requestPermission().then(p => alert("通知設定: " + p));
-  } else {
-    alert("このブラウザは通知に対応していません");
+  if(!("Notification" in window)){ alert("お使いのブラウザは通知に対応していません"); return; }
+  Notification.requestPermission().then(perm => {
+    alert(perm === "granted" ? "通知が許可されました ✅" : "通知が拒否されました");
+  });
+}
+
+/* ════ AI 脳内チャット ════ */
+async function sendChat(){
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if(!text) return;
+
+  appendChatBubble(text, 'user');
+  input.value = "";
+
+  const prompt = `あなたは伝説の個人投資家BNFのトレード思考を模倣するAIアシスタントです。
+ユーザーからの質問: 「${text}」
+株の逆張り手法（25日線マイナス乖離、全体地合いの考慮、過熱感の冷め、板の厚み等）の観点から、的確で冷徹かつ実務的なアドバイスを行ってください。`;
+
+  try {
+    const aiText = await callGeminiWithRetry(prompt);
+    appendChatBubble(aiText, 'bnf');
+  } catch(err) {
+    appendChatBubble("エラーが発生しました: " + err.message, 'bnf');
   }
 }
 
-/* ════ 4. AI脳内 ════ */
-function sendTmpl(txt){
-  document.getElementById('chat-input').value = txt;
+function sendTmpl(msg){
+  document.getElementById('chat-input').value = msg;
   sendChat();
 }
 
-async function sendChat(){
-  const input = document.getElementById('chat-input');
-  const txt = input.value.trim();
-  if(!txt) return;
-
+function appendChatBubble(text, sender){
   const box = document.getElementById('chat-box');
-  box.innerHTML += `<div class="bubble user">${escapeHtml(txt)}</div>`;
-  input.value = "";
-  box.scrollTop = box.scrollHeight;
-
-  try {
-    const res = await callGemini(`あなたは伝説のトレーダーBNFです。短く的確に答えてください: ${txt}`);
-    box.innerHTML += `<div class="bubble bnf">${escapeHtml(res)}</div>`;
-  } catch(e) {
-    box.innerHTML += `<div class="bubble bnf">エラー: ${escapeHtml(e.message)}</div>`;
-  }
+  const div = document.createElement('div');
+  div.className = `bubble ${sender}`;
+  div.innerText = text;
+  box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 }
 
-/* ════ 5. 売買ログ ════ */
+/* ════ ログ管理 ════ */
+function saveLog(){
+  const code = document.getElementById('tool-code').value.trim();
+  const price = document.getElementById('current-price').value;
+  const kairi = document.getElementById('res-kairi').innerText;
+  const stop = document.getElementById('tgt-stop').innerText;
+  const target = document.getElementById('tgt-profit-ma').innerText;
+
+  if(!code || price === ""){ alert("銘柄コードと価格を入力してください"); return; }
+
+  const entry = {
+    date: new Date().toLocaleString(),
+    code,
+    price,
+    kairi,
+    stop,
+    target
+  };
+
+  savedLogs.unshift(entry);
+  localStorage.setItem("bnf_saved_logs", JSON.stringify(savedLogs));
+  renderLogs();
+  alert("ログに保存しました ✅");
+}
+
 function renderLogs(){
   const container = document.getElementById('log-container');
-  const stats = document.getElementById('stats-grid');
-  if(!container) return;
+  const statsContainer = document.getElementById('stats-grid');
 
-  stats.innerHTML = `
-    <div class="stat-cell"><div class="stat-num">${savedLogs.length}</div><div class="stat-lbl">保存件数</div></div>
-    <div class="stat-cell"><div class="stat-num" style="color:var(--green);">${savedLogs.filter(l=>l.status.includes('買い')).length}</div><div class="stat-lbl">買い判定</div></div>
-    <div class="stat-cell"><div class="stat-num" style="color:var(--blue);">${watchlist.length}</div><div class="stat-lbl">監視銘柄</div></div>
+  statsContainer.innerHTML = `
+    <div class="stat-cell"><div class="stat-num">${savedLogs.length}</div><div class="stat-lbl">総分析件数</div></div>
+    <div class="stat-cell"><div class="stat-num" style="color:var(--green);">${savedLogs.filter(l=>l.kairi.includes('-15')).length}</div><div class="stat-lbl">S級シグナル</div></div>
+    <div class="stat-cell"><div class="stat-num" style="color:var(--blue);">${savedLogs.filter(l=>l.kairi.includes('-10')).length}</div><div class="stat-lbl">A級シグナル</div></div>
   `;
 
   if(savedLogs.length === 0){
-    container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted);">ログ履歴はありません</div>`;
+    container.innerHTML = '<div class="cell" style="color:var(--muted);font-size:.8rem;">保存されたログはありません。</div>';
     return;
   }
 
-  container.innerHTML = savedLogs.map(log => `
+  container.innerHTML = savedLogs.map(l => `
     <div class="log-card">
-      <div class="log-top">${log.date}</div>
+      <div class="log-top">${escapeHtml(l.date)}</div>
       <div class="log-mid">
-        <div class="log-code">${escapeHtml(log.code)}</div>
-        <div class="log-kairi">${escapeHtml(log.kairi)}</div>
+        <span class="log-code">${escapeHtml(l.code)} (${escapeHtml(l.price)}円)</span>
+        <span class="log-kairi dn">${escapeHtml(l.kairi)}</span>
       </div>
-      <div style="font-size:.8rem;color:var(--muted);margin-top:4px;">価格: ¥${parseFloat(log.price).toLocaleString()} | 判定: ${escapeHtml(log.status)}</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px;">
+        🎯 利確目標: ${escapeHtml(l.target)} / 🔪 損切り: ${escapeHtml(l.stop)}
+      </div>
     </div>
   `).join('');
 }
 
-function exportCSV(){
-  if(savedLogs.length===0){ alert("エクスポートするデータがありません"); return; }
-  let csv = "ID,日時,コード,価格,乖離率,判定\n";
-  savedLogs.forEach(l => {
-    csv += `"${l.id}","${l.date}","${l.code}","${l.price}","${l.kairi}","${l.status}"\n`;
-  });
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `bnf_logs_${Date.now()}.csv`;
-  a.click();
-}
-
 function clearLogs(){
-  if(confirm("全てのログを削除しますか？")){
+  if(confirm("すべてのログを消去しますか？")){
     savedLogs = [];
     localStorage.removeItem("bnf_saved_logs");
     renderLogs();
+  }
+}
+
+function exportCSV(){
+  if(savedLogs.length === 0){ alert("エクスポートするログがありません"); return; }
+  let csv = "日時,銘柄コード,エントリー価格,乖離率,損切りライン,利確目標\n";
+  savedLogs.forEach(l => {
+    csv += `"${l.date}","${l.code}","${l.price}","${l.kairi}","${l.stop}","${l.target}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `bnf_trade_logs_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+/* ════ バックアップ・データ管理 ════ */
+function exportAllData(){
+  const data = {
+    apiKey: geminiApiKey,
+    workerUrl,
+    isMiniStock,
+    defaultStop,
+    savedLogs,
+    watchlist
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "bnf_system_backup.json";
+  a.click();
+}
+
+function importAllData(){
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "application/json";
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = event => {
+      try {
+        const d = JSON.parse(event.target.result);
+        if(d.apiKey) localStorage.setItem("bnf_gemini_key", d.apiKey);
+        if(d.workerUrl) localStorage.setItem("bnf_worker_url", d.workerUrl);
+        if(d.savedLogs) localStorage.setItem("bnf_saved_logs", JSON.stringify(d.savedLogs));
+        if(d.watchlist) localStorage.setItem("bnf_watchlist", JSON.stringify(d.watchlist));
+        alert("データを復元しました。ページをリロードします。");
+        location.reload();
+      } catch(err) {
+        alert("復元エラー: 不正なファイル形式です");
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function resetAllApp(){
+  if(confirm("【警告】設定およびすべての保存データを初期化しますか？")){
+    localStorage.clear();
+    alert("初期化が完了しました。");
+    location.reload();
   }
 }
 </script>
