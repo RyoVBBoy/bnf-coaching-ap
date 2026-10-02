@@ -1,0 +1,8 @@
+{
+  "generated_at": "2026-10-02 15:40",
+  "market": { "decliningCount": 1210, "statusText": "様子見" },
+  "candidates": [
+    { "code": "6920", "name": "レーザーテック", "price": 21050, "kairi": -16.2, "verdict": "買い", "reason": "ハイテク-15%を下回る" },
+    { "code": "7203", "name": "トヨタ自動車", "price": 2650, "kairi": -8.1, "verdict": "見送り", "reason": "乖離が不足" }
+  ]
+}
