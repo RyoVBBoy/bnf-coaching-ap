@@ -226,21 +226,3 @@ def run_once(git_push=False):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); ap.add_argument("--git-push", action="store_true")
     run_once(ap.parse_args().git_push)
-import requests
-
-NTFY_TOPIC = "bnf-x7k2q9m4v8"  # 自分だけの長いランダム名に変える
-
-def notify(title, message, priority=4):
-    requests.post(
-        "https://ntfy.sh",
-        json={
-            "topic": NTFY_TOPIC,
-            "title": title,
-            "message": message,
-            "priority": priority,  # 1〜5(4=高)
-        },
-        timeout=10,
-    )
-
-# 例: 翌営業日の買い候補が出たとき
-notify("BNF 買い候補", "7203 トヨタ 乖離-11.2%\n6758 ソニーG 乖離-12.5%")
