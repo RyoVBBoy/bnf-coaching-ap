@@ -16,6 +16,14 @@ from pathlib import Path
 import pandas as pd
 import requests
 from anthropic import Anthropic
+NTFY_TOPIC = "ここを自分だけの長いランダム文字列に変える"
+
+def notify(title, message, priority=3):
+    try:
+        requests.post("https://ntfy.sh", json={"topic": NTFY_TOPIC, "title": title,
+                      "message": message[:1900], "priority": priority}, timeout=10)
+    except Exception as e:
+        print("[警告] ntfy通知に失敗:", e)
 
 # ───── 設定 ─────
 BASE = "https://api.jquants.com/v2"
@@ -204,7 +212,13 @@ def run_once(git_push=False):
             f"[{b['code']}] {b['name']} 指値{b['entry_price']} 利確{b['take_profit_price']} 損切{b['stop_loss_price']}"
             for b in result["buy_candidates"]]
         requests.post(url, json={"content": "\n".join(lines)[:1900]}, timeout=10)
-    if git_push:
+       if result["market_status"] == "BUY":
+        lines = [f"[{b['code']}] {b['name']} 指値{b['entry_price']} 利確{b['take_profit_price']} 損切{b['stop_loss_price']}"
+                 for b in result["buy_candidates"]]
+        notify("BNF 買い候補", "\n".join(lines), priority=4)
+    else:
+        notify("BNF 見送り", result["reason"], priority=2)
+     if git_push:
         for cmd in (["git", "add", "last_result.json"], ["git", "commit", "-m", f"result {asof}"], ["git", "push"]):
             subprocess.run(cmd, check=False)
 
